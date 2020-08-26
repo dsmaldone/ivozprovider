@@ -186,7 +186,6 @@ class Users extends Raw\Users
         }
 
         return $response;
-
     }
 
     /**
@@ -198,15 +197,55 @@ class Users extends Raw\Users
      */
     public function delete(\IvozProvider\Model\Raw\ModelAbstract $model)
     {
-
-        $extension = $model->getExtension();
-
         // Update the endpoint
         $endpoint = $model->getEndpoint();
         if ($endpoint) {
             $endpoint
                 ->setCallerid(null)
                 ->setMailboxes(null)
+                ->save();
+        }
+
+        // Update the Extension
+        $extension = $model->getExtension();
+        if ($extension) {
+            $extension
+                ->setRouteType(null)
+                ->setUserId(null)
+                ->save();
+        }
+
+        // IVRCustom
+        $customIvrsByTimeoutVoiceMailUser = $model->getIVRCustomByTimeoutVoiceMailUser();
+        foreach ($customIvrsByTimeoutVoiceMailUser as $ivrByTimeoutVoiceMailUser) {
+            $ivrByTimeoutVoiceMailUser
+                ->setTimeoutTargetType(null)
+                ->setTimeoutExtensionId(null)
+                ->save();
+        }
+
+        $customIvrsByErrorVoiceMailUser = $model->getIVRCustomByErrorVoiceMailUser();
+        foreach ($customIvrsByErrorVoiceMailUser as $ivrByErrorVoiceMailUser) {
+            $ivrByErrorVoiceMailUser
+                ->setErrorTargetType(null)
+                ->setErrorExtensionId(null)
+                ->save();
+        }
+
+        // IVRCommon
+        $commonIvrsByTimeoutVoiceMailUser = $model->getIVRCommonByTimeoutVoiceMailUser();
+        foreach ($commonIvrsByTimeoutVoiceMailUser as $ivrByTimeoutVoiceMailUser) {
+            $ivrByTimeoutVoiceMailUser
+                ->setTimeoutTargetType(null)
+                ->setTimeoutExtensionId(null)
+                ->save();
+        }
+
+        $commonIvrsByErrorVoiceMailUser = $model->getIVRCommonByErrorVoiceMailUser();
+        foreach ($commonIvrsByErrorVoiceMailUser as $ivrByErrorVoiceMailUser) {
+            $ivrByErrorVoiceMailUser
+                ->setErrorTargetType(null)
+                ->setErrorExtensionId(null)
                 ->save();
         }
 
