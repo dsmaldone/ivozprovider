@@ -2,26 +2,11 @@
 
 namespace Ivoz\Kam\Domain\Model\Rtpengine;
 
-use Ivoz\Core\Domain\Model\LoggableEntityInterface;
+use Ivoz\Core\Domain\Model\EntityInterface;
 
-interface RtpengineInterface extends LoggableEntityInterface
+interface RtpengineInterface extends EntityInterface
 {
-    /**
-     * @codeCoverageIgnore
-     * @return array
-     */
-    public function getChangeSet();
-
     public function setMediaRelaySet(\Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface $mediaRelaySet = null);
-
-    /**
-     * Set setid
-     *
-     * @param integer $setid
-     *
-     * @return self
-     */
-    public function setSetid($setid);
 
     /**
      * Get setid
@@ -31,29 +16,11 @@ interface RtpengineInterface extends LoggableEntityInterface
     public function getSetid();
 
     /**
-     * Set url
-     *
-     * @param string $url
-     *
-     * @return self
-     */
-    public function setUrl($url);
-
-    /**
      * Get url
      *
      * @return string
      */
     public function getUrl();
-
-    /**
-     * Set weight
-     *
-     * @param integer $weight
-     *
-     * @return self
-     */
-    public function setWeight($weight);
 
     /**
      * Get weight
@@ -63,29 +30,11 @@ interface RtpengineInterface extends LoggableEntityInterface
     public function getWeight();
 
     /**
-     * Set disabled
-     *
-     * @param boolean $disabled
-     *
-     * @return self
-     */
-    public function setDisabled($disabled);
-
-    /**
      * Get disabled
      *
      * @return boolean
      */
     public function getDisabled();
-
-    /**
-     * Set stamp
-     *
-     * @param \DateTime $stamp
-     *
-     * @return self
-     */
-    public function setStamp($stamp);
 
     /**
      * Get stamp
@@ -95,27 +44,16 @@ interface RtpengineInterface extends LoggableEntityInterface
     public function getStamp();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
 
     /**
      * Get mediaRelaySet
      *
-     * @return \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface
+     * @return \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface | null
      */
     public function getMediaRelaySet();
-
 }
-

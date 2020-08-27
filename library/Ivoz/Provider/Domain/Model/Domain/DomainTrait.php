@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\Domain;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,17 +18,17 @@ trait DomainTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $friends;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
-    protected $retailAccounts;
+    protected $residentialDevices;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $terminals;
 
@@ -41,32 +40,49 @@ trait DomainTrait
     {
         parent::__construct(...func_get_args());
         $this->friends = new ArrayCollection();
-        $this->retailAccounts = new ArrayCollection();
+        $this->residentialDevices = new ArrayCollection();
         $this->terminals = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param DomainDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto DomainDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getFriends()) {
-            $self->replaceFriends($dto->getFriends());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getFriends())) {
+            $self->replaceFriends(
+                $fkTransformer->transformCollection(
+                    $dto->getFriends()
+                )
+            );
         }
 
-        if ($dto->getRetailAccounts()) {
-            $self->replaceRetailAccounts($dto->getRetailAccounts());
+        if (!is_null($dto->getResidentialDevices())) {
+            $self->replaceResidentialDevices(
+                $fkTransformer->transformCollection(
+                    $dto->getResidentialDevices()
+                )
+            );
         }
 
-        if ($dto->getTerminals()) {
-            $self->replaceTerminals($dto->getTerminals());
+        if (!is_null($dto->getTerminals())) {
+            $self->replaceTerminals(
+                $fkTransformer->transformCollection(
+                    $dto->getTerminals()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -76,28 +92,44 @@ trait DomainTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param DomainDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto DomainDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getFriends()) {
-            $this->replaceFriends($dto->getFriends());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getFriends())) {
+            $this->replaceFriends(
+                $fkTransformer->transformCollection(
+                    $dto->getFriends()
+                )
+            );
         }
-        if ($dto->getRetailAccounts()) {
-            $this->replaceRetailAccounts($dto->getRetailAccounts());
+        if (!is_null($dto->getResidentialDevices())) {
+            $this->replaceResidentialDevices(
+                $fkTransformer->transformCollection(
+                    $dto->getResidentialDevices()
+                )
+            );
         }
-        if ($dto->getTerminals()) {
-            $this->replaceTerminals($dto->getTerminals());
+        if (!is_null($dto->getTerminals())) {
+            $this->replaceTerminals(
+                $fkTransformer->transformCollection(
+                    $dto->getTerminals()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return DomainDto
      */
@@ -117,14 +149,12 @@ trait DomainTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add friend
      *
      * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend
      *
-     * @return DomainTrait
+     * @return static
      */
     public function addFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend)
     {
@@ -146,10 +176,10 @@ trait DomainTrait
     /**
      * Replace friends
      *
-     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface[] $friends
-     * @return self
+     * @param ArrayCollection $friends of Ivoz\Provider\Domain\Model\Friend\FriendInterface
+     * @return static
      */
-    public function replaceFriends(Collection $friends)
+    public function replaceFriends(ArrayCollection $friends)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -179,7 +209,7 @@ trait DomainTrait
 
     /**
      * Get friends
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface[]
      */
     public function getFriends(Criteria $criteria = null)
@@ -192,75 +222,75 @@ trait DomainTrait
     }
 
     /**
-     * Add retailAccount
+     * Add residentialDevice
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice
      *
-     * @return DomainTrait
+     * @return static
      */
-    public function addRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount)
+    public function addResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice)
     {
-        $this->retailAccounts->add($retailAccount);
+        $this->residentialDevices->add($residentialDevice);
 
         return $this;
     }
 
     /**
-     * Remove retailAccount
+     * Remove residentialDevice
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice
      */
-    public function removeRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount)
+    public function removeResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice)
     {
-        $this->retailAccounts->removeElement($retailAccount);
+        $this->residentialDevices->removeElement($residentialDevice);
     }
 
     /**
-     * Replace retailAccounts
+     * Replace residentialDevices
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface[] $retailAccounts
-     * @return self
+     * @param ArrayCollection $residentialDevices of Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
+     * @return static
      */
-    public function replaceRetailAccounts(Collection $retailAccounts)
+    public function replaceResidentialDevices(ArrayCollection $residentialDevices)
     {
         $updatedEntities = [];
         $fallBackId = -1;
-        foreach ($retailAccounts as $entity) {
+        foreach ($residentialDevices as $entity) {
             $index = $entity->getId() ? $entity->getId() : $fallBackId--;
             $updatedEntities[$index] = $entity;
             $entity->setDomain($this);
         }
         $updatedEntityKeys = array_keys($updatedEntities);
 
-        foreach ($this->retailAccounts as $key => $entity) {
+        foreach ($this->residentialDevices as $key => $entity) {
             $identity = $entity->getId();
             if (in_array($identity, $updatedEntityKeys)) {
-                $this->retailAccounts->set($key, $updatedEntities[$identity]);
+                $this->residentialDevices->set($key, $updatedEntities[$identity]);
             } else {
-                $this->retailAccounts->remove($key);
+                $this->residentialDevices->remove($key);
             }
             unset($updatedEntities[$identity]);
         }
 
         foreach ($updatedEntities as $entity) {
-            $this->addRetailAccount($entity);
+            $this->addResidentialDevice($entity);
         }
 
         return $this;
     }
 
     /**
-     * Get retailAccounts
-     *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface[]
+     * Get residentialDevices
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface[]
      */
-    public function getRetailAccounts(Criteria $criteria = null)
+    public function getResidentialDevices(Criteria $criteria = null)
     {
         if (!is_null($criteria)) {
-            return $this->retailAccounts->matching($criteria)->toArray();
+            return $this->residentialDevices->matching($criteria)->toArray();
         }
 
-        return $this->retailAccounts->toArray();
+        return $this->residentialDevices->toArray();
     }
 
     /**
@@ -268,7 +298,7 @@ trait DomainTrait
      *
      * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal
      *
-     * @return DomainTrait
+     * @return static
      */
     public function addTerminal(\Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal)
     {
@@ -290,10 +320,10 @@ trait DomainTrait
     /**
      * Replace terminals
      *
-     * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface[] $terminals
-     * @return self
+     * @param ArrayCollection $terminals of Ivoz\Provider\Domain\Model\Terminal\TerminalInterface
+     * @return static
      */
-    public function replaceTerminals(Collection $terminals)
+    public function replaceTerminals(ArrayCollection $terminals)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -323,7 +353,7 @@ trait DomainTrait
 
     /**
      * Get terminals
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface[]
      */
     public function getTerminals(Criteria $criteria = null)
@@ -334,7 +364,4 @@ trait DomainTrait
 
         return $this->terminals->toArray();
     }
-
-
 }
-

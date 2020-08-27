@@ -2,9 +2,15 @@
 
 namespace Ivoz\Provider\Domain\Model\CompanyService;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
-
-interface CompanyServiceRepository extends ObjectRepository, Selectable {}
-
+interface CompanyServiceRepository extends ObjectRepository, Selectable
+{
+    /**
+     * @param int $companyId
+     * @param int $serviceId
+     * @return CompanyServiceInterface | null
+     */
+    public function findCompanyService($companyId, $serviceId);
+}

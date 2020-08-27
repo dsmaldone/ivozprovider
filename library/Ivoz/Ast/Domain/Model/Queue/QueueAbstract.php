@@ -20,18 +20,18 @@ abstract class QueueAbstract
 
     /**
      * column: periodic_announce
-     * @var string
+     * @var string | null
      */
     protected $periodicAnnounce;
 
     /**
      * column: periodic_announce_frequency
-     * @var integer
+     * @var integer | null
      */
     protected $periodicAnnounceFrequency;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $timeout;
 
@@ -46,22 +46,22 @@ abstract class QueueAbstract
     protected $ringinuse = 'no';
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $wrapuptime;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $maxlen;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $strategy;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $weight;
 
@@ -87,7 +87,8 @@ abstract class QueueAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Queue",
             $this->getId()
         );
@@ -111,7 +112,8 @@ abstract class QueueAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param QueueInterface|null $entity
      * @param int $depth
      * @return QueueDto|null
      */
@@ -131,25 +133,29 @@ abstract class QueueAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var QueueDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param QueueDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto QueueDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, QueueDto::class);
 
         $self = new static(
             $dto->getName(),
             $dto->getAutopause(),
-            $dto->getRinginuse());
+            $dto->getRinginuse()
+        );
 
         $self
             ->setPeriodicAnnounce($dto->getPeriodicAnnounce())
@@ -159,24 +165,23 @@ abstract class QueueAbstract
             ->setMaxlen($dto->getMaxlen())
             ->setStrategy($dto->getStrategy())
             ->setWeight($dto->getWeight())
-            ->setQueue($dto->getQueue())
+            ->setQueue($fkTransformer->transform($dto->getQueue()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param QueueDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto QueueDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, QueueDto::class);
 
         $this
@@ -190,15 +195,15 @@ abstract class QueueAbstract
             ->setMaxlen($dto->getMaxlen())
             ->setStrategy($dto->getStrategy())
             ->setWeight($dto->getWeight())
-            ->setQueue($dto->getQueue());
+            ->setQueue($fkTransformer->transform($dto->getQueue()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return QueueDto
      */
@@ -234,11 +239,9 @@ abstract class QueueAbstract
             'maxlen' => self::getMaxlen(),
             'strategy' => self::getStrategy(),
             'weight' => self::getWeight(),
-            'queueId' => self::getQueue() ? self::getQueue()->getId() : null
+            'queueId' => self::getQueue()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -246,9 +249,9 @@ abstract class QueueAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 128, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -271,11 +274,11 @@ abstract class QueueAbstract
     /**
      * Set periodicAnnounce
      *
-     * @param string $periodicAnnounce
+     * @param string $periodicAnnounce | null
      *
-     * @return self
+     * @return static
      */
-    public function setPeriodicAnnounce($periodicAnnounce = null)
+    protected function setPeriodicAnnounce($periodicAnnounce = null)
     {
         if (!is_null($periodicAnnounce)) {
             Assertion::maxLength($periodicAnnounce, 128, 'periodicAnnounce value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -289,7 +292,7 @@ abstract class QueueAbstract
     /**
      * Get periodicAnnounce
      *
-     * @return string
+     * @return string | null
      */
     public function getPeriodicAnnounce()
     {
@@ -299,16 +302,15 @@ abstract class QueueAbstract
     /**
      * Set periodicAnnounceFrequency
      *
-     * @param integer $periodicAnnounceFrequency
+     * @param integer $periodicAnnounceFrequency | null
      *
-     * @return self
+     * @return static
      */
-    public function setPeriodicAnnounceFrequency($periodicAnnounceFrequency = null)
+    protected function setPeriodicAnnounceFrequency($periodicAnnounceFrequency = null)
     {
         if (!is_null($periodicAnnounceFrequency)) {
-            if (!is_null($periodicAnnounceFrequency)) {
-                Assertion::integerish($periodicAnnounceFrequency, 'periodicAnnounceFrequency value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($periodicAnnounceFrequency, 'periodicAnnounceFrequency value "%s" is not an integer or a number castable to integer.');
+            $periodicAnnounceFrequency = (int) $periodicAnnounceFrequency;
         }
 
         $this->periodicAnnounceFrequency = $periodicAnnounceFrequency;
@@ -319,7 +321,7 @@ abstract class QueueAbstract
     /**
      * Get periodicAnnounceFrequency
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPeriodicAnnounceFrequency()
     {
@@ -329,16 +331,15 @@ abstract class QueueAbstract
     /**
      * Set timeout
      *
-     * @param integer $timeout
+     * @param integer $timeout | null
      *
-     * @return self
+     * @return static
      */
-    public function setTimeout($timeout = null)
+    protected function setTimeout($timeout = null)
     {
         if (!is_null($timeout)) {
-            if (!is_null($timeout)) {
-                Assertion::integerish($timeout, 'timeout value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($timeout, 'timeout value "%s" is not an integer or a number castable to integer.');
+            $timeout = (int) $timeout;
         }
 
         $this->timeout = $timeout;
@@ -349,7 +350,7 @@ abstract class QueueAbstract
     /**
      * Get timeout
      *
-     * @return integer
+     * @return integer | null
      */
     public function getTimeout()
     {
@@ -361,9 +362,9 @@ abstract class QueueAbstract
      *
      * @param string $autopause
      *
-     * @return self
+     * @return static
      */
-    public function setAutopause($autopause)
+    protected function setAutopause($autopause)
     {
         Assertion::notNull($autopause, 'autopause value "%s" is null, but non null value was expected.');
 
@@ -387,9 +388,9 @@ abstract class QueueAbstract
      *
      * @param string $ringinuse
      *
-     * @return self
+     * @return static
      */
-    public function setRinginuse($ringinuse)
+    protected function setRinginuse($ringinuse)
     {
         Assertion::notNull($ringinuse, 'ringinuse value "%s" is null, but non null value was expected.');
 
@@ -411,16 +412,15 @@ abstract class QueueAbstract
     /**
      * Set wrapuptime
      *
-     * @param integer $wrapuptime
+     * @param integer $wrapuptime | null
      *
-     * @return self
+     * @return static
      */
-    public function setWrapuptime($wrapuptime = null)
+    protected function setWrapuptime($wrapuptime = null)
     {
         if (!is_null($wrapuptime)) {
-            if (!is_null($wrapuptime)) {
-                Assertion::integerish($wrapuptime, 'wrapuptime value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($wrapuptime, 'wrapuptime value "%s" is not an integer or a number castable to integer.');
+            $wrapuptime = (int) $wrapuptime;
         }
 
         $this->wrapuptime = $wrapuptime;
@@ -431,7 +431,7 @@ abstract class QueueAbstract
     /**
      * Get wrapuptime
      *
-     * @return integer
+     * @return integer | null
      */
     public function getWrapuptime()
     {
@@ -441,16 +441,15 @@ abstract class QueueAbstract
     /**
      * Set maxlen
      *
-     * @param integer $maxlen
+     * @param integer $maxlen | null
      *
-     * @return self
+     * @return static
      */
-    public function setMaxlen($maxlen = null)
+    protected function setMaxlen($maxlen = null)
     {
         if (!is_null($maxlen)) {
-            if (!is_null($maxlen)) {
-                Assertion::integerish($maxlen, 'maxlen value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($maxlen, 'maxlen value "%s" is not an integer or a number castable to integer.');
+            $maxlen = (int) $maxlen;
         }
 
         $this->maxlen = $maxlen;
@@ -461,7 +460,7 @@ abstract class QueueAbstract
     /**
      * Get maxlen
      *
-     * @return integer
+     * @return integer | null
      */
     public function getMaxlen()
     {
@@ -471,15 +470,12 @@ abstract class QueueAbstract
     /**
      * Set strategy
      *
-     * @param string $strategy
+     * @param string $strategy | null
      *
-     * @return self
+     * @return static
      */
-    public function setStrategy($strategy = null)
+    protected function setStrategy($strategy = null)
     {
-        if (!is_null($strategy)) {
-        }
-
         $this->strategy = $strategy;
 
         return $this;
@@ -488,7 +484,7 @@ abstract class QueueAbstract
     /**
      * Get strategy
      *
-     * @return string
+     * @return string | null
      */
     public function getStrategy()
     {
@@ -498,16 +494,15 @@ abstract class QueueAbstract
     /**
      * Set weight
      *
-     * @param integer $weight
+     * @param integer $weight | null
      *
-     * @return self
+     * @return static
      */
-    public function setWeight($weight = null)
+    protected function setWeight($weight = null)
     {
         if (!is_null($weight)) {
-            if (!is_null($weight)) {
-                Assertion::integerish($weight, 'weight value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($weight, 'weight value "%s" is not an integer or a number castable to integer.');
+            $weight = (int) $weight;
         }
 
         $this->weight = $weight;
@@ -518,7 +513,7 @@ abstract class QueueAbstract
     /**
      * Get weight
      *
-     * @return integer
+     * @return integer | null
      */
     public function getWeight()
     {
@@ -530,9 +525,9 @@ abstract class QueueAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue
      *
-     * @return self
+     * @return static
      */
-    public function setQueue(\Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue)
+    protected function setQueue(\Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue)
     {
         $this->queue = $queue;
 
@@ -549,8 +544,5 @@ abstract class QueueAbstract
         return $this->queue;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

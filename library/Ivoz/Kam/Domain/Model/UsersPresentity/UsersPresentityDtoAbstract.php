@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\UsersPresentity;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -55,7 +53,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $priority = '0';
+    private $priority = 0;
 
     /**
      * @var integer
@@ -73,7 +71,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -98,7 +96,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'username' => $this->getUsername(),
             'domain' => $this->getDomain(),
             'event' => $this->getEvent(),
@@ -110,22 +108,19 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
             'priority' => $this->getPriority(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -141,7 +136,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getUsername()
     {
@@ -161,7 +156,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDomain()
     {
@@ -181,7 +176,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEvent()
     {
@@ -201,7 +196,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEtag()
     {
@@ -221,7 +216,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getExpires()
     {
@@ -241,7 +236,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getReceivedTime()
     {
@@ -261,7 +256,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getBody()
     {
@@ -281,7 +276,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSender()
     {
@@ -301,7 +296,7 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPriority()
     {
@@ -321,12 +316,10 @@ abstract class UsersPresentityDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

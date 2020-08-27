@@ -1,13 +1,5 @@
 Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileAbstract:
   type: mappedSuperclass
-  indexes:
-    tpRatingProfile_tpid:
-      columns:
-        - tpid
-    tpRatingProfile_tpid_loadid:
-      columns:
-        - tpid
-        - loadid
   uniqueConstraints:
     tpid_loadid_tenant_category_dir_subj_atime:
       columns:
@@ -60,10 +52,11 @@ Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileAbstract:
       options:
         fixed: false
     activationTime:
-      type: datetime
+      type: string
       nullable: false
+      length: 32
       options:
-        default: CURRENT_TIMESTAMP
+        default: "1970-01-01 00:00:00"
       column: activation_time
     ratingPlanTag:
       type: string
@@ -93,27 +86,21 @@ Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileAbstract:
         default: CURRENT_TIMESTAMP
       column: created_at
   manyToOne:
-    company:
-      targetEntity: \Ivoz\Provider\Domain\Model\Company\CompanyInterface
-      cascade: {  }
+    ratingProfile:
+      targetEntity: \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface
+      inversedBy: tpRatingProfiles
       fetch: LAZY
-      mappedBy: null
-      inversedBy: ratingProfiles
-      joinColumns:
-        companyId:
-          referencedColumnName: id
-          nullable: false
-          onDelete: cascade
-      orphanRemoval: false
-    ratingPlan:
-      targetEntity: \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface
-      cascade: {  }
+      joinColumn:
+        name: ratingProfileId
+        referencedColumnName: id
+        nullable: true
+        onDelete: cascade
+    outgoingRoutingRelCarrier:
+      targetEntity: \Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierInterface
+      inversedBy: tpRatingProfiles
       fetch: LAZY
-      mappedBy: null
-      inversedBy: null
-      joinColumns:
-        ratingPlanId:
-          referencedColumnName: id
-          nullable: false
-          onDelete: cascade
-      orphanRemoval: false
+      joinColumn:
+        name: outgoingRoutingRelCarrierId
+        referencedColumnName: id
+        nullable: true
+        onDelete: cascade

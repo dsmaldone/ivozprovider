@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\PickUpRelUser;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -38,7 +36,7 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -56,28 +54,24 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'id' => $this->getId(),
             'pickUpGroup' => $this->getPickUpGroup(),
             'user' => $this->getUser()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->pickUpGroup = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\PickUpGroup\\PickUpGroup', $this->getPickUpGroupId());
-        $this->user = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\User\\User', $this->getUserId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -93,7 +87,7 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -113,7 +107,7 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\PickUpGroup\PickUpGroupDto
+     * @return \Ivoz\Provider\Domain\Model\PickUpGroup\PickUpGroupDto | null
      */
     public function getPickUpGroup()
     {
@@ -121,7 +115,7 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -135,7 +129,7 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getPickUpGroupId()
     {
@@ -159,7 +153,7 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\User\UserDto
+     * @return \Ivoz\Provider\Domain\Model\User\UserDto | null
      */
     public function getUser()
     {
@@ -167,7 +161,7 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -181,7 +175,7 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getUserId()
     {
@@ -192,5 +186,3 @@ abstract class PickUpRelUserDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

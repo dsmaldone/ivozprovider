@@ -19,7 +19,7 @@ abstract class ApplicationServerAbstract
     protected $ip;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $name;
 
@@ -38,7 +38,8 @@ abstract class ApplicationServerAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "ApplicationServer",
             $this->getId()
         );
@@ -62,7 +63,8 @@ abstract class ApplicationServerAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param ApplicationServerInterface|null $entity
      * @param int $depth
      * @return ApplicationServerDto|null
      */
@@ -82,43 +84,46 @@ abstract class ApplicationServerAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var ApplicationServerDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ApplicationServerDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ApplicationServerDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ApplicationServerDto::class);
 
         $self = new static(
-            $dto->getIp());
+            $dto->getIp()
+        );
 
         $self
             ->setName($dto->getName())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ApplicationServerDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ApplicationServerDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ApplicationServerDto::class);
 
         $this
@@ -127,11 +132,11 @@ abstract class ApplicationServerAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ApplicationServerDto
      */
@@ -152,8 +157,6 @@ abstract class ApplicationServerAbstract
             'name' => self::getName()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -161,9 +164,9 @@ abstract class ApplicationServerAbstract
      *
      * @param string $ip
      *
-     * @return self
+     * @return static
      */
-    public function setIp($ip)
+    protected function setIp($ip)
     {
         Assertion::notNull($ip, 'ip value "%s" is null, but non null value was expected.');
         Assertion::maxLength($ip, 50, 'ip value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -186,11 +189,11 @@ abstract class ApplicationServerAbstract
     /**
      * Set name
      *
-     * @param string $name
+     * @param string $name | null
      *
-     * @return self
+     * @return static
      */
-    public function setName($name = null)
+    protected function setName($name = null)
     {
         if (!is_null($name)) {
             Assertion::maxLength($name, 64, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -204,15 +207,12 @@ abstract class ApplicationServerAbstract
     /**
      * Get name
      *
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
         return $this->name;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

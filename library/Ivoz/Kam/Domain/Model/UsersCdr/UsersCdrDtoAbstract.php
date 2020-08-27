@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\UsersCdr;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -13,19 +11,19 @@ use Ivoz\Core\Application\Model\DtoNormalizer;
 abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
 {
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $startTime = '2000-01-01 00:00:00';
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $endTime = '2000-01-01 00:00:00';
 
     /**
      * @var float
      */
-    private $duration = '0.000';
+    private $duration = 0.0;
 
     /**
      * @var string
@@ -73,6 +71,11 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     private $xcallid;
 
     /**
+     * @var boolean
+     */
+    private $hidden = false;
+
+    /**
      * @var integer
      */
     private $id;
@@ -98,6 +101,11 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     private $friend;
 
     /**
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto | null
+     */
+    private $residentialDevice;
+
+    /**
      * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto | null
      */
     private $retailAccount;
@@ -113,7 +121,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -132,11 +140,13 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
             'callid' => 'callid',
             'callidHash' => 'callidHash',
             'xcallid' => 'xcallid',
+            'hidden' => 'hidden',
             'id' => 'id',
             'brandId' => 'brand',
             'companyId' => 'company',
             'userId' => 'user',
             'friendId' => 'friend',
+            'residentialDeviceId' => 'residentialDevice',
             'retailAccountId' => 'retailAccount'
         ];
     }
@@ -146,7 +156,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'startTime' => $this->getStartTime(),
             'endTime' => $this->getEndTime(),
             'duration' => $this->getDuration(),
@@ -159,33 +169,28 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
             'callid' => $this->getCallid(),
             'callidHash' => $this->getCallidHash(),
             'xcallid' => $this->getXcallid(),
+            'hidden' => $this->getHidden(),
             'id' => $this->getId(),
             'brand' => $this->getBrand(),
             'company' => $this->getCompany(),
             'user' => $this->getUser(),
             'friend' => $this->getFriend(),
+            'residentialDevice' => $this->getResidentialDevice(),
             'retailAccount' => $this->getRetailAccount()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->user = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\User\\User', $this->getUserId());
-        $this->friend = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Friend\\Friend', $this->getFriendId());
-        $this->retailAccount = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\RetailAccount\\RetailAccount', $this->getRetailAccountId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -201,7 +206,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getStartTime()
     {
@@ -221,7 +226,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getEndTime()
     {
@@ -241,7 +246,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return float
+     * @return float | null
      */
     public function getDuration()
     {
@@ -261,7 +266,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDirection()
     {
@@ -281,7 +286,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCaller()
     {
@@ -301,7 +306,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallee()
     {
@@ -321,7 +326,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDiversion()
     {
@@ -341,7 +346,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getReferee()
     {
@@ -361,7 +366,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getReferrer()
     {
@@ -381,7 +386,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallid()
     {
@@ -401,7 +406,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallidHash()
     {
@@ -421,11 +426,31 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getXcallid()
     {
         return $this->xcallid;
+    }
+
+    /**
+     * @param boolean $hidden
+     *
+     * @return static
+     */
+    public function setHidden($hidden = null)
+    {
+        $this->hidden = $hidden;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean | null
+     */
+    public function getHidden()
+    {
+        return $this->hidden;
     }
 
     /**
@@ -441,7 +466,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -461,7 +486,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -469,7 +494,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -483,7 +508,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -507,7 +532,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -515,7 +540,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -529,7 +554,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -553,7 +578,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\User\UserDto
+     * @return \Ivoz\Provider\Domain\Model\User\UserDto | null
      */
     public function getUser()
     {
@@ -561,7 +586,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -575,7 +600,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getUserId()
     {
@@ -599,7 +624,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Friend\FriendDto
+     * @return \Ivoz\Provider\Domain\Model\Friend\FriendDto | null
      */
     public function getFriend()
     {
@@ -607,7 +632,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -621,11 +646,57 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getFriendId()
     {
         if ($dto = $this->getFriend()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto $residentialDevice
+     *
+     * @return static
+     */
+    public function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto $residentialDevice = null)
+    {
+        $this->residentialDevice = $residentialDevice;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto | null
+     */
+    public function getResidentialDevice()
+    {
+        return $this->residentialDevice;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setResidentialDeviceId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto($id)
+            : null;
+
+        return $this->setResidentialDevice($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getResidentialDeviceId()
+    {
+        if ($dto = $this->getResidentialDevice()) {
             return $dto->getId();
         }
 
@@ -645,7 +716,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto | null
      */
     public function getRetailAccount()
     {
@@ -653,7 +724,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -667,7 +738,7 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getRetailAccountId()
     {
@@ -678,5 +749,3 @@ abstract class UsersCdrDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

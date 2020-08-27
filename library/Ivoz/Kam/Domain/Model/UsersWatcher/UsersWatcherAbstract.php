@@ -42,7 +42,7 @@ abstract class UsersWatcherAbstract
     protected $status;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $reason;
 
@@ -78,7 +78,8 @@ abstract class UsersWatcherAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "UsersWatcher",
             $this->getId()
         );
@@ -102,7 +103,8 @@ abstract class UsersWatcherAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param UsersWatcherInterface|null $entity
      * @param int $depth
      * @return UsersWatcherDto|null
      */
@@ -122,19 +124,22 @@ abstract class UsersWatcherAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var UsersWatcherDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersWatcherDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersWatcherDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersWatcherDto::class);
 
         $self = new static(
@@ -143,27 +148,27 @@ abstract class UsersWatcherAbstract
             $dto->getWatcherDomain(),
             $dto->getEvent(),
             $dto->getStatus(),
-            $dto->getInsertedTime());
+            $dto->getInsertedTime()
+        );
 
         $self
             ->setReason($dto->getReason())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersWatcherDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersWatcherDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersWatcherDto::class);
 
         $this
@@ -177,11 +182,11 @@ abstract class UsersWatcherAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return UsersWatcherDto
      */
@@ -212,8 +217,6 @@ abstract class UsersWatcherAbstract
             'inserted_time' => self::getInsertedTime()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -221,9 +224,9 @@ abstract class UsersWatcherAbstract
      *
      * @param string $presentityUri
      *
-     * @return self
+     * @return static
      */
-    public function setPresentityUri($presentityUri)
+    protected function setPresentityUri($presentityUri)
     {
         Assertion::notNull($presentityUri, 'presentityUri value "%s" is null, but non null value was expected.');
         Assertion::maxLength($presentityUri, 128, 'presentityUri value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -248,9 +251,9 @@ abstract class UsersWatcherAbstract
      *
      * @param string $watcherUsername
      *
-     * @return self
+     * @return static
      */
-    public function setWatcherUsername($watcherUsername)
+    protected function setWatcherUsername($watcherUsername)
     {
         Assertion::notNull($watcherUsername, 'watcherUsername value "%s" is null, but non null value was expected.');
         Assertion::maxLength($watcherUsername, 64, 'watcherUsername value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -275,9 +278,9 @@ abstract class UsersWatcherAbstract
      *
      * @param string $watcherDomain
      *
-     * @return self
+     * @return static
      */
-    public function setWatcherDomain($watcherDomain)
+    protected function setWatcherDomain($watcherDomain)
     {
         Assertion::notNull($watcherDomain, 'watcherDomain value "%s" is null, but non null value was expected.');
         Assertion::maxLength($watcherDomain, 190, 'watcherDomain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -302,9 +305,9 @@ abstract class UsersWatcherAbstract
      *
      * @param string $event
      *
-     * @return self
+     * @return static
      */
-    public function setEvent($event)
+    protected function setEvent($event)
     {
         Assertion::notNull($event, 'event value "%s" is null, but non null value was expected.');
         Assertion::maxLength($event, 64, 'event value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -329,14 +332,14 @@ abstract class UsersWatcherAbstract
      *
      * @param integer $status
      *
-     * @return self
+     * @return static
      */
-    public function setStatus($status)
+    protected function setStatus($status)
     {
         Assertion::notNull($status, 'status value "%s" is null, but non null value was expected.');
         Assertion::integerish($status, 'status value "%s" is not an integer or a number castable to integer.');
 
-        $this->status = $status;
+        $this->status = (int) $status;
 
         return $this;
     }
@@ -354,11 +357,11 @@ abstract class UsersWatcherAbstract
     /**
      * Set reason
      *
-     * @param string $reason
+     * @param string $reason | null
      *
-     * @return self
+     * @return static
      */
-    public function setReason($reason = null)
+    protected function setReason($reason = null)
     {
         if (!is_null($reason)) {
             Assertion::maxLength($reason, 64, 'reason value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -372,7 +375,7 @@ abstract class UsersWatcherAbstract
     /**
      * Get reason
      *
-     * @return string
+     * @return string | null
      */
     public function getReason()
     {
@@ -384,14 +387,14 @@ abstract class UsersWatcherAbstract
      *
      * @param integer $insertedTime
      *
-     * @return self
+     * @return static
      */
-    public function setInsertedTime($insertedTime)
+    protected function setInsertedTime($insertedTime)
     {
         Assertion::notNull($insertedTime, 'insertedTime value "%s" is null, but non null value was expected.');
         Assertion::integerish($insertedTime, 'insertedTime value "%s" is not an integer or a number castable to integer.');
 
-        $this->insertedTime = $insertedTime;
+        $this->insertedTime = (int) $insertedTime;
 
         return $this;
     }
@@ -406,8 +409,5 @@ abstract class UsersWatcherAbstract
         return $this->insertedTime;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

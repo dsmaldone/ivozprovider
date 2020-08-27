@@ -4,34 +4,47 @@ namespace Ivoz\Provider\Domain\Model\Administrator;
 
 class AdministratorDto extends AdministratorDtoAbstract
 {
+    protected $sensitiveFields = [
+        'pass',
+    ];
+
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
-            return [
+            $response = [
                 'id' => 'id',
                 'active' => 'active',
+                'restricted' => 'restricted',
+                'username' => 'username',
                 'name' => 'name',
                 'lastname' => 'lastname',
                 'email' => 'email'
             ];
+        } else {
+            $response = parent::getPropertyMap(...func_get_args());
         }
 
-        return parent::getPropertyMap(...func_get_args());
-    }
-
-    public function toArray($hideSensitiveData = false)
-    {
-        $response = parent::toArray($hideSensitiveData);
-        if (!$hideSensitiveData) {
-            return $response;
+        if ($role === 'ROLE_BRAND_ADMIN') {
+            unset($response['brandId']);
         }
-        $response['pass'] = '****';
 
         return $response;
     }
+
+    public function denormalize(array $data, string $context, string $role = '')
+    {
+        $contextProperties = self::getPropertyMap($context, $role);
+        if ($role === 'ROLE_BRAND_ADMIN') {
+            $contextProperties['brandId'] = 'brand';
+        }
+
+        $this->setByContext(
+            $contextProperties,
+            $data
+        );
+    }
 }
-
-

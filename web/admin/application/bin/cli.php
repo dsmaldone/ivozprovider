@@ -4,8 +4,7 @@
 require_once 'Zend/Registry.php';
 
 /** @var \Composer\Autoload\ClassLoader $loader */
-$loader = require __DIR__.'/../../../../web/rest/app/autoload.php';
-include_once __DIR__.'/../../../../web/rest/var/bootstrap.php.cache';
+$loader = require __DIR__ . '/../../../../web/rest/platform/vendor/autoload.php';
 
 $kernel = new AppKernel('prod', false);
 $kernel->boot();
@@ -16,13 +15,6 @@ $kernel->boot();
 );
 
 require_once 'Zend/Registry.php';
-
-/** @var \Composer\Autoload\ClassLoader $loader */
-$loader = require __DIR__.'/../../../../web/rest/app/autoload.php';
-include_once __DIR__.'/../../../../web/rest/var/bootstrap.php.cache';
-
-$kernel = new AppKernel('prod', false);
-$kernel->boot();
 
 \Zend_Registry::set(
     'data_gateway',
@@ -68,7 +60,7 @@ define('APPLICATION_PATH', realpath(__DIR__ . '/../'));
 
 
     // initialize Zend_Application
-    $application = new Zend_Application (
+    $application = new Zend_Application(
         APPLICATION_ENV,
         APPLICATION_PATH . '/configs/application.ini'
     );
@@ -105,4 +97,4 @@ define('APPLICATION_PATH', realpath(__DIR__ . '/../'));
     // lets bootstrap our application and enjoy!
     $application->bootstrap()
        ->run();
-?>
+    ?>

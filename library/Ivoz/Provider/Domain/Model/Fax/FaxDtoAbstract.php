@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Fax;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -25,7 +23,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     /**
      * @var boolean
      */
-    private $sendByEmail = '1';
+    private $sendByEmail = true;
 
     /**
      * @var integer
@@ -53,7 +51,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -74,7 +72,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'email' => $this->getEmail(),
             'sendByEmail' => $this->getSendByEmail(),
@@ -82,23 +80,19 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
             'company' => $this->getCompany(),
             'outgoingDdi' => $this->getOutgoingDdi()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->outgoingDdi = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Ddi\\Ddi', $this->getOutgoingDdiId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -114,7 +108,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -134,7 +128,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEmail()
     {
@@ -154,7 +148,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getSendByEmail()
     {
@@ -174,7 +168,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -194,7 +188,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -202,7 +196,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -216,7 +210,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -240,7 +234,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto | null
      */
     public function getOutgoingDdi()
     {
@@ -248,7 +242,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -262,7 +256,7 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getOutgoingDdiId()
     {
@@ -273,5 +267,3 @@ abstract class FaxDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

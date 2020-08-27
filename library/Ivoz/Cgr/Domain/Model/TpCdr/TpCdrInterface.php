@@ -9,13 +9,24 @@ interface TpCdrInterface extends EntityInterface
     public function getDuration();
 
     /**
-     * Set cgrid
-     *
-     * @param string $cgrid
-     *
-     * @return self
+     * @return array|null
      */
-    public function setCgrid($cgrid);
+    public function getCostDetailsFirstTimespan();
+
+    /**
+     * @return \DateTime | null
+     */
+    public function getStartTime();
+
+    /**
+     * @return string
+     */
+    public function getRatingPlanTag();
+
+    /**
+     * @return string
+     */
+    public function getMatchedDestinationTag();
 
     /**
      * Get cgrid
@@ -25,29 +36,11 @@ interface TpCdrInterface extends EntityInterface
     public function getCgrid();
 
     /**
-     * Set runId
-     *
-     * @param string $runId
-     *
-     * @return self
-     */
-    public function setRunId($runId);
-
-    /**
      * Get runId
      *
      * @return string
      */
     public function getRunId();
-
-    /**
-     * Set originHost
-     *
-     * @param string $originHost
-     *
-     * @return self
-     */
-    public function setOriginHost($originHost);
 
     /**
      * Get originHost
@@ -57,29 +50,11 @@ interface TpCdrInterface extends EntityInterface
     public function getOriginHost();
 
     /**
-     * Set source
-     *
-     * @param string $source
-     *
-     * @return self
-     */
-    public function setSource($source);
-
-    /**
      * Get source
      *
      * @return string
      */
     public function getSource();
-
-    /**
-     * Set originId
-     *
-     * @param string $originId
-     *
-     * @return self
-     */
-    public function setOriginId($originId);
 
     /**
      * Get originId
@@ -89,29 +64,11 @@ interface TpCdrInterface extends EntityInterface
     public function getOriginId();
 
     /**
-     * Set tor
-     *
-     * @param string $tor
-     *
-     * @return self
-     */
-    public function setTor($tor);
-
-    /**
      * Get tor
      *
      * @return string
      */
     public function getTor();
-
-    /**
-     * Set requestType
-     *
-     * @param string $requestType
-     *
-     * @return self
-     */
-    public function setRequestType($requestType);
 
     /**
      * Get requestType
@@ -121,29 +78,11 @@ interface TpCdrInterface extends EntityInterface
     public function getRequestType();
 
     /**
-     * Set tenant
-     *
-     * @param string $tenant
-     *
-     * @return self
-     */
-    public function setTenant($tenant);
-
-    /**
      * Get tenant
      *
      * @return string
      */
     public function getTenant();
-
-    /**
-     * Set category
-     *
-     * @param string $category
-     *
-     * @return self
-     */
-    public function setCategory($category);
 
     /**
      * Get category
@@ -153,29 +92,11 @@ interface TpCdrInterface extends EntityInterface
     public function getCategory();
 
     /**
-     * Set account
-     *
-     * @param string $account
-     *
-     * @return self
-     */
-    public function setAccount($account);
-
-    /**
      * Get account
      *
      * @return string
      */
     public function getAccount();
-
-    /**
-     * Set subject
-     *
-     * @param string $subject
-     *
-     * @return self
-     */
-    public function setSubject($subject);
 
     /**
      * Get subject
@@ -185,29 +106,11 @@ interface TpCdrInterface extends EntityInterface
     public function getSubject();
 
     /**
-     * Set destination
-     *
-     * @param string $destination
-     *
-     * @return self
-     */
-    public function setDestination($destination);
-
-    /**
      * Get destination
      *
      * @return string
      */
     public function getDestination();
-
-    /**
-     * Set setupTime
-     *
-     * @param \DateTime $setupTime
-     *
-     * @return self
-     */
-    public function setSetupTime($setupTime);
 
     /**
      * Get setupTime
@@ -217,29 +120,11 @@ interface TpCdrInterface extends EntityInterface
     public function getSetupTime();
 
     /**
-     * Set answerTime
-     *
-     * @param \DateTime $answerTime
-     *
-     * @return self
-     */
-    public function setAnswerTime($answerTime);
-
-    /**
      * Get answerTime
      *
      * @return \DateTime
      */
     public function getAnswerTime();
-
-    /**
-     * Set usage
-     *
-     * @param integer $usage
-     *
-     * @return self
-     */
-    public function setUsage($usage);
 
     /**
      * Get usage
@@ -249,29 +134,11 @@ interface TpCdrInterface extends EntityInterface
     public function getUsage();
 
     /**
-     * Set extraFields
-     *
-     * @param string $extraFields
-     *
-     * @return self
-     */
-    public function setExtraFields($extraFields);
-
-    /**
      * Get extraFields
      *
      * @return string
      */
     public function getExtraFields();
-
-    /**
-     * Set costSource
-     *
-     * @param string $costSource
-     *
-     * @return self
-     */
-    public function setCostSource($costSource);
 
     /**
      * Get costSource
@@ -281,29 +148,11 @@ interface TpCdrInterface extends EntityInterface
     public function getCostSource();
 
     /**
-     * Set cost
-     *
-     * @param string $cost
-     *
-     * @return self
-     */
-    public function setCost($cost);
-
-    /**
      * Get cost
      *
-     * @return string
+     * @return float
      */
     public function getCost();
-
-    /**
-     * Set costDetails
-     *
-     * @param array $costDetails
-     *
-     * @return self
-     */
-    public function setCostDetails($costDetails);
 
     /**
      * Get costDetails
@@ -313,15 +162,6 @@ interface TpCdrInterface extends EntityInterface
     public function getCostDetails();
 
     /**
-     * Set extraInfo
-     *
-     * @param string $extraInfo
-     *
-     * @return self
-     */
-    public function setExtraInfo($extraInfo);
-
-    /**
      * Get extraInfo
      *
      * @return string
@@ -329,52 +169,23 @@ interface TpCdrInterface extends EntityInterface
     public function getExtraInfo();
 
     /**
-     * Set createdAt
-     *
-     * @param \DateTime $createdAt
-     *
-     * @return self
-     */
-    public function setCreatedAt($createdAt = null);
-
-    /**
      * Get createdAt
      *
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedAt();
 
     /**
-     * Set updatedAt
-     *
-     * @param \DateTime $updatedAt
-     *
-     * @return self
-     */
-    public function setUpdatedAt($updatedAt = null);
-
-    /**
      * Get updatedAt
      *
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getUpdatedAt();
 
     /**
-     * Set deletedAt
-     *
-     * @param \DateTime $deletedAt
-     *
-     * @return self
-     */
-    public function setDeletedAt($deletedAt = null);
-
-    /**
      * Get deletedAt
      *
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getDeletedAt();
-
 }
-

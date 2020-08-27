@@ -5,6 +5,7 @@ namespace spec\Ivoz\Provider\Domain\Model\IvrEntry;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
 use Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface;
 use Ivoz\Provider\Domain\Model\Extension\ExtensionInterface;
+use Ivoz\Provider\Domain\Model\Ivr\IvrInterface;
 use Ivoz\Provider\Domain\Model\IvrEntry\IvrEntry;
 use Ivoz\Provider\Domain\Model\IvrEntry\IvrEntryDto;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
@@ -22,7 +23,7 @@ class IvrEntrySpec extends ObjectBehavior
     protected $dto;
 
     function let(
-        CompanyInterface $company
+        IvrInterface $ivr
     ) {
         $this->dto = $dto = new IvrEntryDto();
         $dto
@@ -30,9 +31,16 @@ class IvrEntrySpec extends ObjectBehavior
             ->setRouteType('number')
             ->setNumberValue('946002020');
 
+        $this->hydrate(
+            $dto,
+            [
+                'ivr' => $ivr->getWrappedObject(),
+            ]
+        );
+
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 
@@ -45,7 +53,6 @@ class IvrEntrySpec extends ObjectBehavior
         ExtensionInterface $extension,
         UserInterface $voiceMailUser,
         ConditionalRouteInterface $conditionalRoute
-
     ) {
         $dto = clone $this->dto;
         $dto
@@ -61,7 +68,10 @@ class IvrEntrySpec extends ObjectBehavior
             ]
         );
 
-        $this->updateFromDto($dto);
+        $this->updateFromDto(
+            $dto,
+            new \spec\DtoToEntityFakeTransformer()
+        );
 
         $this
             ->getExtension()

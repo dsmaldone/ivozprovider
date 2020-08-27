@@ -4,10 +4,6 @@ Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateAbstract:
     tpDestinationRate_tpid:
       columns:
         - tpid
-    tpDestinationRate_tpid_drid:
-      columns:
-        - tpid
-        - tag
   uniqueConstraints:
     tpid_drid_dstid:
       unique: true
@@ -15,18 +11,6 @@ Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateAbstract:
         - tpid
         - tag
         - destinations_tag
-    destinationRate_prefix:
-      unique: true
-      columns:
-        - destinationRateId
-        - prefix
-  embedded:
-    destination:
-      class: Destination
-      columnPrefix: false
-    rate:
-      class: Rate
-      columnPrefix: false
   fields:
     tpid:
       type: string
@@ -62,6 +46,7 @@ Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateAbstract:
       options:
         fixed: false
         default: "*up"
+        comment: '[enum:*up|*upmincost]'
       column: rounding_method
     roundingDecimals:
       type: integer
@@ -77,7 +62,7 @@ Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateAbstract:
       scale: 4
       column: max_cost
       options:
-        default: '0.000'
+        default: 0.0
     maxCostStrategy:
       type: string
       nullable: false
@@ -92,14 +77,13 @@ Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateAbstract:
       options:
         default: CURRENT_TIMESTAMP
       column: created_at
-  manyToOne:
+  oneToOne:
     destinationRate:
-      targetEntity: \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface
-      mappedBy: null
-      inversedBy: tpDestinationRates
-      joinColumns:
-        destinationRateId:
-          nullable: false
-          referencedColumnName: id
-          onDelete: cascade
-      orphanRemoval: false
+      targetEntity: \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateInterface
+      inversedBy: tpDestinationRate
+      fetch: LAZY
+      joinColumn:
+        name: destinationRateId
+        referencedColumnName: id
+        nullable: false
+        onDelete: cascade

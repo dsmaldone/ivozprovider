@@ -63,7 +63,7 @@ class CompanySpec extends ObjectBehavior
 
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 
@@ -90,16 +90,19 @@ class CompanySpec extends ObjectBehavior
             ->during('setOnDemandRecordCode', ['123']);
     }
 
-    function it_turns_empty_ipFilter_into_zero()
+    function it_turns_empty_ipFilter_into_false()
     {
         $dto = clone $this->dto;
         $dto->setIpFilter(null);
 
-        $this->updateFromDto($dto);
+        $this->updateFromDto(
+            $dto,
+            new \spec\DtoToEntityFakeTransformer()
+        );
 
         $this
             ->getIpFilter()
-            ->shouldBe(0);
+            ->shouldBe(false);
     }
 
     function it_turns_empty_onDemandRecord_into_zero()
@@ -107,7 +110,11 @@ class CompanySpec extends ObjectBehavior
         $dto = clone $this->dto;
         $dto->setOnDemandRecord(null);
 
-        $this->updateFromDto($dto);
+
+        $this->updateFromDto(
+            $dto,
+            new \spec\DtoToEntityFakeTransformer()
+        );
 
         $this
             ->getOnDemandRecord()
@@ -119,7 +126,11 @@ class CompanySpec extends ObjectBehavior
         $dto = clone $this->dto;
         $dto->setOnDemandRecordCode(null);
 
-        $this->updateFromDto($dto);
+
+        $this->updateFromDto(
+            $dto,
+            new \spec\DtoToEntityFakeTransformer()
+        );
 
         $this
             ->getOnDemandRecordCode()
@@ -133,7 +144,11 @@ class CompanySpec extends ObjectBehavior
             $dto,
             ['language' => null]
         );
-        $this->updateFromDto($dto);
+
+        $this->updateFromDto(
+            $dto,
+            new \spec\DtoToEntityFakeTransformer()
+        );
 
         $this
             ->getDefaultTimezone()
@@ -147,7 +162,11 @@ class CompanySpec extends ObjectBehavior
             $dto,
             ['language' => null]
         );
-        $this->updateFromDto($dto);
+
+        $this->updateFromDto(
+            $dto,
+            new \spec\DtoToEntityFakeTransformer()
+        );
 
         $this
             ->getLanguage()

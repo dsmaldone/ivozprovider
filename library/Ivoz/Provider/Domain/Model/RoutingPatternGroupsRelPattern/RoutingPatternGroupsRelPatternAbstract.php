@@ -14,12 +14,12 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class RoutingPatternGroupsRelPatternAbstract
 {
     /**
-     * @var \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface
+     * @var \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface | null
      */
     protected $routingPattern;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface
+     * @var \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface | null
      */
     protected $routingPatternGroup;
 
@@ -31,14 +31,14 @@ abstract class RoutingPatternGroupsRelPatternAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "RoutingPatternGroupsRelPattern",
             $this->getId()
         );
@@ -62,7 +62,8 @@ abstract class RoutingPatternGroupsRelPatternAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param RoutingPatternGroupsRelPatternInterface|null $entity
      * @param int $depth
      * @return RoutingPatternGroupsRelPatternDto|null
      */
@@ -82,56 +83,58 @@ abstract class RoutingPatternGroupsRelPatternAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var RoutingPatternGroupsRelPatternDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param RoutingPatternGroupsRelPatternDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto RoutingPatternGroupsRelPatternDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, RoutingPatternGroupsRelPatternDto::class);
 
         $self = new static();
 
         $self
-            ->setRoutingPattern($dto->getRoutingPattern())
-            ->setRoutingPatternGroup($dto->getRoutingPatternGroup())
+            ->setRoutingPattern($fkTransformer->transform($dto->getRoutingPattern()))
+            ->setRoutingPatternGroup($fkTransformer->transform($dto->getRoutingPatternGroup()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param RoutingPatternGroupsRelPatternDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto RoutingPatternGroupsRelPatternDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, RoutingPatternGroupsRelPatternDto::class);
 
         $this
-            ->setRoutingPattern($dto->getRoutingPattern())
-            ->setRoutingPatternGroup($dto->getRoutingPatternGroup());
+            ->setRoutingPattern($fkTransformer->transform($dto->getRoutingPattern()))
+            ->setRoutingPatternGroup($fkTransformer->transform($dto->getRoutingPatternGroup()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return RoutingPatternGroupsRelPatternDto
      */
@@ -152,16 +155,14 @@ abstract class RoutingPatternGroupsRelPatternAbstract
             'routingPatternGroupId' => self::getRoutingPatternGroup() ? self::getRoutingPatternGroup()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set routingPattern
      *
-     * @param \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern
+     * @param \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern | null
      *
-     * @return self
+     * @return static
      */
     public function setRoutingPattern(\Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern = null)
     {
@@ -173,7 +174,7 @@ abstract class RoutingPatternGroupsRelPatternAbstract
     /**
      * Get routingPattern
      *
-     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface
+     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface | null
      */
     public function getRoutingPattern()
     {
@@ -183,9 +184,9 @@ abstract class RoutingPatternGroupsRelPatternAbstract
     /**
      * Set routingPatternGroup
      *
-     * @param \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface $routingPatternGroup
+     * @param \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface $routingPatternGroup | null
      *
-     * @return self
+     * @return static
      */
     public function setRoutingPatternGroup(\Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface $routingPatternGroup = null)
     {
@@ -197,15 +198,12 @@ abstract class RoutingPatternGroupsRelPatternAbstract
     /**
      * Get routingPatternGroup
      *
-     * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface
+     * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface | null
      */
     public function getRoutingPatternGroup()
     {
         return $this->routingPatternGroup;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

@@ -45,7 +45,8 @@ abstract class TerminalManufacturerAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TerminalManufacturer",
             $this->getId()
         );
@@ -69,7 +70,8 @@ abstract class TerminalManufacturerAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TerminalManufacturerInterface|null $entity
      * @param int $depth
      * @return TerminalManufacturerDto|null
      */
@@ -89,43 +91,44 @@ abstract class TerminalManufacturerAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TerminalManufacturerDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TerminalManufacturerDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TerminalManufacturerDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TerminalManufacturerDto::class);
 
         $self = new static(
             $dto->getIden(),
             $dto->getName(),
-            $dto->getDescription());
+            $dto->getDescription()
+        );
 
-        $self;
-
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TerminalManufacturerDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TerminalManufacturerDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TerminalManufacturerDto::class);
 
         $this
@@ -135,11 +138,11 @@ abstract class TerminalManufacturerAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TerminalManufacturerDto
      */
@@ -162,8 +165,6 @@ abstract class TerminalManufacturerAbstract
             'description' => self::getDescription()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -171,9 +172,9 @@ abstract class TerminalManufacturerAbstract
      *
      * @param string $iden
      *
-     * @return self
+     * @return static
      */
-    public function setIden($iden)
+    protected function setIden($iden)
     {
         Assertion::notNull($iden, 'iden value "%s" is null, but non null value was expected.');
         Assertion::maxLength($iden, 100, 'iden value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -198,9 +199,9 @@ abstract class TerminalManufacturerAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 100, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -225,9 +226,9 @@ abstract class TerminalManufacturerAbstract
      *
      * @param string $description
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description)
+    protected function setDescription($description)
     {
         Assertion::notNull($description, 'description value "%s" is null, but non null value was expected.');
         Assertion::maxLength($description, 500, 'description value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -247,8 +248,5 @@ abstract class TerminalManufacturerAbstract
         return $this->description;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

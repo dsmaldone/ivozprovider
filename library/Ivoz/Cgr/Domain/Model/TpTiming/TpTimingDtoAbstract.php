@@ -3,8 +3,6 @@
 namespace Ivoz\Cgr\Domain\Model\TpTiming;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -48,7 +46,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     private $time = '00:00:00';
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $createdAt = 'CURRENT_TIMESTAMP';
 
@@ -56,6 +54,11 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
      * @var integer
      */
     private $id;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto | null
+     */
+    private $ratingPlan;
 
 
     use DtoNormalizer;
@@ -68,7 +71,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -83,7 +86,8 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
             'weekDays' => 'weekDays',
             'time' => 'time',
             'createdAt' => 'createdAt',
-            'id' => 'id'
+            'id' => 'id',
+            'ratingPlanId' => 'ratingPlan'
         ];
     }
 
@@ -92,7 +96,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'tpid' => $this->getTpid(),
             'tag' => $this->getTag(),
             'years' => $this->getYears(),
@@ -101,24 +105,22 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
             'weekDays' => $this->getWeekDays(),
             'time' => $this->getTime(),
             'createdAt' => $this->getCreatedAt(),
-            'id' => $this->getId()
+            'id' => $this->getId(),
+            'ratingPlan' => $this->getRatingPlan()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -134,7 +136,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTpid()
     {
@@ -154,7 +156,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -174,7 +176,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getYears()
     {
@@ -194,7 +196,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getMonths()
     {
@@ -214,7 +216,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getMonthDays()
     {
@@ -234,7 +236,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getWeekDays()
     {
@@ -254,7 +256,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTime()
     {
@@ -274,7 +276,7 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedAt()
     {
@@ -294,12 +296,56 @@ abstract class TpTimingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto $ratingPlan
+     *
+     * @return static
+     */
+    public function setRatingPlan(\Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto $ratingPlan = null)
+    {
+        $this->ratingPlan = $ratingPlan;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto | null
+     */
+    public function getRatingPlan()
+    {
+        return $this->ratingPlan;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setRatingPlanId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto($id)
+            : null;
+
+        return $this->setRatingPlan($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getRatingPlanId()
+    {
+        if ($dto = $this->getRatingPlan()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
 }
-
-

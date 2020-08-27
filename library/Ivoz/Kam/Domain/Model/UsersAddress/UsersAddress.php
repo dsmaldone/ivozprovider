@@ -12,15 +12,6 @@ class UsersAddress extends UsersAddressAbstract implements UsersAddressInterface
     use UsersAddressTrait;
 
     /**
-     * @codeCoverageIgnore
-     * @return array
-     */
-    public function getChangeSet()
-    {
-        return parent::getChangeSet();
-    }
-
-    /**
      * Get id
      * @codeCoverageIgnore
      * @return integer
@@ -61,4 +52,3 @@ class UsersAddress extends UsersAddressAbstract implements UsersAddressInterface
         return parent::setMask($mask);
     }
 }
-

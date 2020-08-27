@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\Dispatcher;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -15,7 +13,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $setid = '0';
+    private $setid = 0;
 
     /**
      * @var string
@@ -25,12 +23,12 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $flags = '0';
+    private $flags = 0;
 
     /**
      * @var integer
      */
-    private $priority = '0';
+    private $priority = 0;
 
     /**
      * @var string
@@ -63,7 +61,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -86,7 +84,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'setid' => $this->getSetid(),
             'destination' => $this->getDestination(),
             'flags' => $this->getFlags(),
@@ -96,22 +94,19 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
             'id' => $this->getId(),
             'applicationServer' => $this->getApplicationServer()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->applicationServer = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\ApplicationServer\\ApplicationServer', $this->getApplicationServerId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -127,7 +122,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getSetid()
     {
@@ -147,7 +142,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDestination()
     {
@@ -167,7 +162,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getFlags()
     {
@@ -187,7 +182,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPriority()
     {
@@ -207,7 +202,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getAttrs()
     {
@@ -227,7 +222,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -247,7 +242,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -267,7 +262,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerDto
+     * @return \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerDto | null
      */
     public function getApplicationServer()
     {
@@ -275,7 +270,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -289,7 +284,7 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getApplicationServerId()
     {
@@ -300,5 +295,3 @@ abstract class DispatcherDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

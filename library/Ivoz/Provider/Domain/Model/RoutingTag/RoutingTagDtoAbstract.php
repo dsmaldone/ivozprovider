@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\RoutingTag;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -53,7 +51,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -72,7 +70,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'tag' => $this->getTag(),
             'id' => $this->getId(),
@@ -80,51 +78,19 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
             'outgoingRoutings' => $this->getOutgoingRoutings(),
             'relCompanies' => $this->getRelCompanies()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        if (!is_null($this->outgoingRoutings)) {
-            $items = $this->getOutgoingRoutings();
-            $this->outgoingRoutings = [];
-            foreach ($items as $item) {
-                $this->outgoingRoutings[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\OutgoingRouting\\OutgoingRouting',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-        if (!is_null($this->relCompanies)) {
-            $items = $this->getRelCompanies();
-            $this->relCompanies = [];
-            foreach ($items as $item) {
-                $this->relCompanies[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\CompanyRelRoutingTag\\CompanyRelRoutingTag',
-                    $item->getId() ?? $item
-                );
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
             }
+            $response[$sensitiveField] = '*****';
         }
 
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->outgoingRoutings = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\OutgoingRouting\\OutgoingRouting',
-            $this->outgoingRoutings
-        );
-        $this->relCompanies = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\CompanyRelRoutingTag\\CompanyRelRoutingTag',
-            $this->relCompanies
-        );
+        return $response;
     }
 
     /**
@@ -140,7 +106,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -160,7 +126,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -180,7 +146,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -200,7 +166,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -208,7 +174,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -222,7 +188,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -246,7 +212,7 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getOutgoingRoutings()
     {
@@ -266,12 +232,10 @@ abstract class RoutingTagDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getRelCompanies()
     {
         return $this->relCompanies;
     }
 }
-
-

@@ -19,7 +19,7 @@ abstract class TpDestinationAbstract
     protected $tpid = 'ivozprovider';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $tag;
 
@@ -29,20 +29,15 @@ abstract class TpDestinationAbstract
     protected $prefix;
 
     /**
-     * @var string
-     */
-    protected $name;
-
-    /**
      * column: created_at
      * @var \DateTime
      */
     protected $createdAt;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface
+     * @var \Ivoz\Provider\Domain\Model\Destination\DestinationInterface
      */
-    protected $tpDestinationRate;
+    protected $destination;
 
 
     use ChangelogTrait;
@@ -61,7 +56,8 @@ abstract class TpDestinationAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TpDestination",
             $this->getId()
         );
@@ -85,7 +81,8 @@ abstract class TpDestinationAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TpDestinationInterface|null $entity
      * @param int $depth
      * @return TpDestinationDto|null
      */
@@ -105,64 +102,65 @@ abstract class TpDestinationAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TpDestinationDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpDestinationDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpDestinationDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpDestinationDto::class);
 
         $self = new static(
             $dto->getTpid(),
             $dto->getPrefix(),
-            $dto->getCreatedAt());
+            $dto->getCreatedAt()
+        );
 
         $self
             ->setTag($dto->getTag())
-            ->setName($dto->getName())
-            ->setTpDestinationRate($dto->getTpDestinationRate())
+            ->setDestination($fkTransformer->transform($dto->getDestination()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpDestinationDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpDestinationDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpDestinationDto::class);
 
         $this
             ->setTpid($dto->getTpid())
             ->setTag($dto->getTag())
             ->setPrefix($dto->getPrefix())
-            ->setName($dto->getName())
             ->setCreatedAt($dto->getCreatedAt())
-            ->setTpDestinationRate($dto->getTpDestinationRate());
+            ->setDestination($fkTransformer->transform($dto->getDestination()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TpDestinationDto
      */
@@ -172,9 +170,8 @@ abstract class TpDestinationAbstract
             ->setTpid(self::getTpid())
             ->setTag(self::getTag())
             ->setPrefix(self::getPrefix())
-            ->setName(self::getName())
             ->setCreatedAt(self::getCreatedAt())
-            ->setTpDestinationRate(\Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRate::entityToDto(self::getTpDestinationRate(), $depth));
+            ->setDestination(\Ivoz\Provider\Domain\Model\Destination\Destination::entityToDto(self::getDestination(), $depth));
     }
 
     /**
@@ -186,13 +183,10 @@ abstract class TpDestinationAbstract
             'tpid' => self::getTpid(),
             'tag' => self::getTag(),
             'prefix' => self::getPrefix(),
-            'name' => self::getName(),
             'created_at' => self::getCreatedAt(),
-            'tpDestinationRateId' => self::getTpDestinationRate() ? self::getTpDestinationRate()->getId() : null
+            'destinationId' => self::getDestination()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -200,9 +194,9 @@ abstract class TpDestinationAbstract
      *
      * @param string $tpid
      *
-     * @return self
+     * @return static
      */
-    public function setTpid($tpid)
+    protected function setTpid($tpid)
     {
         Assertion::notNull($tpid, 'tpid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($tpid, 64, 'tpid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -225,11 +219,11 @@ abstract class TpDestinationAbstract
     /**
      * Set tag
      *
-     * @param string $tag
+     * @param string $tag | null
      *
-     * @return self
+     * @return static
      */
-    public function setTag($tag = null)
+    protected function setTag($tag = null)
     {
         if (!is_null($tag)) {
             Assertion::maxLength($tag, 64, 'tag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -243,7 +237,7 @@ abstract class TpDestinationAbstract
     /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -255,9 +249,9 @@ abstract class TpDestinationAbstract
      *
      * @param string $prefix
      *
-     * @return self
+     * @return static
      */
-    public function setPrefix($prefix)
+    protected function setPrefix($prefix)
     {
         Assertion::notNull($prefix, 'prefix value "%s" is null, but non null value was expected.');
         Assertion::maxLength($prefix, 24, 'prefix value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -278,47 +272,23 @@ abstract class TpDestinationAbstract
     }
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name = null)
-    {
-        if (!is_null($name)) {
-            Assertion::maxLength($name, 64, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        }
-
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * Get name
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
      * Set createdAt
      *
      * @param \DateTime $createdAt
      *
-     * @return self
+     * @return static
      */
-    public function setCreatedAt($createdAt)
+    protected function setCreatedAt($createdAt)
     {
         Assertion::notNull($createdAt, 'createdAt value "%s" is null, but non null value was expected.');
         $createdAt = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $createdAt,
             'CURRENT_TIMESTAMP'
         );
+
+        if ($this->createdAt == $createdAt) {
+            return $this;
+        }
 
         $this->createdAt = $createdAt;
 
@@ -332,35 +302,32 @@ abstract class TpDestinationAbstract
      */
     public function getCreatedAt()
     {
-        return $this->createdAt;
+        return clone $this->createdAt;
     }
 
     /**
-     * Set tpDestinationRate
+     * Set destination
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface $tpDestinationRate
+     * @param \Ivoz\Provider\Domain\Model\Destination\DestinationInterface $destination
      *
-     * @return self
+     * @return static
      */
-    public function setTpDestinationRate(\Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface $tpDestinationRate)
+    public function setDestination(\Ivoz\Provider\Domain\Model\Destination\DestinationInterface $destination)
     {
-        $this->tpDestinationRate = $tpDestinationRate;
+        $this->destination = $destination;
 
         return $this;
     }
 
     /**
-     * Get tpDestinationRate
+     * Get destination
      *
-     * @return \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface
+     * @return \Ivoz\Provider\Domain\Model\Destination\DestinationInterface
      */
-    public function getTpDestinationRate()
+    public function getDestination()
     {
-        return $this->tpDestinationRate;
+        return $this->destination;
     }
-
-
 
     // @codeCoverageIgnoreEnd
 }
-

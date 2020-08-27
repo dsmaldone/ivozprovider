@@ -1,4 +1,5 @@
 <?php
+
 namespace Ivoz\Kam\Domain\Model\TrunksLcrRuleTarget;
 
 /**
@@ -27,4 +28,3 @@ class TrunksLcrRuleTarget extends TrunksLcrRuleTargetAbstract implements TrunksL
         return $this->id;
     }
 }
-

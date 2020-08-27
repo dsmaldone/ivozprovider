@@ -3,10 +3,22 @@
 namespace Ivoz\Provider\Domain\Model\HuntGroup;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface HuntGroupInterface extends LoggableEntityInterface
 {
+    const STRATEGY_RINGALL = 'ringAll';
+    const STRATEGY_LINEAR = 'linear';
+    const STRATEGY_ROUNDROBIN = 'roundRobin';
+    const STRATEGY_RANDOM = 'random';
+
+
+    const NOANSWERTARGETTYPE_NUMBER = 'number';
+    const NOANSWERTARGETTYPE_EXTENSION = 'extension';
+    const NOANSWERTARGETTYPE_VOICEMAIL = 'voicemail';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -14,17 +26,8 @@ interface HuntGroupInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set ringAllTimeout
-     *
-     * @param integer $ringAllTimeout
-     *
-     * @return self
-     */
-    public function setRingAllTimeout($ringAllTimeout);
-
-    /**
      * Get this Hungroup related users
-     * @return UserInterface[]
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface[]
      */
     public function getHuntGroupUsersArray();
 
@@ -41,15 +44,6 @@ interface HuntGroupInterface extends LoggableEntityInterface
     public function getNoAnswerNumberValueE164();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
-
-    /**
      * Get name
      *
      * @return string
@@ -57,29 +51,11 @@ interface HuntGroupInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description);
-
-    /**
      * Get description
      *
      * @return string
      */
     public function getDescription();
-
-    /**
-     * Set strategy
-     *
-     * @param string $strategy
-     *
-     * @return self
-     */
-    public function setStrategy($strategy);
 
     /**
      * Get strategy
@@ -91,50 +67,23 @@ interface HuntGroupInterface extends LoggableEntityInterface
     /**
      * Get ringAllTimeout
      *
-     * @return integer
+     * @return integer | null
      */
     public function getRingAllTimeout();
 
     /**
-     * Set noAnswerTargetType
-     *
-     * @param string $noAnswerTargetType
-     *
-     * @return self
-     */
-    public function setNoAnswerTargetType($noAnswerTargetType = null);
-
-    /**
      * Get noAnswerTargetType
      *
-     * @return string
+     * @return string | null
      */
     public function getNoAnswerTargetType();
 
     /**
-     * Set noAnswerNumberValue
-     *
-     * @param string $noAnswerNumberValue
-     *
-     * @return self
-     */
-    public function setNoAnswerNumberValue($noAnswerNumberValue = null);
-
-    /**
      * Get noAnswerNumberValue
      *
-     * @return string
+     * @return string | null
      */
     public function getNoAnswerNumberValue();
-
-    /**
-     * Set preventMissedCalls
-     *
-     * @param integer $preventMissedCalls
-     *
-     * @return self
-     */
-    public function setPreventMissedCalls($preventMissedCalls);
 
     /**
      * Get preventMissedCalls
@@ -144,13 +93,11 @@ interface HuntGroupInterface extends LoggableEntityInterface
     public function getPreventMissedCalls();
 
     /**
-     * Set company
+     * Get allowCallForwards
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
+     * @return integer
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
+    public function getAllowCallForwards();
 
     /**
      * Get company
@@ -160,66 +107,30 @@ interface HuntGroupInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set noAnswerLocution
-     *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $noAnswerLocution
-     *
-     * @return self
-     */
-    public function setNoAnswerLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $noAnswerLocution = null);
-
-    /**
      * Get noAnswerLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getNoAnswerLocution();
 
     /**
-     * Set noAnswerExtension
-     *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $noAnswerExtension
-     *
-     * @return self
-     */
-    public function setNoAnswerExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $noAnswerExtension = null);
-
-    /**
      * Get noAnswerExtension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getNoAnswerExtension();
 
     /**
-     * Set noAnswerVoiceMailUser
-     *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $noAnswerVoiceMailUser
-     *
-     * @return self
-     */
-    public function setNoAnswerVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $noAnswerVoiceMailUser = null);
-
-    /**
      * Get noAnswerVoiceMailUser
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getNoAnswerVoiceMailUser();
 
     /**
-     * Set noAnswerNumberCountry
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $noAnswerNumberCountry
-     *
-     * @return self
-     */
-    public function setNoAnswerNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $noAnswerNumberCountry = null);
-
-    /**
      * Get noAnswerNumberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getNoAnswerNumberCountry();
 
@@ -228,7 +139,7 @@ interface HuntGroupInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface $huntGroupsRelUser
      *
-     * @return HuntGroupTrait
+     * @return static
      */
     public function addHuntGroupsRelUser(\Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface $huntGroupsRelUser);
 
@@ -242,14 +153,14 @@ interface HuntGroupInterface extends LoggableEntityInterface
     /**
      * Replace huntGroupsRelUsers
      *
-     * @param \Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface[] $huntGroupsRelUsers
-     * @return self
+     * @param ArrayCollection $huntGroupsRelUsers of Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface
+     * @return static
      */
-    public function replaceHuntGroupsRelUsers(Collection $huntGroupsRelUsers);
+    public function replaceHuntGroupsRelUsers(ArrayCollection $huntGroupsRelUsers);
 
     /**
      * Get huntGroupsRelUsers
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface[]
      */
     public function getHuntGroupsRelUsers(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -259,6 +170,4 @@ interface HuntGroupInterface extends LoggableEntityInterface
      * @return null|string
      */
     public function getTarget(string $prefix = '');
-
 }
-

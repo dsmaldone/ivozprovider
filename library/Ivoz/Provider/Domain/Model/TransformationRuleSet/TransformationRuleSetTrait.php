@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\TransformationRuleSet;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,7 +18,7 @@ trait TransformationRuleSetTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $rules;
 
@@ -33,20 +32,29 @@ trait TransformationRuleSetTrait
         $this->rules = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param TransformationRuleSetDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TransformationRuleSetDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getRules()) {
-            $self->replaceRules($dto->getRules());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getRules())) {
+            $self->replaceRules(
+                $fkTransformer->transformCollection(
+                    $dto->getRules()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -56,22 +64,30 @@ trait TransformationRuleSetTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param TransformationRuleSetDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TransformationRuleSetDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getRules()) {
-            $this->replaceRules($dto->getRules());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getRules())) {
+            $this->replaceRules(
+                $fkTransformer->transformCollection(
+                    $dto->getRules()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TransformationRuleSetDto
      */
@@ -91,14 +107,12 @@ trait TransformationRuleSetTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add rule
      *
      * @param \Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface $rule
      *
-     * @return TransformationRuleSetTrait
+     * @return static
      */
     public function addRule(\Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface $rule)
     {
@@ -120,10 +134,10 @@ trait TransformationRuleSetTrait
     /**
      * Replace rules
      *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface[] $rules
-     * @return self
+     * @param ArrayCollection $rules of Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface
+     * @return static
      */
-    public function replaceRules(Collection $rules)
+    public function replaceRules(ArrayCollection $rules)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -153,7 +167,7 @@ trait TransformationRuleSetTrait
 
     /**
      * Get rules
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface[]
      */
     public function getRules(Criteria $criteria = null)
@@ -164,7 +178,4 @@ trait TransformationRuleSetTrait
 
         return $this->rules->toArray();
     }
-
-
 }
-

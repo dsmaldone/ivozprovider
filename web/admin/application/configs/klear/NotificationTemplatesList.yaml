@@ -18,26 +18,28 @@ production:
       title: _("List of %s %2s", ngettext('Notification template', 'Notification templates', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/brand/notifications.html"
+        href: "/doc/en/administration_portal/brand/settings/notification_templates.html"
       forcedValues:
         <<: *forcedBrand
       fields: &notificationTemplates_fieldsLink
         options:
           title: _("Options")
           screens:
-            notificationTemplatesEdit_screen: true
+            notificationTemplatesEdit_screen: ${auth.acls.NotificationTemplates.update}
             notificationTemplatesContentsVoicemailList_screen: true
             notificationTemplatesContentsFaxList_screen: true
             notificationTemplatesContentsLowBalanceList_screen: true
+            notificationTemplatesContentsInvoiceList_screen: true
+            notificationTemplatesContentsCallCsvList_screen: true
           dialogs:
-            notificationTemplatesDel_dialog: true
+            notificationTemplatesDel_dialog: ${auth.acls.NotificationTemplates.delete}
           default: notificationTemplatesEdit_screen
       options:
         title: _("Options")
         screens:
-          notificationTemplatesNew_screen: true
+          notificationTemplatesNew_screen: ${auth.acls.NotificationTemplates.create}
         dialogs:
-          notificationTemplatesDel_dialog: true
+          notificationTemplatesDel_dialog: ${auth.acls.NotificationTemplates.delete}
 
     notificationTemplatesNew_screen: &notificationTemplatesNew_screenLink
       <<: *NotificationTemplates
@@ -95,6 +97,20 @@ production:
       <<: *notificationTemplatesContentsFaxEdit_screenLink
       filterField: notificationTemplate
 
+    # notificationTemplatesInvoiceContents screens:
+    notificationTemplatesContentsInvoiceList_screen:
+      <<: *notificationTemplatesContentsInvoiceList_screenLink
+      filterField: notificationTemplate
+      parentOptionCustomizer:
+        - IvozProvider_Klear_Options_OptionsCustomizerFilterForNotificationInvoice
+        - recordCount
+    notificationTemplatesContentsInvoiceNew_screen:
+      <<: *notificationTemplatesContentsInvoiceNew_screenLink
+      filterField: notificationTemplate
+    notificationTemplatesContentsInvoiceEdit_screen:
+      <<: *notificationTemplatesContentsInvoiceEdit_screenLink
+      filterField: notificationTemplate
+
     # notificationTemplatesLowBalanceContents screens:
     notificationTemplatesContentsLowBalanceList_screen:
       <<: *notificationTemplatesContentsLowBalanceList_screenLink
@@ -107,6 +123,20 @@ production:
       filterField: notificationTemplate
     notificationTemplatesContentsLowBalanceEdit_screen:
       <<: *notificationTemplatesContentsLowBalanceEdit_screenLink
+      filterField: notificationTemplate
+
+    # notificationTemplatesCallCsvContents screens:
+    notificationTemplatesContentsCallCsvList_screen:
+      <<: *notificationTemplatesContentsCallCsvList_screenLink
+      filterField: notificationTemplate
+      parentOptionCustomizer:
+        - IvozProvider_Klear_Options_OptionsCustomizerFilterForNotificationCallCsv
+        - recordCount
+    notificationTemplatesContentsCallCsvNew_screen:
+      <<: *notificationTemplatesContentsCallCsvNew_screenLink
+      filterField: notificationTemplate
+    notificationTemplatesContentsCallCsvEdit_screen:
+      <<: *notificationTemplatesContentsCallCsvEdit_screenLink
       filterField: notificationTemplate
 
   dialogs: &notificationTemplates_dialogsLink

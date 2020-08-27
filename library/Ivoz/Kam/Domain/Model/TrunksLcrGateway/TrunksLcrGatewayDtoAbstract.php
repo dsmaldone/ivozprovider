@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\TrunksLcrGateway;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -15,7 +13,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     /**
      * @var integer
      */
-    private $lcrId = '1';
+    private $lcrId = 1;
 
     /**
      * @var string
@@ -78,9 +76,9 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     private $id;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\PeerServer\PeerServerDto | null
+     * @var \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerDto | null
      */
-    private $peerServer;
+    private $carrierServer;
 
 
     use DtoNormalizer;
@@ -93,7 +91,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -113,7 +111,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
             'tag' => 'tag',
             'defunct' => 'defunct',
             'id' => 'id',
-            'peerServerId' => 'peerServer'
+            'carrierServerId' => 'carrierServer'
         ];
     }
 
@@ -122,7 +120,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'lcrId' => $this->getLcrId(),
             'gwName' => $this->getGwName(),
             'ip' => $this->getIp(),
@@ -136,24 +134,21 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
             'tag' => $this->getTag(),
             'defunct' => $this->getDefunct(),
             'id' => $this->getId(),
-            'peerServer' => $this->getPeerServer()
+            'carrierServer' => $this->getCarrierServer()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->peerServer = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\PeerServer\\PeerServer', $this->getPeerServerId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -169,7 +164,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getLcrId()
     {
@@ -189,7 +184,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getGwName()
     {
@@ -209,7 +204,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getIp()
     {
@@ -229,7 +224,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getHostname()
     {
@@ -249,7 +244,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPort()
     {
@@ -269,7 +264,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getParams()
     {
@@ -289,7 +284,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getUriScheme()
     {
@@ -309,7 +304,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getTransport()
     {
@@ -329,7 +324,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getStrip()
     {
@@ -349,7 +344,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPrefix()
     {
@@ -369,7 +364,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -389,7 +384,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getDefunct()
     {
@@ -409,7 +404,7 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -417,50 +412,48 @@ abstract class TrunksLcrGatewayDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @param \Ivoz\Provider\Domain\Model\PeerServer\PeerServerDto $peerServer
+     * @param \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerDto $carrierServer
      *
      * @return static
      */
-    public function setPeerServer(\Ivoz\Provider\Domain\Model\PeerServer\PeerServerDto $peerServer = null)
+    public function setCarrierServer(\Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerDto $carrierServer = null)
     {
-        $this->peerServer = $peerServer;
+        $this->carrierServer = $carrierServer;
 
         return $this;
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\PeerServer\PeerServerDto
+     * @return \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerDto | null
      */
-    public function getPeerServer()
+    public function getCarrierServer()
     {
-        return $this->peerServer;
+        return $this->carrierServer;
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
-    public function setPeerServerId($id)
+    public function setCarrierServerId($id)
     {
         $value = !is_null($id)
-            ? new \Ivoz\Provider\Domain\Model\PeerServer\PeerServerDto($id)
+            ? new \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerDto($id)
             : null;
 
-        return $this->setPeerServer($value);
+        return $this->setCarrierServer($value);
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
-    public function getPeerServerId()
+    public function getCarrierServerId()
     {
-        if ($dto = $this->getPeerServer()) {
+        if ($dto = $this->getCarrierServer()) {
             return $dto->getId();
         }
 
         return null;
     }
 }
-
-

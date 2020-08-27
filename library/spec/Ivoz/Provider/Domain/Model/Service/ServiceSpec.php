@@ -11,7 +11,8 @@ use Ivoz\Provider\Domain\Model\Service\Description;
 
 class ServiceSpec extends ObjectBehavior
 {
-    function let() {
+    function let()
+    {
 
         $dto = new ServiceDto();
         $dto->setIden('Iden')
@@ -24,7 +25,7 @@ class ServiceSpec extends ObjectBehavior
 
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 

@@ -13,15 +13,6 @@ interface LanguageInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set iden
-     *
-     * @param string $iden
-     *
-     * @return self
-     */
-    public function setIden($iden);
-
-    /**
      * Get iden
      *
      * @return string
@@ -29,20 +20,9 @@ interface LanguageInterface extends LoggableEntityInterface
     public function getIden();
 
     /**
-     * Set name
-     *
-     * @param \Ivoz\Provider\Domain\Model\Language\Name $name
-     *
-     * @return self
-     */
-    public function setName(\Ivoz\Provider\Domain\Model\Language\Name $name);
-
-    /**
      * Get name
      *
      * @return \Ivoz\Provider\Domain\Model\Language\Name
      */
     public function getName();
-
 }
-

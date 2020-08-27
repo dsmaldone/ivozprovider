@@ -1,5 +1,9 @@
 <?php
 
+use Ivoz\Provider\Domain\Model\BillableCall\BillableCallInterface;
+use \Ivoz\Provider\Domain\Model\Friend\FriendInterface;
+use \Ivoz\Provider\Domain\Model\ProxyTrunk\ProxyTrunk;
+
 class IvozProvider_Klear_Options_OptionsCustomizer implements \KlearMatrix_Model_Interfaces_ParentOptionCustomizer
 {
     /**
@@ -29,7 +33,7 @@ class IvozProvider_Klear_Options_OptionsCustomizer implements \KlearMatrix_Model
         $this->_mainRouterOriginalParams = $this->_mainRouter->getParams();
     }
 
-    public function setOption (\KlearMatrix_Model_Option_Abstract $option)
+    public function setOption(\KlearMatrix_Model_Option_Abstract $option)
     {
         $this->_option = $option;
     }
@@ -49,6 +53,9 @@ class IvozProvider_Klear_Options_OptionsCustomizer implements \KlearMatrix_Model
             case "emulateCompany_dialog":
                 $show = $this->_checkEmulation("company");
                 break;
+            case 'invoicesView_screen':
+                $show = $parentModel->getStatus() === 'created';
+                break;
             case "pricingPlansEdit_screen":
                 $show = !$this->_pricingPlanHasStarted();
                 break;
@@ -60,21 +67,20 @@ class IvozProvider_Klear_Options_OptionsCustomizer implements \KlearMatrix_Model
                 break;
             case "pricingPlansRelTargetPatternsList_screen":
                 $show = !$this->_pricingPlanHasStarted();
-//                 $show = true;
                 break;
             case "pricingPlansRelTargetPatternsListView_screen":
                 $show = $this->_pricingPlanHasStarted();
-//                 $show = false;
-                break;
-            case "kamRtpproxyList_screen":
-                $show = $this->_isTypeRtpproxy();
-                break;
-            case "kamRtpengineList_screen":
-                $show = !$this->_isTypeRtpproxy();
                 break;
             case "mediaRelaySetsEdit_screen":
             case "mediaRelaySetsDel_dialog":
                 $show = $this->_isRemovable();
+                break;
+            case "proxyTrunksEditMain_screen":
+                $show = $this->_isMainProxyTrunks();
+                break;
+            case "proxyTrunksEdit_screen":
+            case "proxyTrunksDel_dialog":
+                $show = !$this->_isMainProxyTrunks();
                 break;
             case "domainsEdit_screen":
             case "domainsDel_dialog":
@@ -98,6 +104,13 @@ class IvozProvider_Klear_Options_OptionsCustomizer implements \KlearMatrix_Model
             case "transformationRulesCalleeOutView_screen":
                 $show = !$this->_isBrandData();
                 break;
+            case "invoiceTemplatesEdit_screen":
+            case "invoiceTemplatesDel_dialog":
+                $show = $this->_isBrandData();
+                break;
+            case "invoiceTemplatesView_screen":
+                $show = !$this->_isBrandData();
+                break;
             case "matchListsEdit_screen":
             case "matchListsDel_dialog":
             case "matchListPatternsList_screen":
@@ -110,6 +123,32 @@ class IvozProvider_Klear_Options_OptionsCustomizer implements \KlearMatrix_Model
             case "genericMatchListPatternsList_screen":
             case "genericMatchListsDel_dialog":
                 $show = $this->_isBrandData();
+                break;
+            case "ratingProfilesList_screen":
+            case "addToBalance_dialog":
+            case "balanceNotificationList_screen":
+            case "balanceMovementsList_screen":
+                $show = $this->_parentModel->getCalculateCost();
+                break;
+            case "callForwardSettingsList_screen":
+                $show = $this->_parentModel->getT38Passthrough() == 'no';
+                break;
+            case "tarificateCall_dialog":
+                $direction = $this->_parentModel->getDirection();
+                $isOutboundCall = $direction === BillableCallInterface::DIRECTION_OUTBOUND;
+                $show = $isOutboundCall;
+                break;
+            case "specialNumbersEdit_screen":
+            case "specialNumbersDel_dialog":
+                $show = $this->_isBrandData();
+                break;
+            case "specialNumbersView_screen":
+                $show = !$this->_isBrandData();
+                break;
+            case "friendsPatternsList_screen":
+                $directConnectivity = $this->_parentModel->getDirectConnectivity();
+                $isNotInterPbx = $directConnectivity != FriendInterface::DIRECTCONNECTIVITY_INTERVPBX;
+                $show = $isNotInterPbx;
                 break;
             default:
                 throw new Klear_Exception_Default("Unsupported dialog " . $this->_option->getName());
@@ -126,28 +165,22 @@ class IvozProvider_Klear_Options_OptionsCustomizer implements \KlearMatrix_Model
 
             return $response;
         }
-
     }
 
-    protected function _isRemovable() {
+    protected function _isRemovable()
+    {
         $name = $this->_parentModel->getName();
-        if ($name == 'Default-rtpproxy' || $name == 'Default-rtpengine') {
-            return false;
-        }
-
-        return true;
+        return $name != 'Default';
     }
 
-    protected function _isTypeRtpproxy() {
-        $type = $this->_parentModel->getType();
-        if ($type == 'rtpproxy') {
-            return true;
-        }
-
-        return false;
+    protected function _isMainProxyTrunks()
+    {
+        $id = $this->_parentModel->getId();
+        return $id == ProxyTrunk::MAIN_ADDRESS_ID;
     }
 
-    protected function _isEditable() {
+    protected function _isEditable()
+    {
         $scope  = $this->_parentModel->getScope();
         $domain = $this->_parentModel->getDomain();
 
@@ -158,13 +191,15 @@ class IvozProvider_Klear_Options_OptionsCustomizer implements \KlearMatrix_Model
         return $isEditable;
     }
 
-    protected function _isBrandData() {
+    protected function _isBrandData()
+    {
         $brandId = $this->_parentModel->getBrandId();
 
         return $brandId != null;
     }
 
-    protected function _isCompanyData() {
+    protected function _isCompanyData()
+    {
         $companyId = $this->_parentModel->getCompanyId();
 
         return $companyId != null;

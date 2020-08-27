@@ -2,8 +2,10 @@
 
 namespace Ivoz\Provider\Domain\Model\Calendar;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
-interface CalendarRepository extends ObjectRepository, Selectable {}
+interface CalendarRepository extends ObjectRepository, Selectable
+{
 
+}

@@ -2,8 +2,6 @@
 
 namespace Ivoz\Provider\Domain\Traits;
 
-use Ivoz\Core\Domain\Model\EntityInterface;
-
 /**
  * RoutableTrait
  *
@@ -27,14 +25,16 @@ trait RoutableTrait
         'extension',
         'retail',
         'conditional',
-        'fax'
+        'fax',
+        'residential',
+        'retail'
     ];
 
     /**
      * @param string $prefix
      * @return null|string
      */
-    public function getTarget (string $prefix = "")
+    public function getTarget(string $prefix = "")
     {
         // Get Route Type
         $routeTypeGetter = 'get' . $prefix . 'RouteType';
@@ -53,7 +53,8 @@ trait RoutableTrait
                 if (!$this->{$userGetter}()) {
                     return "";
                 }
-                return sprintf("%s %s",
+                return sprintf(
+                    "%s %s",
                     $this->{$userGetter}()->getName(),
                     $this->{$userGetter}()->getLastname()
                 );
@@ -84,10 +85,25 @@ trait RoutableTrait
                 if (!$this->{$voicemailGetter}()) {
                     return "";
                 }
-                return sprintf("%s %s",
+                return sprintf(
+                    "%s %s",
                     $this->{$voicemailGetter}()->getName(),
                     $this->{$voicemailGetter}()->getLastname()
                 );
+
+            case 'residential':
+                $residentialGetter = 'get' . $prefix . 'ResidentialDevice';
+                if (!$this->{$residentialGetter}()) {
+                    return "";
+                }
+                return $this->{$residentialGetter}()->getName();
+
+            case 'retail':
+                $retailGetter = 'get' . $prefix . 'RetailAccount';
+                if (!$this->{$retailGetter}()) {
+                    return "";
+                }
+                return $this->{$retailGetter}()->getName();
 
             default:
                 // Get Generic Target Type
@@ -107,6 +123,8 @@ trait RoutableTrait
 
     /**
      * {@inheritDoc}
+     *
+     * @return void
      */
     protected function sanitizeRouteValues(string $prefix = "")
     {
@@ -123,13 +141,12 @@ trait RoutableTrait
             'queue'          => 'Queue',
             'voicemail'      => 'VoicemailUser',
             'extension'      => 'Extension',
-            'retail'         => 'RetailAccount',
+            'residential'    => 'ResidentialDevice',
             'conditional'    => 'ConditionalRoute',
             'fax'            => 'Fax'
         ];
 
         foreach ($nullableFields as $type => $fieldNames) {
-
             if ($routeType == $type) {
                 continue;
             }
@@ -150,6 +167,4 @@ trait RoutableTrait
             }
         }
     }
-
 }
-

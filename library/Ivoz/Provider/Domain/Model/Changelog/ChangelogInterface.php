@@ -2,24 +2,16 @@
 
 namespace Ivoz\Provider\Domain\Model\Changelog;
 
+use Ivoz\Core\Domain\Model\LoggerEntityInterface;
 use Ivoz\Core\Domain\Model\EntityInterface;
 
-interface ChangelogInterface extends EntityInterface
+interface ChangelogInterface extends LoggerEntityInterface, EntityInterface
 {
     /**
-     * @param EntityEventInterface $event
-     * @return Changelog
-     */
-    public static function fromEvent(\Ivoz\Core\Domain\Event\EntityEventInterface $event);
-
-    /**
-     * Set entity
-     *
-     * @param string $entity
-     *
+     * @param \Ivoz\Core\Domain\Event\EntityEventInterface $event
      * @return self
      */
-    public function setEntity($entity);
+    public static function fromEvent(\Ivoz\Core\Domain\Event\EntityEventInterface $event, \Ivoz\Provider\Domain\Model\Commandlog\CommandlogInterface $command);
 
     /**
      * Get entity
@@ -29,15 +21,6 @@ interface ChangelogInterface extends EntityInterface
     public function getEntity();
 
     /**
-     * Set entityId
-     *
-     * @param string $entityId
-     *
-     * @return self
-     */
-    public function setEntityId($entityId);
-
-    /**
      * Get entityId
      *
      * @return string
@@ -45,29 +28,11 @@ interface ChangelogInterface extends EntityInterface
     public function getEntityId();
 
     /**
-     * Set data
-     *
-     * @param array $data
-     *
-     * @return self
-     */
-    public function setData($data = null);
-
-    /**
      * Get data
      *
-     * @return array
+     * @return array | null
      */
     public function getData();
-
-    /**
-     * Set createdOn
-     *
-     * @param \DateTime $createdOn
-     *
-     * @return self
-     */
-    public function setCreatedOn($createdOn);
 
     /**
      * Get createdOn
@@ -77,15 +42,6 @@ interface ChangelogInterface extends EntityInterface
     public function getCreatedOn();
 
     /**
-     * Set microtime
-     *
-     * @param integer $microtime
-     *
-     * @return self
-     */
-    public function setMicrotime($microtime);
-
-    /**
      * Get microtime
      *
      * @return integer
@@ -93,20 +49,9 @@ interface ChangelogInterface extends EntityInterface
     public function getMicrotime();
 
     /**
-     * Set command
-     *
-     * @param \Ivoz\Provider\Domain\Model\Commandlog\CommandlogInterface $command
-     *
-     * @return self
-     */
-    public function setCommand(\Ivoz\Provider\Domain\Model\Commandlog\CommandlogInterface $command);
-
-    /**
      * Get command
      *
      * @return \Ivoz\Provider\Domain\Model\Commandlog\CommandlogInterface
      */
     public function getCommand();
-
 }
-

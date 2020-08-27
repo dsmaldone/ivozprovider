@@ -3,7 +3,8 @@
 namespace Ivoz\Provider\Domain\Model\PickUpGroup;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface PickUpGroupInterface extends LoggableEntityInterface
 {
@@ -14,29 +15,11 @@ interface PickUpGroupInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
-
-    /**
      * Get name
      *
      * @return string
      */
     public function getName();
-
-    /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -50,7 +33,7 @@ interface PickUpGroupInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\PickUpRelUser\PickUpRelUserInterface $relUser
      *
-     * @return PickUpGroupTrait
+     * @return static
      */
     public function addRelUser(\Ivoz\Provider\Domain\Model\PickUpRelUser\PickUpRelUserInterface $relUser);
 
@@ -64,17 +47,15 @@ interface PickUpGroupInterface extends LoggableEntityInterface
     /**
      * Replace relUsers
      *
-     * @param \Ivoz\Provider\Domain\Model\PickUpRelUser\PickUpRelUserInterface[] $relUsers
-     * @return self
+     * @param ArrayCollection $relUsers of Ivoz\Provider\Domain\Model\PickUpRelUser\PickUpRelUserInterface
+     * @return static
      */
-    public function replaceRelUsers(Collection $relUsers);
+    public function replaceRelUsers(ArrayCollection $relUsers);
 
     /**
      * Get relUsers
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\PickUpRelUser\PickUpRelUserInterface[]
      */
     public function getRelUsers(\Doctrine\Common\Collections\Criteria $criteria = null);
-
 }
-

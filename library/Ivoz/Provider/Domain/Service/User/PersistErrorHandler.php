@@ -2,15 +2,14 @@
 
 namespace Ivoz\Provider\Domain\Service\User;
 
+use Doctrine\DBAL\Driver\PDOException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Ivoz\Core\Domain\Service\PersistErrorHandlerInterface;
 
-/**
- * Class CryptPass
- * @package Ivoz\Provider\Domain\Service\User
- * @lifecycle pre_persist
- */
 class PersistErrorHandler implements PersistErrorHandlerInterface
 {
+    const ON_ERROR_PRIORITY = self::PRIORITY_NORMAL;
+
     /*
      * Mysql error code list:
      * https://dev.mysql.com/doc/refman/5.5/en/error-messages-server.html
@@ -18,18 +17,30 @@ class PersistErrorHandler implements PersistErrorHandlerInterface
     const MYSQL_ERROR_DUPLICATE_ENTRY = 1062;
     const UNIQUE_EMAIL_CONSTRAINT_NAME = 'duplicateEmail';
 
-    public function __construct() {}
-
-    public function handle(\Exception $e)
+    public static function getSubscribedEvents()
     {
-        $isDuplicatedEmailError =
-            $e->getCode() === self::MYSQL_ERROR_DUPLICATE_ENTRY
-            && strpos($e->getMessage(), self::UNIQUE_EMAIL_CONSTRAINT_NAME);
+        return [
+            self::EVENT_ON_ERROR => self::ON_ERROR_PRIORITY,
+        ];
+    }
 
-        if ($isDuplicatedEmailError) {
-            throw new \DomainException('Email already in use', 2201, $e);
+    public function handle(\Throwable $exception)
+    {
+        if (!$exception instanceof UniqueConstraintViolationException) {
+            return;
         }
 
-        throw $e;
+        $pdoException = $exception->getPrevious();
+        if (!$pdoException instanceof PDOException) {
+            return;
+        }
+
+        $isDuplicatedEmailError =
+            $pdoException->getErrorCode() === self::MYSQL_ERROR_DUPLICATE_ENTRY
+            && strpos($exception->getMessage(), self::UNIQUE_EMAIL_CONSTRAINT_NAME);
+
+        if ($isDuplicatedEmailError) {
+            throw new \DomainException('Email already in use', 2201, $exception);
+        }
     }
 }

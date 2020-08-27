@@ -3,8 +3,12 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\Terminal\TerminalRepository;
+use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
+use Ivoz\Provider\Domain\Model\Domain\DomainInterface;
 use Ivoz\Provider\Domain\Model\Terminal\Terminal;
+use Ivoz\Provider\Domain\Model\Terminal\TerminalInterface;
+use Ivoz\Provider\Domain\Model\Terminal\TerminalRepository;
+use Ivoz\Provider\Infrastructure\Persistence\Doctrine\Traits\CountByCriteriaTrait;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -15,9 +19,64 @@ use Symfony\Bridge\Doctrine\RegistryInterface;
  */
 class TerminalDoctrineRepository extends ServiceEntityRepository implements TerminalRepository
 {
+    use CountByCriteriaTrait;
+
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Terminal::class);
     }
 
+    /**
+     * @param string $name
+     * @param DomainInterface $domain
+     * @return TerminalInterface | null
+     */
+    public function findOneByNameAndDomain(string $name, DomainInterface $domain)
+    {
+        /** @var TerminalInterface $response */
+        $response = $this->findOneBy([
+            'name' => $name,
+            'domain' => $domain
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * @param int $companyId
+     * @return string[]
+     */
+    public function findNamesByCompanyId(int $companyId)
+    {
+        $qb = $this->createQueryBuilder('self');
+        $expression = $qb->expr();
+
+        $qb
+            ->select('self.name')
+            ->where(
+                $expression->eq('self.company', $companyId)
+            );
+
+        $result = $qb
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_column(
+            $result,
+            'name'
+        );
+    }
+
+    /**
+     * @param int[] $companyIds
+     * @return int
+     */
+    public function countRegistrableDevices(array $companyIds): int
+    {
+        $criteria = CriteriaHelper::fromArray([
+            ['company', 'in', $companyIds]
+        ]);
+
+        return $this->countByCriteria($criteria);
+    }
 }

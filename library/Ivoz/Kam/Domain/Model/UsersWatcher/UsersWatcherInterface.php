@@ -2,40 +2,16 @@
 
 namespace Ivoz\Kam\Domain\Model\UsersWatcher;
 
-use Ivoz\Core\Domain\Model\LoggableEntityInterface;
+use Ivoz\Core\Domain\Model\EntityInterface;
 
-interface UsersWatcherInterface extends LoggableEntityInterface
+interface UsersWatcherInterface extends EntityInterface
 {
-    /**
-     * @codeCoverageIgnore
-     * @return array
-     */
-    public function getChangeSet();
-
-    /**
-     * Set presentityUri
-     *
-     * @param string $presentityUri
-     *
-     * @return self
-     */
-    public function setPresentityUri($presentityUri);
-
     /**
      * Get presentityUri
      *
      * @return string
      */
     public function getPresentityUri();
-
-    /**
-     * Set watcherUsername
-     *
-     * @param string $watcherUsername
-     *
-     * @return self
-     */
-    public function setWatcherUsername($watcherUsername);
 
     /**
      * Get watcherUsername
@@ -45,29 +21,11 @@ interface UsersWatcherInterface extends LoggableEntityInterface
     public function getWatcherUsername();
 
     /**
-     * Set watcherDomain
-     *
-     * @param string $watcherDomain
-     *
-     * @return self
-     */
-    public function setWatcherDomain($watcherDomain);
-
-    /**
      * Get watcherDomain
      *
      * @return string
      */
     public function getWatcherDomain();
-
-    /**
-     * Set event
-     *
-     * @param string $event
-     *
-     * @return self
-     */
-    public function setEvent($event);
 
     /**
      * Get event
@@ -77,15 +35,6 @@ interface UsersWatcherInterface extends LoggableEntityInterface
     public function getEvent();
 
     /**
-     * Set status
-     *
-     * @param integer $status
-     *
-     * @return self
-     */
-    public function setStatus($status);
-
-    /**
      * Get status
      *
      * @return integer
@@ -93,29 +42,11 @@ interface UsersWatcherInterface extends LoggableEntityInterface
     public function getStatus();
 
     /**
-     * Set reason
-     *
-     * @param string $reason
-     *
-     * @return self
-     */
-    public function setReason($reason = null);
-
-    /**
      * Get reason
      *
-     * @return string
+     * @return string | null
      */
     public function getReason();
-
-    /**
-     * Set insertedTime
-     *
-     * @param integer $insertedTime
-     *
-     * @return self
-     */
-    public function setInsertedTime($insertedTime);
 
     /**
      * Get insertedTime
@@ -123,6 +54,4 @@ interface UsersWatcherInterface extends LoggableEntityInterface
      * @return integer
      */
     public function getInsertedTime();
-
 }
-

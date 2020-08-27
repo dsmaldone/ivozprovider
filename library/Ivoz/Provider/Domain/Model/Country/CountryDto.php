@@ -7,13 +7,15 @@ class CountryDto extends CountryDtoAbstract
 
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return [
                 'id' => 'id',
                 'code' => 'code',
+                'countryCode' => 'countryCode',
                 'name' => ['en', 'es']
             ];
         }
@@ -21,5 +23,3 @@ class CountryDto extends CountryDtoAbstract
         return parent::getPropertyMap(...func_get_args());
     }
 }
-
-

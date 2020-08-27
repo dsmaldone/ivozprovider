@@ -3,10 +3,27 @@
 namespace Ivoz\Provider\Domain\Model\Company;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface CompanyInterface extends LoggableEntityInterface
 {
+    const TYPE_VPBX = 'vpbx';
+    const TYPE_RETAIL = 'retail';
+    const TYPE_WHOLESALE = 'wholesale';
+    const TYPE_RESIDENTIAL = 'residential';
+
+
+    const DISTRIBUTEMETHOD_STATIC = 'static';
+    const DISTRIBUTEMETHOD_RR = 'rr';
+    const DISTRIBUTEMETHOD_HASH = 'hash';
+
+
+    const BILLINGMETHOD_POSTPAID = 'postpaid';
+    const BILLINGMETHOD_PREPAID = 'prepaid';
+    const BILLINGMETHOD_PSEUDOPREPAID = 'pseudoprepaid';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -25,23 +42,44 @@ interface CompanyInterface extends LoggableEntityInterface
 
     /**
      * @param string $exten
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getExtension($exten);
 
     /**
-     * @param $ddieE164
+     * @param string $ddieE164
      * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface|null
      */
     public function getDdi($ddieE164);
 
     public function getFriend($exten);
 
+    /**
+     * @param string $exten
+     * @return \Ivoz\Provider\Domain\Model\CompanyService\CompanyServiceInterface|null
+     */
     public function getService($exten);
 
+    /**
+     * @param string $name
+     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface|mixed
+     */
     public function getTerminal($name);
 
+    /**
+     * @return string
+     */
     public function getLanguageCode();
+
+    /**
+     * @return string
+     */
+    public function getCurrencySymbol();
+
+    /**
+     * @return string
+     */
+    public function getCurrencyIden();
 
     /**
      * brief: Get musicclass for given company
@@ -49,36 +87,51 @@ interface CompanyInterface extends LoggableEntityInterface
      * If no specific company music on hold is found, brand music will be used.
      * If no specific brand music  on hold is found, dafault music will be sued.
      *
+     * @return string
      */
     public function getMusicClass();
 
     /**
-     * Ensures valid domain value
-     * @param string $data
-     * @return \Ivoz\Provider\Model\Raw\Companies
-     * @throws \Exception
+     * @inheritdoc
      */
     public function setDomainUsers($domainUsers = null);
 
+    /**
+     * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[]
+     */
     public function getOutgoingRoutings();
 
     /**
      * Get the size in bytes used by the recordings on this company
+     * @return int|null
      */
     public function getRecordingsDiskUsage();
 
     /**
      * Get the size in bytes for disk usage limit on this company
+     * @return float|int
      */
     public function getRecordingsLimit();
 
+    /**
+     * Check if a Company has a given Feature by id
+     *
+     * @param int $featureId
+     * @return bool
+     */
     public function hasFeature($featureId);
+
+    public function hasFeatureByIden(string $iden);
 
     /**
      * Get On demand recording code DTMFs
+     * @return string
      */
     public function getOnDemandRecordDTMFs();
 
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Feature\FeatureInterface[]
+     */
     public function getFeatures();
 
     /**
@@ -88,18 +141,17 @@ interface CompanyInterface extends LoggableEntityInterface
     public function getServiceCode($name);
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface
+     * @return string
      */
-    public function getDefaultTimezone();
+    public function getCgrSubject();
 
-    /**
-     * Set type
-     *
-     * @param string $type
-     *
-     * @return self
-     */
-    public function setType($type);
+    public function isVpbx();
+
+    public function isRetail();
+
+    public function isResidential();
+
+    public function isWholesale();
 
     /**
      * Get type
@@ -118,18 +170,9 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Get domainUsers
      *
-     * @return string
+     * @return string | null
      */
     public function getDomainUsers();
-
-    /**
-     * Set nif
-     *
-     * @param string $nif
-     *
-     * @return self
-     */
-    public function setNif($nif);
 
     /**
      * Get nif
@@ -139,29 +182,11 @@ interface CompanyInterface extends LoggableEntityInterface
     public function getNif();
 
     /**
-     * Set distributeMethod
-     *
-     * @param string $distributeMethod
-     *
-     * @return self
-     */
-    public function setDistributeMethod($distributeMethod);
-
-    /**
      * Get distributeMethod
      *
      * @return string
      */
     public function getDistributeMethod();
-
-    /**
-     * Set maxCalls
-     *
-     * @param integer $maxCalls
-     *
-     * @return self
-     */
-    public function setMaxCalls($maxCalls);
 
     /**
      * Get maxCalls
@@ -171,13 +196,11 @@ interface CompanyInterface extends LoggableEntityInterface
     public function getMaxCalls();
 
     /**
-     * Set postalAddress
+     * Get maxDailyUsage
      *
-     * @param string $postalAddress
-     *
-     * @return self
+     * @return integer
      */
-    public function setPostalAddress($postalAddress);
+    public function getMaxDailyUsage();
 
     /**
      * Get postalAddress
@@ -187,29 +210,11 @@ interface CompanyInterface extends LoggableEntityInterface
     public function getPostalAddress();
 
     /**
-     * Set postalCode
-     *
-     * @param string $postalCode
-     *
-     * @return self
-     */
-    public function setPostalCode($postalCode);
-
-    /**
      * Get postalCode
      *
      * @return string
      */
     public function getPostalCode();
-
-    /**
-     * Set town
-     *
-     * @param string $town
-     *
-     * @return self
-     */
-    public function setTown($town);
 
     /**
      * Get town
@@ -219,29 +224,11 @@ interface CompanyInterface extends LoggableEntityInterface
     public function getTown();
 
     /**
-     * Set province
-     *
-     * @param string $province
-     *
-     * @return self
-     */
-    public function setProvince($province);
-
-    /**
      * Get province
      *
      * @return string
      */
     public function getProvince();
-
-    /**
-     * Set countryName
-     *
-     * @param string $countryName
-     *
-     * @return self
-     */
-    public function setCountryName($countryName);
 
     /**
      * Get countryName
@@ -251,100 +238,53 @@ interface CompanyInterface extends LoggableEntityInterface
     public function getCountryName();
 
     /**
-     * Set ipfilter
-     *
-     * @param boolean $ipfilter
-     *
-     * @return self
-     */
-    public function setIpfilter($ipfilter = null);
-
-    /**
      * Get ipfilter
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getIpfilter();
 
     /**
-     * Set onDemandRecord
-     *
-     * @param integer $onDemandRecord
-     *
-     * @return self
-     */
-    public function setOnDemandRecord($onDemandRecord = null);
-
-    /**
      * Get onDemandRecord
      *
-     * @return integer
+     * @return integer | null
      */
     public function getOnDemandRecord();
 
     /**
+     * Get allowRecordingRemoval
+     *
+     * @return boolean
+     */
+    public function getAllowRecordingRemoval();
+
+    /**
      * Get onDemandRecordCode
      *
-     * @return string
+     * @return string | null
      */
     public function getOnDemandRecordCode();
 
     /**
-     * Set externallyextraopts
-     *
-     * @param string $externallyextraopts
-     *
-     * @return self
-     */
-    public function setExternallyextraopts($externallyextraopts = null);
-
-    /**
      * Get externallyextraopts
      *
-     * @return string
+     * @return string | null
      */
     public function getExternallyextraopts();
 
     /**
-     * Set recordingsLimitMB
-     *
-     * @param integer $recordingsLimitMB
-     *
-     * @return self
-     */
-    public function setRecordingsLimitMB($recordingsLimitMB = null);
-
-    /**
      * Get recordingsLimitMB
      *
-     * @return integer
+     * @return integer | null
      */
     public function getRecordingsLimitMB();
 
     /**
-     * Set recordingsLimitEmail
-     *
-     * @param string $recordingsLimitEmail
-     *
-     * @return self
-     */
-    public function setRecordingsLimitEmail($recordingsLimitEmail = null);
-
-    /**
      * Get recordingsLimitEmail
      *
-     * @return string
+     * @return string | null
      */
     public function getRecordingsLimitEmail();
-
-    /**
-     * Set billingMethod
-     *
-     * @param string $billingMethod
-     *
-     * @return self
-     */
-    public function setBillingMethod($billingMethod);
 
     /**
      * Get billingMethod
@@ -354,70 +294,48 @@ interface CompanyInterface extends LoggableEntityInterface
     public function getBillingMethod();
 
     /**
-     * Set balance
-     *
-     * @param string $balance
-     *
-     * @return self
-     */
-    public function setBalance($balance = null);
-
-    /**
      * Get balance
      *
-     * @return string
+     * @return float | null
      */
     public function getBalance();
 
     /**
-     * Set language
+     * Get showInvoices
      *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
-     *
-     * @return self
+     * @return boolean | null
      */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null);
+    public function getShowInvoices();
 
     /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage();
 
     /**
-     * Set mediaRelaySets
-     *
-     * @param \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface $mediaRelaySets
-     *
-     * @return self
-     */
-    public function setMediaRelaySets(\Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface $mediaRelaySets = null);
-
-    /**
      * Get mediaRelaySets
      *
-     * @return \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface
+     * @return \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface | null
      */
     public function getMediaRelaySets();
 
     /**
-     * Set defaultTimezone
+     * Get defaultTimezone
      *
-     * @param \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface | null
      */
-    public function setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone = null);
+    public function getDefaultTimezone();
 
     /**
      * Set brand
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null);
+    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand);
 
     /**
      * Get brand
@@ -427,139 +345,88 @@ interface CompanyInterface extends LoggableEntityInterface
     public function getBrand();
 
     /**
-     * Set domain
-     *
-     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain
-     *
-     * @return self
-     */
-    public function setDomain(\Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain = null);
-
-    /**
      * Get domain
      *
-     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     public function getDomain();
 
     /**
-     * Set applicationServer
-     *
-     * @param \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface $applicationServer
-     *
-     * @return self
-     */
-    public function setApplicationServer(\Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface $applicationServer = null);
-
-    /**
      * Get applicationServer
      *
-     * @return \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface
+     * @return \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface | null
      */
     public function getApplicationServer();
 
     /**
-     * Set country
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $country
-     *
-     * @return self
-     */
-    public function setCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $country = null);
-
-    /**
      * Get country
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getCountry();
 
     /**
-     * Set transformationRuleSet
+     * Get currency
      *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface | null
      */
-    public function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null);
+    public function getCurrency();
 
     /**
      * Get transformationRuleSet
      *
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     public function getTransformationRuleSet();
 
     /**
-     * Set outgoingDdi
-     *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi
-     *
-     * @return self
-     */
-    public function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null);
-
-    /**
      * Get outgoingDdi
      *
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     public function getOutgoingDdi();
 
     /**
-     * Set outgoingDdiRule
-     *
-     * @param \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule
-     *
-     * @return self
-     */
-    public function setOutgoingDdiRule(\Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule = null);
-
-    /**
      * Get outgoingDdiRule
      *
-     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface
+     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface | null
      */
     public function getOutgoingDdiRule();
 
     /**
-     * Set voicemailNotificationTemplate
-     *
-     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $voicemailNotificationTemplate
-     *
-     * @return self
-     */
-    public function setVoicemailNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $voicemailNotificationTemplate = null);
-
-    /**
      * Get voicemailNotificationTemplate
      *
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     public function getVoicemailNotificationTemplate();
 
     /**
-     * Set faxNotificationTemplate
-     *
-     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $faxNotificationTemplate
-     *
-     * @return self
-     */
-    public function setFaxNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $faxNotificationTemplate = null);
-
-    /**
      * Get faxNotificationTemplate
      *
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     public function getFaxNotificationTemplate();
+
+    /**
+     * Get invoiceNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getInvoiceNotificationTemplate();
+
+    /**
+     * Get callCsvNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getCallCsvNotificationTemplate();
 
     /**
      * Add extension
      *
      * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension);
 
@@ -573,14 +440,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace extensions
      *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface[] $extensions
-     * @return self
+     * @param ArrayCollection $extensions of Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return static
      */
-    public function replaceExtensions(Collection $extensions);
+    public function replaceExtensions(ArrayCollection $extensions);
 
     /**
      * Get extensions
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface[]
      */
     public function getExtensions(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -590,7 +457,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi);
 
@@ -604,14 +471,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace ddis
      *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface[] $ddis
-     * @return self
+     * @param ArrayCollection $ddis of Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return static
      */
-    public function replaceDdis(Collection $ddis);
+    public function replaceDdis(ArrayCollection $ddis);
 
     /**
      * Get ddis
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface[]
      */
     public function getDdis(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -621,7 +488,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend);
 
@@ -635,14 +502,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace friends
      *
-     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface[] $friends
-     * @return self
+     * @param ArrayCollection $friends of Ivoz\Provider\Domain\Model\Friend\FriendInterface
+     * @return static
      */
-    public function replaceFriends(Collection $friends);
+    public function replaceFriends(ArrayCollection $friends);
 
     /**
      * Get friends
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface[]
      */
     public function getFriends(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -652,7 +519,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\CompanyService\CompanyServiceInterface $companyService
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addCompanyService(\Ivoz\Provider\Domain\Model\CompanyService\CompanyServiceInterface $companyService);
 
@@ -666,14 +533,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace companyServices
      *
-     * @param \Ivoz\Provider\Domain\Model\CompanyService\CompanyServiceInterface[] $companyServices
-     * @return self
+     * @param ArrayCollection $companyServices of Ivoz\Provider\Domain\Model\CompanyService\CompanyServiceInterface
+     * @return static
      */
-    public function replaceCompanyServices(Collection $companyServices);
+    public function replaceCompanyServices(ArrayCollection $companyServices);
 
     /**
      * Get companyServices
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\CompanyService\CompanyServiceInterface[]
      */
     public function getCompanyServices(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -683,7 +550,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addTerminal(\Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal);
 
@@ -697,14 +564,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace terminals
      *
-     * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface[] $terminals
-     * @return self
+     * @param ArrayCollection $terminals of Ivoz\Provider\Domain\Model\Terminal\TerminalInterface
+     * @return static
      */
-    public function replaceTerminals(Collection $terminals);
+    public function replaceTerminals(ArrayCollection $terminals);
 
     /**
      * Get terminals
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface[]
      */
     public function getTerminals(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -712,31 +579,31 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Add ratingProfile
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileInterface $ratingProfile
+     * @param \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface $ratingProfile
      *
-     * @return CompanyTrait
+     * @return static
      */
-    public function addRatingProfile(\Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileInterface $ratingProfile);
+    public function addRatingProfile(\Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface $ratingProfile);
 
     /**
      * Remove ratingProfile
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileInterface $ratingProfile
+     * @param \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface $ratingProfile
      */
-    public function removeRatingProfile(\Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileInterface $ratingProfile);
+    public function removeRatingProfile(\Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface $ratingProfile);
 
     /**
      * Replace ratingProfiles
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileInterface[] $ratingProfiles
-     * @return self
+     * @param ArrayCollection $ratingProfiles of Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface
+     * @return static
      */
-    public function replaceRatingProfiles(Collection $ratingProfiles);
+    public function replaceRatingProfiles(ArrayCollection $ratingProfiles);
 
     /**
      * Get ratingProfiles
-     *
-     * @return \Ivoz\Cgr\Domain\Model\TpRatingProfile\TpRatingProfileInterface[]
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface[]
      */
     public function getRatingProfiles(\Doctrine\Common\Collections\Criteria $criteria = null);
 
@@ -745,7 +612,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface $musicsOnHold
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addMusicsOnHold(\Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface $musicsOnHold);
 
@@ -759,14 +626,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace musicsOnHold
      *
-     * @param \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface[] $musicsOnHold
-     * @return self
+     * @param ArrayCollection $musicsOnHold of Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface
+     * @return static
      */
-    public function replaceMusicsOnHold(Collection $musicsOnHold);
+    public function replaceMusicsOnHold(ArrayCollection $musicsOnHold);
 
     /**
      * Get musicsOnHold
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface[]
      */
     public function getMusicsOnHold(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -776,7 +643,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Recording\RecordingInterface $recording
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addRecording(\Ivoz\Provider\Domain\Model\Recording\RecordingInterface $recording);
 
@@ -790,14 +657,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace recordings
      *
-     * @param \Ivoz\Provider\Domain\Model\Recording\RecordingInterface[] $recordings
-     * @return self
+     * @param ArrayCollection $recordings of Ivoz\Provider\Domain\Model\Recording\RecordingInterface
+     * @return static
      */
-    public function replaceRecordings(Collection $recordings);
+    public function replaceRecordings(ArrayCollection $recordings);
 
     /**
      * Get recordings
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Recording\RecordingInterface[]
      */
     public function getRecordings(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -807,7 +674,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\FeaturesRelCompany\FeaturesRelCompanyInterface $relFeature
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addRelFeature(\Ivoz\Provider\Domain\Model\FeaturesRelCompany\FeaturesRelCompanyInterface $relFeature);
 
@@ -821,14 +688,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace relFeatures
      *
-     * @param \Ivoz\Provider\Domain\Model\FeaturesRelCompany\FeaturesRelCompanyInterface[] $relFeatures
-     * @return self
+     * @param ArrayCollection $relFeatures of Ivoz\Provider\Domain\Model\FeaturesRelCompany\FeaturesRelCompanyInterface
+     * @return static
      */
-    public function replaceRelFeatures(Collection $relFeatures);
+    public function replaceRelFeatures(ArrayCollection $relFeatures);
 
     /**
      * Get relFeatures
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\FeaturesRelCompany\FeaturesRelCompanyInterface[]
      */
     public function getRelFeatures(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -838,7 +705,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\CompanyRelCodec\CompanyRelCodecInterface $relCodec
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addRelCodec(\Ivoz\Provider\Domain\Model\CompanyRelCodec\CompanyRelCodecInterface $relCodec);
 
@@ -852,14 +719,14 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace relCodecs
      *
-     * @param \Ivoz\Provider\Domain\Model\CompanyRelCodec\CompanyRelCodecInterface[] $relCodecs
-     * @return self
+     * @param ArrayCollection $relCodecs of Ivoz\Provider\Domain\Model\CompanyRelCodec\CompanyRelCodecInterface
+     * @return static
      */
-    public function replaceRelCodecs(Collection $relCodecs);
+    public function replaceRelCodecs(ArrayCollection $relCodecs);
 
     /**
      * Get relCodecs
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\CompanyRelCodec\CompanyRelCodecInterface[]
      */
     public function getRelCodecs(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -869,7 +736,7 @@ interface CompanyInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface $relRoutingTag
      *
-     * @return CompanyTrait
+     * @return static
      */
     public function addRelRoutingTag(\Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface $relRoutingTag);
 
@@ -883,17 +750,15 @@ interface CompanyInterface extends LoggableEntityInterface
     /**
      * Replace relRoutingTags
      *
-     * @param \Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface[] $relRoutingTags
-     * @return self
+     * @param ArrayCollection $relRoutingTags of Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface
+     * @return static
      */
-    public function replaceRelRoutingTags(Collection $relRoutingTags);
+    public function replaceRelRoutingTags(ArrayCollection $relRoutingTags);
 
     /**
      * Get relRoutingTags
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface[]
      */
     public function getRelRoutingTags(\Doctrine\Common\Collections\Criteria $criteria = null);
-
 }
-

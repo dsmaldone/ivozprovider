@@ -22,7 +22,6 @@ Depends: debconf, po-debconf,
     ivozprovider-kamailio-users (=${binary:Version}),
     ivozprovider-kamailio-trunks (=${binary:Version}),
     ivozprovider-recordings (=${binary:Version}),
-    ivozprovider-rtpproxy,
     ivozprovider-rtpengine
 Homepage: http://www.irontec.com
 Description: IVOZ Provider - Virtual standalone package
@@ -39,7 +38,7 @@ Description: IVOZ Provider - Common configuration files
  .
  This package is used to:
   - System wide configuration files
-  - Enviroment configuration requets (testing, production, ..)
+  - Environment configuration requests (testing, production, ..)
  .
 
 Package: ivozprovider-profile-as
@@ -65,14 +64,14 @@ Package: ivozprovider-profile-data
 Architecture: all
 Section: admin
 Priority: optional
-Pre-Depends: bind9
+Pre-Depends: bind9, mysql-server
 Depends: ivozprovider-profile-common (=${binary:Version}),
-    mysql-server,
-    ivozprovider-scheme (=${binary:Version}),
+    ivozprovider-schema (=${binary:Version}),
     ivozprovider-balances (=${binary:Version}),
     libstring-crc32-perl,
     libgearman-client-perl,
-    redis-server
+    redis-server,
+    redis-sentinel
 Homepage: http://www.irontec.com
 Description: IVOZ Provider - Data System Profile
  .
@@ -84,8 +83,11 @@ Priority: optional
 Depends: ivozprovider-profile-common (=${binary:Version}),
     ivozprovider-doc (=${binary:Version}),
     ivozprovider-async-workers (=${binary:Version}),
+    ivozprovider-scheduler (=${binary:Version}),
+    ivozprovider-realtime (=${binary:Version}),
     apache2,
     ssl-cert,
+    ghostscript,
     php-gearman,
     php7.0,
     php-igbinary,
@@ -95,6 +97,7 @@ Depends: ivozprovider-profile-common (=${binary:Version}),
     php7.0-curl,
     php-yaml,
     php7.0-gd,
+    php-zip,
     ivozprovider-web-admin (=${binary:Version}),
     ivozprovider-web-user (=${binary:Version}),
     gearman-job-server,
@@ -111,9 +114,10 @@ Package: ivozprovider-profile-proxy
 Architecture: all
 Section: admin
 Priority: optional
-Depends: ivozprovider-profile-common,
+Depends: ivozprovider-profile-common (=${binary:Version}),
         sngrep,
         mysql-client,
+        redis-tools,
         netcat-openbsd,
         ssl-cert,
         ivozprovider-kamailio,
@@ -124,14 +128,15 @@ Depends: ivozprovider-profile-common,
         ivozprovider-kamailio-websocket-modules,
         ivozprovider-kamailio-presence-modules,
         ivozprovider-kamailio-extra-modules,
+        ivozprovider-kamailio-utils-modules,
+        ivozprovider-kamailio-redis-modules,
         ivozprovider-kamailio-trunks (=${binary:Version}),
         ivozprovider-kamailio-users (=${binary:Version}),
-        ivozprovider-recordings,
+        ivozprovider-recordings (=${binary:Version}),
         ivozprovider-cgrates,
         ivozprovider-cgrates-tools,
         ivozprovider-cgrates-config (=${binary:Version}),
-        ivozprovider-rtpengine,
-        ivozprovider-rtpproxy
+        ivozprovider-rtpengine
 Homepage: http://www.irontec.com
 Description: IVOZ Provider - Profile files for a Proxy Systems
  .
@@ -178,11 +183,12 @@ Homepage: http://www.irontec.com
 Description: IVOZ Provider - Asterik - Gateway Interface Zend Application
  .
 
-Package: ivozprovider-scheme
+Package: ivozprovider-schema
 Architecture: all
 Section: database
 Priority: optional
 Pre-Depends: ivozprovider-common-library (=${binary:Version}), bind9, php7.0-mysql, php7.0-xml, mysql-server
+Conflicts: ivozprovider-scheme
 Homepage: http://www.irontec.com
 Description: IVOZ Provider - Database Scheme
  .
@@ -221,7 +227,7 @@ Description: IVOZ Provider - Rest API files
 Package: ivozprovider-common-library
 Architecture: all
 Section: php
-Depends: php7.0-cli, php7.0-mysql, php7.0-mbstring, php7.0-xml, acl, klear-library, php-mailparse
+Depends: php7.0-cli, php7.0-mysql, php7.0-mbstring, php7.0-xml, acl, klear-library, php-mailparse, php7.0-intl
 Provides: ivozprovider-data-library
 Conflicts: ivozprovider-data-library
 Priority: optional
@@ -247,12 +253,28 @@ Homepage: http://www.irontec.com
 Description: IVOZ Provider - Async Workers - Symfony microservice
  .
 
+Package: ivozprovider-scheduler
+Architecture: all
+Priority: optional
+Depends: ivozprovider-common-library (=${binary:Version})
+Homepage: http://www.irontec.com
+Description: IVOZ Provider - Scheduled tasks runner - Symfony microservice
+ .
+
 Package: ivozprovider-balances
 Architecture: all
 Priority: optional
 Depends: ivozprovider-common-library (=${binary:Version}), php-gearman
 Homepage: http://www.irontec.com
 Description: IVOZ Provider - Rating updater - Symfony microservice
+  .
+
+Package: ivozprovider-realtime
+Architecture: all
+Priority: optional
+Depends: ivozprovider-common-library (=${binary:Version}), php-redis, php-swoole
+Homepage: http://www.irontec.com
+Description: IVOZ Provider - Realtime Websocket server - Symfony microservice
   .
 
 Package: ivozprovider-doc

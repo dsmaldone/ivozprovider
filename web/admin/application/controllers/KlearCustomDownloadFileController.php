@@ -5,8 +5,8 @@ class KlearCustomDownloadFileController extends Zend_Controller_Action
 
     public function init()
     {
-        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter)) ) {
-            throw New Zend_Exception('',Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
+        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter))) {
+            throw new Zend_Exception('', Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
         }
 
         $this->_helper->ContextSwitch()
@@ -20,10 +20,10 @@ class KlearCustomDownloadFileController extends Zend_Controller_Action
     {
 
         $data = array(
-                'title' => _("Download file"),
-                'message'=> "<a download=\"template.txt\">" . _("Download") . "</a>",
+                'title' => $this->_helper->translate("Download file"),
+                'message'=> "<a download=\"template.txt\">" . $this->_helper->translate("Download") . "</a>",
                 'buttons'=> array(
-                        _('Cancel') => array(
+                        $this->_helper->translate('Cancel') => array(
                                 'reloadParent' => false,
                                 'recall' => false,
                         )
@@ -39,4 +39,3 @@ class KlearCustomDownloadFileController extends Zend_Controller_Action
         $jsonResponse->attachView($this->view);
     }
 }
-

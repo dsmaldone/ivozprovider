@@ -3,8 +3,6 @@
 namespace Ivoz\Cgr\Domain\Model\TpRatingPlan;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -33,12 +31,12 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     private $timingTag = '*any';
 
     /**
-     * @var string
+     * @var float
      */
     private $weight = 10;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $createdAt = 'CURRENT_TIMESTAMP';
 
@@ -48,19 +46,9 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     private $id;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\TpTiming\TpTimingDto | null
-     */
-    private $timing;
-
-    /**
-     * @var \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanDto | null
+     * @var \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto | null
      */
     private $ratingPlan;
-
-    /**
-     * @var \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto | null
-     */
-    private $destinationRate;
 
 
     use DtoNormalizer;
@@ -73,7 +61,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -87,9 +75,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
             'weight' => 'weight',
             'createdAt' => 'createdAt',
             'id' => 'id',
-            'timingId' => 'timing',
-            'ratingPlanId' => 'ratingPlan',
-            'destinationRateId' => 'destinationRate'
+            'ratingPlanId' => 'ratingPlan'
         ];
     }
 
@@ -98,7 +84,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'tpid' => $this->getTpid(),
             'tag' => $this->getTag(),
             'destratesTag' => $this->getDestratesTag(),
@@ -106,28 +92,21 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
             'weight' => $this->getWeight(),
             'createdAt' => $this->getCreatedAt(),
             'id' => $this->getId(),
-            'timing' => $this->getTiming(),
-            'ratingPlan' => $this->getRatingPlan(),
-            'destinationRate' => $this->getDestinationRate()
+            'ratingPlan' => $this->getRatingPlan()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->timing = $transformer->transform('Ivoz\\Cgr\\Domain\\Model\\TpTiming\\TpTiming', $this->getTimingId());
-        $this->ratingPlan = $transformer->transform('Ivoz\\Cgr\\Domain\\Model\\RatingPlan\\RatingPlan', $this->getRatingPlanId());
-        $this->destinationRate = $transformer->transform('Ivoz\\Cgr\\Domain\\Model\\DestinationRate\\DestinationRate', $this->getDestinationRateId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -143,7 +122,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTpid()
     {
@@ -163,7 +142,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -183,7 +162,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDestratesTag()
     {
@@ -203,7 +182,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTimingTag()
     {
@@ -211,7 +190,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param string $weight
+     * @param float $weight
      *
      * @return static
      */
@@ -223,7 +202,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return float | null
      */
     public function getWeight()
     {
@@ -243,7 +222,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedAt()
     {
@@ -263,7 +242,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -271,57 +250,11 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param \Ivoz\Cgr\Domain\Model\TpTiming\TpTimingDto $timing
+     * @param \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto $ratingPlan
      *
      * @return static
      */
-    public function setTiming(\Ivoz\Cgr\Domain\Model\TpTiming\TpTimingDto $timing = null)
-    {
-        $this->timing = $timing;
-
-        return $this;
-    }
-
-    /**
-     * @return \Ivoz\Cgr\Domain\Model\TpTiming\TpTimingDto
-     */
-    public function getTiming()
-    {
-        return $this->timing;
-    }
-
-    /**
-     * @param integer $id | null
-     *
-     * @return static
-     */
-    public function setTimingId($id)
-    {
-        $value = !is_null($id)
-            ? new \Ivoz\Cgr\Domain\Model\TpTiming\TpTimingDto($id)
-            : null;
-
-        return $this->setTiming($value);
-    }
-
-    /**
-     * @return integer | null
-     */
-    public function getTimingId()
-    {
-        if ($dto = $this->getTiming()) {
-            return $dto->getId();
-        }
-
-        return null;
-    }
-
-    /**
-     * @param \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanDto $ratingPlan
-     *
-     * @return static
-     */
-    public function setRatingPlan(\Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanDto $ratingPlan = null)
+    public function setRatingPlan(\Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto $ratingPlan = null)
     {
         $this->ratingPlan = $ratingPlan;
 
@@ -329,7 +262,7 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanDto
+     * @return \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto | null
      */
     public function getRatingPlan()
     {
@@ -337,21 +270,21 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
     public function setRatingPlanId($id)
     {
         $value = !is_null($id)
-            ? new \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanDto($id)
+            ? new \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanDto($id)
             : null;
 
         return $this->setRatingPlan($value);
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getRatingPlanId()
     {
@@ -361,52 +294,4 @@ abstract class TpRatingPlanDtoAbstract implements DataTransferObjectInterface
 
         return null;
     }
-
-    /**
-     * @param \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto $destinationRate
-     *
-     * @return static
-     */
-    public function setDestinationRate(\Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto $destinationRate = null)
-    {
-        $this->destinationRate = $destinationRate;
-
-        return $this;
-    }
-
-    /**
-     * @return \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto
-     */
-    public function getDestinationRate()
-    {
-        return $this->destinationRate;
-    }
-
-    /**
-     * @param integer $id | null
-     *
-     * @return static
-     */
-    public function setDestinationRateId($id)
-    {
-        $value = !is_null($id)
-            ? new \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto($id)
-            : null;
-
-        return $this->setDestinationRate($value);
-    }
-
-    /**
-     * @return integer | null
-     */
-    public function getDestinationRateId()
-    {
-        if ($dto = $this->getDestinationRate()) {
-            return $dto->getId();
-        }
-
-        return null;
-    }
 }
-
-

@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\TrunksDomainAttr;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -33,7 +31,7 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
     private $value;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $lastModified = '1900-01-01 00:00:01';
 
@@ -53,7 +51,7 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -74,7 +72,7 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'did' => $this->getDid(),
             'name' => $this->getName(),
             'type' => $this->getType(),
@@ -82,22 +80,19 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
             'lastModified' => $this->getLastModified(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -113,7 +108,7 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDid()
     {
@@ -133,7 +128,7 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -153,7 +148,7 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getType()
     {
@@ -173,7 +168,7 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getValue()
     {
@@ -193,7 +188,7 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getLastModified()
     {
@@ -213,12 +208,10 @@ abstract class TrunksDomainAttrDtoAbstract implements DataTransferObjectInterfac
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

@@ -3,9 +3,10 @@
 namespace Agi\Action;
 
 use Agi\Wrapper;
+use Ivoz\Provider\Domain\Model\CalendarPeriod\CalendarPeriodInterface;
 use Ivoz\Provider\Domain\Model\Ddi\DdiInterface;
 use Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface;
-use Ivoz\Provider\Domain\Model\Locution\LocutionInterface;
+use Ivoz\Provider\Domain\Model\HolidayDate\HolidayDateInterface;
 
 class ExternalFilterAction
 {
@@ -30,33 +31,43 @@ class ExternalFilterAction
     protected $ddi;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @var HolidayDateInterface|null
      */
-    protected $eventLocution;
+    protected $holidayDate;
+
+    /**
+     * @var CalendarPeriodInterface|null
+     */
+    protected $calendarPeriod;
 
 
     /**
      * ExternalFilterAction constructor.
-     * 
+     *
      * @param Wrapper $agi
      * @param RouterAction $routerAction
      */
     public function __construct(
         Wrapper $agi,
         RouterAction $routerAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->routerAction = $routerAction;
     }
 
     /**
-     * @param LocutionInterface|null $locution
+     * @param HolidayDateInterface|null $holidayDate
      * @return $this
      */
-    public function setLocution(LocutionInterface $locution = null)
+    public function setHolidayDate(HolidayDateInterface $holidayDate = null)
     {
-        $this->eventLocution = $locution;
+        $this->holidayDate = $holidayDate;
+        return $this;
+    }
+
+    public function setCalendarPeriod(CalendarPeriodInterface $calendarPeriod = null)
+    {
+        $this->calendarPeriod = $calendarPeriod;
         return $this;
     }
 
@@ -92,14 +103,19 @@ class ExternalFilterAction
         }
 
         // Some feedback for the asterisk cli
-        $this->agi->notice("Procesing Holiday filter %s for DDI %s", $filter, $ddi);
+        $this->agi->notice("Processing Holiday filter %s for DDI %s", $filter, $ddi);
 
+        $locution = $filter->getHolidayLocution();
         // Play holiday locution
-        if (!empty($this->eventLocution)) {
-            $this->agi->playback($this->eventLocution);
-        } else {
-            $this->agi->playback($filter->getHolidayLocution());
+        if (!is_null($this->holidayDate)) {
+            $eventLocution = $this->holidayDate->getLocution();
+            if (!is_null($eventLocution)) {
+                $locution = $eventLocution;
+            }
         }
+
+        // Play holiday louction
+        $this->agi->playbackLocution($locution);
 
         // Set Diversion information
         $count = $this->agi->getRedirecting('count');
@@ -108,14 +124,24 @@ class ExternalFilterAction
         $this->agi->setRedirecting('from-num,i', $ddi->getDDIE164());
         $this->agi->setRedirecting('reason', 'time_of_day');
 
-        // Route to configured destination
-        $this->routerAction
-            ->setRouteType($filter->getHolidayTargetType())
-            ->setRouteExtension($filter->getHolidayExtension())
-            ->setRouteExternal($filter->getHolidayNumberValueE164())
-            ->setRouteVoicemail($filter->getHolidayVoiceMailUser())
-            ->route();
-
+        $useHolidayDateRouting = $this->holidayDate && $this->holidayDate->getRouteType();
+        if ($useHolidayDateRouting) {
+            // Route to using event
+            $this->routerAction
+                ->setRouteType($this->holidayDate->getRouteType())
+                ->setRouteExtension($this->holidayDate->getExtension())
+                ->setRouteExternal($this->holidayDate->getNumberValueE164())
+                ->setRouteVoicemailUser($this->holidayDate->getVoiceMailUser())
+                ->route();
+        } else {
+            // Route to using filter
+            $this->routerAction
+                ->setRouteType($filter->getHolidayTargetType())
+                ->setRouteExtension($filter->getHolidayExtension())
+                ->setRouteExternal($filter->getHolidayNumberValueE164())
+                ->setRouteVoicemailUser($filter->getHolidayVoiceMailUser())
+                ->route();
+        }
     }
 
     public function processOutOfSchedule()
@@ -129,10 +155,18 @@ class ExternalFilterAction
         }
 
         // Some feedback for the asterisk cli
-        $this->agi->notice("Procesing OutOfSchedule filter %s for DDI %s", $filter, $ddi);
+        $this->agi->notice("Processing OutOfSchedule filter %s for DDI %s", $filter, $ddi);
+
+        $locution = $filter->getOutOfScheduleLocution();
+        if (!is_null($this->calendarPeriod)) {
+            $periodLocution = $this->calendarPeriod->getLocution();
+            if (!is_null($periodLocution)) {
+                $locution = $periodLocution;
+            }
+        }
 
         // Play holiday locution
-        $this->agi->playback($this->filter->getOutOfScheduleLocution());
+        $this->agi->playbackLocution($locution);
 
         // Set Diversion information
         $count = $this->agi->getRedirecting('count');
@@ -141,13 +175,23 @@ class ExternalFilterAction
         $this->agi->setRedirecting('from-num,i', $ddi->getDDIE164());
         $this->agi->setRedirecting('reason', 'time_of_day');
 
-        // Route to destination
-        $this->routerAction
-            ->setRouteType($filter->getOutOfScheduleTargetType())
-            ->setRouteExtension($filter->getOutOfScheduleExtension())
-            ->setRouteExternal($filter->getOutOfScheduleNumberValueE164())
-            ->setRouteVoicemail($filter->getOutOfScheduleVoiceMailUser())
-            ->route();
-
+        $userCalendarPeriodRouting = $this->calendarPeriod && $this->calendarPeriod->getRouteType();
+        if ($userCalendarPeriodRouting) {
+            // Route to using period
+            $this->routerAction
+                ->setRouteType($this->calendarPeriod->getRouteType())
+                ->setRouteExtension($this->calendarPeriod->getExtension())
+                ->setRouteExternal($this->calendarPeriod->getNumberValueE164())
+                ->setRouteVoicemailUser($this->calendarPeriod->getVoiceMailUser())
+                ->route();
+        } else {
+            // Route to destination
+            $this->routerAction
+                ->setRouteType($filter->getOutOfScheduleTargetType())
+                ->setRouteExtension($filter->getOutOfScheduleExtension())
+                ->setRouteExternal($filter->getOutOfScheduleNumberValueE164())
+                ->setRouteVoicemailUser($filter->getOutOfScheduleVoiceMailUser())
+                ->route();
+        }
     }
 }

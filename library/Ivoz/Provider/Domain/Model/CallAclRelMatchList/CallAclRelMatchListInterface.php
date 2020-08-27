@@ -6,6 +6,10 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface CallAclRelMatchListInterface extends LoggableEntityInterface
 {
+    const POLICY_ALLOW = 'allow';
+    const POLICY_DENY = 'deny';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -13,29 +17,11 @@ interface CallAclRelMatchListInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set priority
-     *
-     * @param integer $priority
-     *
-     * @return self
-     */
-    public function setPriority($priority);
-
-    /**
      * Get priority
      *
      * @return integer
      */
     public function getPriority();
-
-    /**
-     * Set policy
-     *
-     * @param string $policy
-     *
-     * @return self
-     */
-    public function setPolicy($policy);
 
     /**
      * Get policy
@@ -47,27 +33,18 @@ interface CallAclRelMatchListInterface extends LoggableEntityInterface
     /**
      * Set callAcl
      *
-     * @param \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl
+     * @param \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl | null
      *
-     * @return self
+     * @return static
      */
     public function setCallAcl(\Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl = null);
 
     /**
      * Get callAcl
      *
-     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface
+     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface | null
      */
     public function getCallAcl();
-
-    /**
-     * Set matchList
-     *
-     * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList
-     *
-     * @return self
-     */
-    public function setMatchList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList);
 
     /**
      * Get matchList
@@ -75,6 +52,4 @@ interface CallAclRelMatchListInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface
      */
     public function getMatchList();
-
 }
-

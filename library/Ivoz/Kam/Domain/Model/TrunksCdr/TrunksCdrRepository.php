@@ -2,44 +2,36 @@
 
 namespace Ivoz\Kam\Domain\Model\TrunksCdr;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
 interface TrunksCdrRepository extends ObjectRepository, Selectable
 {
     /**
-     * @param array $conditions
-     * @param int $limit
-     * @return mixed
+     * This method expects results to be marked as parsed as soon as they're used:
+     * a.k.a it does not apply any query offset, just a limit
+     *
+     * @param int $batchSize
+     * @param array|null $order
+     * @return \Generator
      */
-    public function getGeneratorByConditions(array $conditions, int $limit, array $order = null);
+    public function getUnparsedCallsGeneratorWithoutOffset(int $batchSize, array $order = null);
 
     /**
-     * @param array $conditions
-     * @param int $invoiceId
+     * @param array $ids
      * @return mixed
      */
-    public function setInvoiceId(array $conditions, int $invoiceId);
+    public function resetParsed(array $ids);
 
     /**
-     * @param int $invoiceId
+     * @param string $callid
+     * @return TrunksCdrInterface[]
      */
-    public function resetInvoiceId(int $invoiceId);
+    public function findByCallid($callid);
 
     /**
-     * @param int $companyId
-     * @param int $brandId
-     * @param string $startTime
-     * @return mixed
+     * @param string $callid
+     * @return TrunksCdrInterface | null
      */
-    public function countUntarificattedCallsBeforeDate(int $companyId, int $brandId, string $startTime);
-
-    /**
-     * @param int $companyId
-     * @param int $brandId
-     * @param string $startTime
-     * @return mixed
-     */
-    public function countUntarificattedCallsInRange(int $companyId, int $brandId, string $startTime, string $endTime);
+    public function findOneByCallid($callid);
 }
-

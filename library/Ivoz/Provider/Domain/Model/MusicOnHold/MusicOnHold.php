@@ -9,10 +9,11 @@ use Ivoz\Core\Domain\Service\TempFile;
 /**
  * MusicOnHold
  */
-class MusicOnHold extends MusicOnHoldAbstract implements MusicOnHoldInterface, FileContainerInterface
+class MusicOnHold extends MusicOnHoldAbstract implements FileContainerInterface, MusicOnHoldInterface
 {
     use MusicOnHoldTrait;
-    use TempFileContainnerTrait { addTmpFile as protected _addTmpFile; }
+    use TempFileContainnerTrait { addTmpFile as protected _addTmpFile;
+    }
 
     /**
      * @codeCoverageIgnore
@@ -26,12 +27,22 @@ class MusicOnHold extends MusicOnHoldAbstract implements MusicOnHoldInterface, F
     /**
      * @return array
      */
-    public function getFileObjects()
+    public function getFileObjects(int $filter = null)
     {
-        return [
-            'OriginalFile',
-            'EncodedFile'
+        $fileObjects = [
+            'OriginalFile' => [
+                FileContainerInterface::DOWNLOADABLE_FILE,
+                FileContainerInterface::UPDALOADABLE_FILE,
+            ],
+            'EncodedFile' => [
+                FileContainerInterface::DOWNLOADABLE_FILE,
+            ]
         ];
+
+        return $this->filterFileObjects(
+            $fileObjects,
+            $filter
+        );
     }
 
     /**
@@ -72,15 +83,14 @@ class MusicOnHold extends MusicOnHoldAbstract implements MusicOnHoldInterface, F
     /**
      * Add TempFile and set status to pending
      *
-     * @param $fldName
-     * @param TempFile $file
+     * @param string $fldName
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
      */
     public function addTmpFile($fldName, TempFile $file)
     {
-        if ($fldName == 'OriginalFile') {
+        if ($fldName === 'OriginalFile') {
             $this->setStatus('pending');
         }
         $this->_addTmpFile($fldName, $file);
     }
 }
-

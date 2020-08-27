@@ -14,19 +14,19 @@ class Pdf
     /**
      * column: pdfFileFileSize
      * comment: FSO
-     * @var integer
+     * @var integer | null
      */
     protected $fileSize;
 
     /**
      * column: pdfFileMimeType
-     * @var string
+     * @var string | null
      */
     protected $mimeType;
 
     /**
      * column: pdfFileBaseName
-     * @var string
+     * @var string | null
      */
     protected $baseName;
 
@@ -41,22 +41,33 @@ class Pdf
         $this->setBaseName($baseName);
     }
 
+    /**
+     * Equals
+     */
+    public function equals(self $pdf)
+    {
+        return
+            $this->getFileSize() === $pdf->getFileSize() &&
+            $this->getMimeType() === $pdf->getMimeType() &&
+            $this->getBaseName() === $pdf->getBaseName();
+    }
+
+
     // @codeCoverageIgnoreStart
 
     /**
      * Set fileSize
      *
-     * @param integer $fileSize
+     * @param integer $fileSize | null
      *
-     * @return self
+     * @return static
      */
     protected function setFileSize($fileSize = null)
     {
         if (!is_null($fileSize)) {
-            if (!is_null($fileSize)) {
-                Assertion::integerish($fileSize, 'fileSize value "%s" is not an integer or a number castable to integer.');
-                Assertion::greaterOrEqualThan($fileSize, 0, 'fileSize provided "%s" is not greater or equal than "%s".');
-            }
+            Assertion::integerish($fileSize, 'fileSize value "%s" is not an integer or a number castable to integer.');
+            Assertion::greaterOrEqualThan($fileSize, 0, 'fileSize provided "%s" is not greater or equal than "%s".');
+            $fileSize = (int) $fileSize;
         }
 
         $this->fileSize = $fileSize;
@@ -67,7 +78,7 @@ class Pdf
     /**
      * Get fileSize
      *
-     * @return integer
+     * @return integer | null
      */
     public function getFileSize()
     {
@@ -77,9 +88,9 @@ class Pdf
     /**
      * Set mimeType
      *
-     * @param string $mimeType
+     * @param string $mimeType | null
      *
-     * @return self
+     * @return static
      */
     protected function setMimeType($mimeType = null)
     {
@@ -95,7 +106,7 @@ class Pdf
     /**
      * Get mimeType
      *
-     * @return string
+     * @return string | null
      */
     public function getMimeType()
     {
@@ -105,9 +116,9 @@ class Pdf
     /**
      * Set baseName
      *
-     * @param string $baseName
+     * @param string $baseName | null
      *
-     * @return self
+     * @return static
      */
     protected function setBaseName($baseName = null)
     {
@@ -123,15 +134,12 @@ class Pdf
     /**
      * Get baseName
      *
-     * @return string
+     * @return string | null
      */
     public function getBaseName()
     {
         return $this->baseName;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

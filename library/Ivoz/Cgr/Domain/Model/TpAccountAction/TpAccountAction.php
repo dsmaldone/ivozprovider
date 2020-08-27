@@ -28,4 +28,3 @@ class TpAccountAction extends TpAccountActionAbstract implements TpAccountAction
         return parent::getChangeSet();
     }
 }
-

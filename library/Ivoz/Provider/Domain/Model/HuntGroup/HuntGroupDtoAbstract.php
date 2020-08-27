@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\HuntGroup;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -45,7 +43,12 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $preventMissedCalls = '1';
+    private $preventMissedCalls = 1;
+
+    /**
+     * @var integer
+     */
+    private $allowCallForwards = 0;
 
     /**
      * @var integer
@@ -93,7 +96,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -107,6 +110,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
             'noAnswerTargetType' => 'noAnswerTargetType',
             'noAnswerNumberValue' => 'noAnswerNumberValue',
             'preventMissedCalls' => 'preventMissedCalls',
+            'allowCallForwards' => 'allowCallForwards',
             'id' => 'id',
             'companyId' => 'company',
             'noAnswerLocutionId' => 'noAnswerLocution',
@@ -121,7 +125,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'description' => $this->getDescription(),
             'strategy' => $this->getStrategy(),
@@ -129,6 +133,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
             'noAnswerTargetType' => $this->getNoAnswerTargetType(),
             'noAnswerNumberValue' => $this->getNoAnswerNumberValue(),
             'preventMissedCalls' => $this->getPreventMissedCalls(),
+            'allowCallForwards' => $this->getAllowCallForwards(),
             'id' => $this->getId(),
             'company' => $this->getCompany(),
             'noAnswerLocution' => $this->getNoAnswerLocution(),
@@ -137,40 +142,19 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
             'noAnswerNumberCountry' => $this->getNoAnswerNumberCountry(),
             'huntGroupsRelUsers' => $this->getHuntGroupsRelUsers()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->noAnswerLocution = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Locution\\Locution', $this->getNoAnswerLocutionId());
-        $this->noAnswerExtension = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Extension\\Extension', $this->getNoAnswerExtensionId());
-        $this->noAnswerVoiceMailUser = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\User\\User', $this->getNoAnswerVoiceMailUserId());
-        $this->noAnswerNumberCountry = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Country\\Country', $this->getNoAnswerNumberCountryId());
-        if (!is_null($this->huntGroupsRelUsers)) {
-            $items = $this->getHuntGroupsRelUsers();
-            $this->huntGroupsRelUsers = [];
-            foreach ($items as $item) {
-                $this->huntGroupsRelUsers[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\HuntGroupsRelUser\\HuntGroupsRelUser',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->huntGroupsRelUsers = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\HuntGroupsRelUser\\HuntGroupsRelUser',
-            $this->huntGroupsRelUsers
-        );
+        return $response;
     }
 
     /**
@@ -186,7 +170,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -206,7 +190,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -226,7 +210,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getStrategy()
     {
@@ -246,7 +230,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getRingAllTimeout()
     {
@@ -266,7 +250,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNoAnswerTargetType()
     {
@@ -286,7 +270,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNoAnswerNumberValue()
     {
@@ -306,11 +290,31 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPreventMissedCalls()
     {
         return $this->preventMissedCalls;
+    }
+
+    /**
+     * @param integer $allowCallForwards
+     *
+     * @return static
+     */
+    public function setAllowCallForwards($allowCallForwards = null)
+    {
+        $this->allowCallForwards = $allowCallForwards;
+
+        return $this;
+    }
+
+    /**
+     * @return integer | null
+     */
+    public function getAllowCallForwards()
+    {
+        return $this->allowCallForwards;
     }
 
     /**
@@ -326,7 +330,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -346,7 +350,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -354,7 +358,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -368,7 +372,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -392,7 +396,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto | null
      */
     public function getNoAnswerLocution()
     {
@@ -400,7 +404,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -414,7 +418,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNoAnswerLocutionId()
     {
@@ -438,7 +442,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto | null
      */
     public function getNoAnswerExtension()
     {
@@ -446,7 +450,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -460,7 +464,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNoAnswerExtensionId()
     {
@@ -484,7 +488,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\User\UserDto
+     * @return \Ivoz\Provider\Domain\Model\User\UserDto | null
      */
     public function getNoAnswerVoiceMailUser()
     {
@@ -492,7 +496,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -506,7 +510,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNoAnswerVoiceMailUserId()
     {
@@ -530,7 +534,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto | null
      */
     public function getNoAnswerNumberCountry()
     {
@@ -538,7 +542,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -552,7 +556,7 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNoAnswerNumberCountryId()
     {
@@ -576,12 +580,10 @@ abstract class HuntGroupDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getHuntGroupsRelUsers()
     {
         return $this->huntGroupsRelUsers;
     }
 }
-
-

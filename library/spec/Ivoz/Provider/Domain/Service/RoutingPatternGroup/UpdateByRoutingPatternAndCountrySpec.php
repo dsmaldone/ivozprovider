@@ -64,7 +64,7 @@ class UpdateByRoutingPatternAndCountrySpec extends ObjectBehavior
     ) {
         $this->getterProphecy(
             $country,
-            ['getZone' => new Zone('', '')]
+            ['getZone' => new Zone('', '', '', '')]
         );
 
         $entity
@@ -79,10 +79,7 @@ class UpdateByRoutingPatternAndCountrySpec extends ObjectBehavior
 
         $this
             ->routingPatternGroupRepository
-            ->findOneBy([
-                'brand' => 1,
-                'name' => ''
-            ])
+            ->findByBrandIdAndName(1, '')
             ->willReturn($routingPatternGroup)
             ->shouldBeCalled();
 
@@ -106,7 +103,7 @@ class UpdateByRoutingPatternAndCountrySpec extends ObjectBehavior
     ) {
         $this->getterProphecy(
             $country,
-            ['getZone' => new Zone('', '')]
+            ['getZone' => new Zone('', '', '', '')]
         );
 
         $entity
@@ -121,10 +118,7 @@ class UpdateByRoutingPatternAndCountrySpec extends ObjectBehavior
 
         $this
             ->routingPatternGroupRepository
-            ->findOneBy([
-                'brand' => 1,
-                'name' => ''
-            ])
+            ->findByBrandIdAndName(1, '')
             ->willReturn(null)
             ->shouldBeCalled();
 

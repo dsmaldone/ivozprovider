@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\ExternalCallFilterWhiteList;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -38,7 +36,7 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -56,28 +54,24 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'id' => $this->getId(),
             'filter' => $this->getFilter(),
             'matchlist' => $this->getMatchlist()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->filter = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\ExternalCallFilter\\ExternalCallFilter', $this->getFilterId());
-        $this->matchlist = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\MatchList\\MatchList', $this->getMatchlistId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -93,7 +87,7 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -113,7 +107,7 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterDto
+     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterDto | null
      */
     public function getFilter()
     {
@@ -121,7 +115,7 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -135,7 +129,7 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getFilterId()
     {
@@ -159,7 +153,7 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListDto
+     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListDto | null
      */
     public function getMatchlist()
     {
@@ -167,7 +161,7 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -181,7 +175,7 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getMatchlistId()
     {
@@ -192,5 +186,3 @@ abstract class ExternalCallFilterWhiteListDtoAbstract implements DataTransferObj
         return null;
     }
 }
-
-

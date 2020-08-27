@@ -1,5 +1,3 @@
-#include ../conf.d/recordingHelp.yaml
-
 production:
   entity: \Ivoz\Provider\Domain\Model\Company\Company
   fields:
@@ -51,8 +49,23 @@ production:
             fields:
               - tz
             template: '%tz%'
+          extraDataAttributes:
+            country: countryId
           order:
             Timezone.tz: asc
+    currency:
+      title: ngettext('Currency', 'Currencies', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\Currency\Currency
+          fieldName:
+            fields:
+              - name${lang}
+              - symbol
+            template: '%name${lang}% (%symbol%)'
+        'null': _("Default currency")
     distributeMethod:
       title: _('Distribute method')
       type: select
@@ -101,7 +114,21 @@ production:
         type: box
         position: left
         icon: help
-        text: _("Limits both user generated and external received calls to this value (0 for unlimited).")
+        text: _("Limits external incoming and outgoing calls to this value (0 for unlimited).")
+        label: _("Need help?")
+    maxDailyUsage:
+      title: _('Max daily usage')
+      type: number
+      defaultValue: 1000000
+      source:
+        control: Spinner
+        min: 1
+        minStep: 50
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("Limit max daily usage.")
         label: _("Need help?")
     postalAddress:
       title: _('Postal address')
@@ -138,6 +165,8 @@ production:
       type: select
       defaultValue: 70
       required: true
+      attributes:
+        data-autofilter-select-by-data: "defaultTimezone:country"
       source:
         data: mapper
         config:
@@ -165,7 +194,7 @@ production:
             template: '%name${lang}%'
           order:
             TransformationRuleSet.name.${lang}: asc
-    outgoingDDI:
+    outgoingDdi:
       title: _('Outgoing DDI')
       type: select
       source:
@@ -180,6 +209,12 @@ production:
           order:
             Ddi.ddie164: asc
         'null': _("Unassigned")
+    outgoingDdiE164:
+      title: _('Outgoing DDI')
+      type: ghost
+      source:
+        class: IvozProvider_Klear_Ghost_Companies
+        method: getDdiE164
     outgoingDdiRule:
       title: ngettext('Outgoing DDI Rule', 'Outgoing DDI Rules', 1)
       type: select
@@ -258,16 +293,32 @@ production:
               show: []
               hide: ["onDemandRecordCode"]
           '1':
-            title: _("Using BXFER or INFO")
+            title: _("Enabled (SIP INFO)")
             visualFilter:
-              show: ["onDemandRecordCode"]
-              hide: []
+              show: []
+              hide: ["onDemandRecordCode"]
           '2':
-            title: _("Using DTMFs (read WARNING)")
+            title: _("Enabled (SIP INFO + DTMFs)")
             visualFilter:
               show: ["onDemandRecordCode"]
               hide: []
-      <<: *recordingHelp
+    allowRecordingRemoval:
+      title: _('Allow Client to remove recordings')
+      type: select
+      defaultValue: 1
+      source:
+        data: inline
+        values:
+          '0':
+            title: _("No")
+          '1':
+            title: _("Yes")
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("Enable this option to display delete button in Client's portal call recordings section.")
+        label: _("Need help?")
     onDemandRecordCode:
       title: _('Code')
       type: text
@@ -276,9 +327,6 @@ production:
       maxLength: 3
       prefix: '<span class="asterisc">*</span>'
       pattern: '[0-9*]+'
-    externallyExtraOpts:
-      title: _('Externally rater custom options')
-      type: textarea
     recordingsLimitMB:
       title: _("Max disk usage (in MB)")
       type: number
@@ -333,7 +381,7 @@ production:
                   - recordingsDiskUsage
                   - recordingsLimitEmail
                   - onDemandRecord
-                  - onDemandRecordCode
+                  - allowRecordingRemoval
               faxes:
                 toggle:
                   - faxNotificationTemplate
@@ -364,6 +412,32 @@ production:
               - name
             template: '%name%'
         'null': _("Use generic template")
+    invoiceNotificationTemplate:
+      title: ngettext('Invoice Notification', 'Invoice Notifications', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate
+          filterClass: IvozProvider_Klear_Filter_NotificationTemplateInvoice
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+        'null': _("Use generic template")
+    callCsvNotificationTemplate:
+      title: ngettext('Call CSV Notification', 'Call CSV Notifications', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate
+          filterClass: IvozProvider_Klear_Filter_NotificationTemplateCallCsv
+          fieldName:
+            fields:
+            - name
+            template: '%name%'
+        'null': _("Use generic template")
     billingMethod:
       title: _('Billing method')
       type: select
@@ -379,8 +453,34 @@ production:
             title: _("Pseudo-prepaid")
     balance:
       title: _('Balance')
-      type: text
+      type: ghost
       readonly: true
+      source:
+        class: IvozProvider_Klear_Ghost_Companies
+        method: getBalance
+    currentDayUsage:
+      title: _('Today usage')
+      type: ghost
+      readonly: true
+      source:
+        class: IvozProvider_Klear_Ghost_Companies
+        method: getCurrentDayUsage
+    accountStatus:
+      title: _('Status')
+      type: ghost
+      readonly: true
+      dirty: true
+      source:
+        class: IvozProvider_Klear_Ghost_Companies
+        method: getAccountStatus
+    currentDayMaxUsage:
+      title: _('Max daily usage')
+      type: ghost
+      readonly: true
+      dirty: true
+      source:
+        class: IvozProvider_Klear_Ghost_Companies
+        method: getCurrentDayMaxUsage
     typeIcon:
       title: _('Type')
       type: ghost
@@ -388,7 +488,26 @@ production:
       source:
         class: IvozProvider_Klear_Ghost_Companies
         method: getTypeIcon
-
+    showInvoices:
+      title: _('Display Client Invoices section')
+      type: select
+      defaultValue: 0
+      source:
+        data: inline
+        values:
+          '0':
+            title: _("No")
+          '1':
+            title: _("Yes")
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("Enable this option to display a section in Client's portal to download generated invoices.")
+        label: _("Need help?")
+    externallyExtraOpts:
+      title: _('Externally rater custom options')
+      type: textarea
 staging:
   _extends: production
 testing:

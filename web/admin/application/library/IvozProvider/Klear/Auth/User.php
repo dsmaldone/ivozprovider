@@ -2,11 +2,10 @@
 
 namespace IvozProvider\Klear\Auth;
 
-use \Ivoz\Provider\Domain\Model\Brand\Brand;
-use Ivoz\Provider\Domain\Model\Brand\BrandDTO;
-use \Ivoz\Provider\Domain\Model\Company\Company;
-use Ivoz\Provider\Domain\Model\Company\CompanyDTO;
-
+use Ivoz\Provider\Domain\Model\Brand\Brand;
+use Ivoz\Provider\Domain\Model\Brand\BrandDto;
+use Ivoz\Provider\Domain\Model\Company\Company;
+use Ivoz\Provider\Domain\Model\Company\CompanyDto;
 
 class User extends \Klear_Model_UserAdvanced
 {
@@ -31,13 +30,55 @@ class User extends \Klear_Model_UserAdvanced
     public $brandFeatures = [];
     public $companyFeatures = [];
 
+    public $token;
+    public $refreshToken;
+
+    public $companyType;
+    public $companyVPBX = true;
+    public $companyNotVPBX = false;
+    public $companyResidential = false;
+    public $companyNotResidential = true;
+    public $companyWholesale = false;
+    public $companyNotWholesale = true;
+    public $companyRetail = false;
+    public $companyNotRetail = true;
+    public $companyInvoices = false;
+    public $companyRecordingRemoval = true;
+
+    public $acls = [];
+
+    public function setToken(string $token, string $refreshToken)
+    {
+        $this->token = $token;
+        $this->refreshToken = $refreshToken;
+    }
+
+    public function isTokenExpired()
+    {
+        $decodedToken = base64_decode($this->token);
+        $success = preg_match(
+            '/"exp"\:([0-9]+),/',
+            $decodedToken,
+            $matches
+        );
+
+        if (!$success) {
+            return true;
+        }
+
+        $now = time();
+        $expires = (int) $matches[1] ?? 0;
+
+        return $expires <= $now;
+    }
+
     public function setUserName($username)
     {
         $this->_name = $username;
         return $this;
     }
 
-    public function setBrand(BrandDTO $brand)
+    public function setBrand(BrandDto $brand)
     {
         $this->brand = $brand;
         $this->brandId = $brand->getId();
@@ -66,7 +107,7 @@ class User extends \Klear_Model_UserAdvanced
     }
 
 
-    public function setCompany(CompanyDTO $company)
+    public function setCompany(CompanyDto $company)
     {
         $this->company = $company;
         $this->companyId = $company->getId();
@@ -74,8 +115,15 @@ class User extends \Klear_Model_UserAdvanced
         $this->companyName = $company->getName();
         $this->companyType = $company->getType();
         $this->companyVPBX = $company->getType() === Company::VPBX;
-        $this->companyRetail = $company->getType() === Company::RETAIL;
+        $this->companyNotVPBX = $company->getType() != Company::VPBX;
+        $this->companyResidential = $company->getType() === Company::RESIDENTIAL;
+        $this->companyNotResidential = $company->getType() != Company::RESIDENTIAL;
         $this->companyWholesale = $company->getType() === Company::WHOLESALE;
+        $this->companyNotWholesale = $company->getType() != Company::WHOLESALE;
+        $this->companyRetail = $company->getType() === Company::RETAIL;
+        $this->companyNotRetail = $company->getType() != Company::RETAIL;
+        $this->companyInvoices = $company->getShowInvoices() == 1;
+        $this->companyRecordingRemoval = $company->getAllowRecordingRemoval() !== false;
     }
 
     public function getCompany()
@@ -126,4 +174,8 @@ class User extends \Klear_Model_UserAdvanced
         return md5(print_r(call_user_func('get_object_vars', $this), true));
     }
 
+    public function __toString()
+    {
+        return 'Administrator#' . $this->getId();
+    }
 }

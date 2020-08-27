@@ -6,8 +6,9 @@ class HuntGroupsRelUserDto extends HuntGroupsRelUserDtoAbstract
 {
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return [
@@ -15,12 +16,10 @@ class HuntGroupsRelUserDto extends HuntGroupsRelUserDtoAbstract
                 'priority' => 'priority',
                 'id' => 'id',
                 'huntGroupId' => 'huntGroup',
-                'userId' => 'user'
+                'routeType' => 'routeType'
             ];
         }
 
         return parent::getPropertyMap(...func_get_args());
     }
 }
-
-

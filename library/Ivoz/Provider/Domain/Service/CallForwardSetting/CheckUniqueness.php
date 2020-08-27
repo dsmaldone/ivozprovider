@@ -2,11 +2,11 @@
 
 namespace Ivoz\Provider\Domain\Service\CallForwardSetting;
 
-use Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface;
-use Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingRepository;
-use Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSetting;
 use Doctrine\Common\Collections\Criteria;
 use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
+use Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSetting;
+use Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface;
+use Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingRepository;
 
 /**
  * Class CheckValidity
@@ -15,7 +15,6 @@ use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
  */
 class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterface
 {
-    const INCONDITIONAL_CALL_FORWARD_EXCEPTION = 30000;
     const CALL_FORWARDS_WITH_THAT_TYPE_EXCEPTION = 30001;
     const BUSY_CALL_FORWARD_EXCEPTION = 30002;
     const NO_ANSWER_CALL_FORWARD_EXCEPTION = 30003;
@@ -40,8 +39,10 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
 
     /**
      * @throws \Exception
+     *
+     * @return void
      */
-    public function execute(CallForwardSettingInterface $entity, $isNew)
+    public function execute(CallForwardSettingInterface $entity)
     {
         // Skip checks for disabled call forward setting
         if ($entity->getEnabled() == 0) {
@@ -52,38 +53,25 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
             $entity->getCallTypeFilter()
         );
 
-        if ($entity->getCallTypeFilter() == 'both') {
+        if ($entity->getCallTypeFilter() === 'both') {
             $callTypeFilterConditions[] = 'external';
             $callTypeFilterConditions[] = 'internal';
         } else {
             $callTypeFilterConditions[] = 'both';
         }
 
-        $inconditionalCallForwardsConditions = $this->getInconditionalCallForwardsCondition(
-            $entity,
-            $callTypeFilterConditions
-        );
-        $inconditionalCallForwards = $this->callForwardSettingRepository->matching(
-            $inconditionalCallForwardsConditions
-        );
-
-        if ($inconditionalCallForwards->count() > 0) {
-            $message = "There is an inconditional call forward with that call type. You can't add call forwards";
-            throw new \DomainException($message, self::INCONDITIONAL_CALL_FORWARD_EXCEPTION);
-        }
-
         $isInconditional = ($entity->getCallForwardType() === 'inconditional');
         if ($isInconditional) {
-            $callForwardsConditions = $this->getCallForwardsCondition(
+            $inconditionalCallForwardsConditions = $this->getInconditionalCallForwardsCondition(
                 $entity,
                 $callTypeFilterConditions
             );
             $callForwards = $this->callForwardSettingRepository->matching(
-                $callForwardsConditions
+                $inconditionalCallForwardsConditions
             );
 
             if ($callForwards->count() > 0) {
-                $message = "There are already call forwards with that call type. You can't add inconditional call forward";
+                $message = "There is already a inconditional call forward with that call type.";
                 throw new \DomainException($message, self::CALL_FORWARDS_WITH_THAT_TYPE_EXCEPTION);
             }
         }
@@ -120,7 +108,7 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
             }
         }
 
-        $isUserNotRegistered = ($entity->getCallForwardType() == "userNotRegistered");
+        $isUserNotRegistered = ($entity->getCallForwardType() === "userNotRegistered");
         if ($isUserNotRegistered) {
             $userNotRegisteredCallForwardsConditions = $this->getUserNotRegisteredCallForwardsConditions(
                 $entity,
@@ -139,7 +127,7 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
 
     /**
      * @param CallForwardSetting $entity
-     * @param $callTypeFilterConditions
+     * @param array $callTypeFilterConditions
      * @return Criteria
      */
     protected function getInconditionalCallForwardsCondition(CallForwardSetting $entity, $callTypeFilterConditions)
@@ -153,7 +141,7 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
 
     /**
      * @param CallForwardSetting $entity
-     * @param $callTypeFilterConditions
+     * @param array $callTypeFilterConditions
      * @return Criteria
      */
     protected function getCallForwardsCondition(CallForwardSetting $entity, $callTypeFilterConditions)
@@ -166,7 +154,7 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
 
     /**
      * @param CallForwardSetting $entity
-     * @param $callTypeFilterConditions
+     * @param array $callTypeFilterConditions
      * @return Criteria
      */
     protected function getBusyCallForwardsConditions(CallForwardSetting $entity, $callTypeFilterConditions)
@@ -180,7 +168,7 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
 
     /**
      * @param CallForwardSetting $entity
-     * @param $callTypeFilterConditions
+     * @param array $callTypeFilterConditions
      * @return Criteria
      */
     protected function getNoAnswerCallForwardsConditions(CallForwardSetting $entity, $callTypeFilterConditions)
@@ -194,7 +182,7 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
 
     /**
      * @param CallForwardSetting $entity
-     * @param $callTypeFilterConditions
+     * @param array $callTypeFilterConditions
      * @return Criteria
      */
     protected function getUserNotRegisteredCallForwardsConditions(CallForwardSetting $entity, $callTypeFilterConditions)
@@ -204,25 +192,29 @@ class CheckUniqueness implements CallForwardSettingLifecycleEventHandlerInterfac
             $callTypeFilterConditions,
             'userNotRegistered'
         );
-
-        return $criteria;
     }
 
     /**
      * @param CallForwardSetting $entity
-     * @param $callTypeFilterConditions
-     * @param $callForwardType
+     * @param array $callTypeFilterConditions
+     * @param string | null $callForwardType
      * @return Criteria
      */
     protected function createConditions(CallForwardSetting $entity, $callTypeFilterConditions, $callForwardType = null)
     {
-
         $criteria = [
             ['id', 'neq', $entity->getId()],
-            ['user', 'eq', $entity->getUser()],
             ['callTypeFilter', 'in', $callTypeFilterConditions],
             ['enabled', 'eq', 1]
         ];
+
+        if (!is_null($entity->getUser())) {
+            $criteria[] = ['user', 'eq', $entity->getUser()];
+        } elseif (!is_null($entity->getResidentialDevice())) {
+            $criteria[] = ['residentialDevice', 'eq', $entity->getResidentialDevice()];
+        } elseif (!is_null($entity->getRetailAccount())) {
+            $criteria[] = ['retailAccount', 'eq', $entity->getRetailAccount()];
+        }
 
         if ($callForwardType) {
             $criteria[] = [

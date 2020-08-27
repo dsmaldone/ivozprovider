@@ -38,8 +38,7 @@ class FaxReceiveStatus extends RouteHandlerAbstract
         Wrapper $agi,
         EntityManagerInterface $em,
         FaxReceiveStatusAction $faxReceiveStatusAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->em = $em;
         $this->faxReceiveStatusAction = $faxReceiveStatusAction;
@@ -53,7 +52,7 @@ class FaxReceiveStatus extends RouteHandlerAbstract
         /** @var FaxesInOutRepository $faxInOutRepository */
         $faxInOutRepository = $this->em->getRepository(FaxesInOut::class);
 
-        /** @var FaxesInOutInterface $faxOut */
+        /** @var FaxesInOutInterface|null $faxOut */
         $faxOut = $faxInOutRepository->find($faxId);
         if (is_null($faxOut)) {
             $this->agi->error("Faxfile %d not found in database", $faxId);

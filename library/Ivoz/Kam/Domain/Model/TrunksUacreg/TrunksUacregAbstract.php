@@ -69,23 +69,18 @@ abstract class TrunksUacregAbstract
     /**
      * @var integer
      */
-    protected $expires = '0';
+    protected $expires = 0;
 
     /**
      * @var integer
      */
-    protected $flags = '0';
+    protected $flags = 0;
 
     /**
      * column: reg_delay
      * @var integer
      */
-    protected $regDelay = '0';
-
-    /**
-     * @var boolean
-     */
-    protected $multiddi = '0';
+    protected $regDelay = 0;
 
     /**
      * column: auth_ha1
@@ -94,14 +89,14 @@ abstract class TrunksUacregAbstract
     protected $authHa1 = '';
 
     /**
+     * @var \Ivoz\Provider\Domain\Model\DdiProviderRegistration\DdiProviderRegistrationInterface
+     */
+    protected $ddiProviderRegistration;
+
+    /**
      * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface
      */
     protected $brand;
-
-    /**
-     * @var \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
-     */
-    protected $peeringContract;
 
 
     use ChangelogTrait;
@@ -122,7 +117,6 @@ abstract class TrunksUacregAbstract
         $expires,
         $flags,
         $regDelay,
-        $multiddi,
         $authHa1
     ) {
         $this->setLUuid($lUuid);
@@ -137,7 +131,6 @@ abstract class TrunksUacregAbstract
         $this->setExpires($expires);
         $this->setFlags($flags);
         $this->setRegDelay($regDelay);
-        $this->setMultiddi($multiddi);
         $this->setAuthHa1($authHa1);
     }
 
@@ -145,7 +138,8 @@ abstract class TrunksUacregAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TrunksUacreg",
             $this->getId()
         );
@@ -169,7 +163,8 @@ abstract class TrunksUacregAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TrunksUacregInterface|null $entity
      * @param int $depth
      * @return TrunksUacregDto|null
      */
@@ -189,19 +184,22 @@ abstract class TrunksUacregAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TrunksUacregDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksUacregDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksUacregDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksUacregDto::class);
 
         $self = new static(
@@ -217,29 +215,28 @@ abstract class TrunksUacregAbstract
             $dto->getExpires(),
             $dto->getFlags(),
             $dto->getRegDelay(),
-            $dto->getMultiddi(),
-            $dto->getAuthHa1());
+            $dto->getAuthHa1()
+        );
 
         $self
-            ->setBrand($dto->getBrand())
-            ->setPeeringContract($dto->getPeeringContract())
+            ->setDdiProviderRegistration($fkTransformer->transform($dto->getDdiProviderRegistration()))
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksUacregDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksUacregDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksUacregDto::class);
 
         $this
@@ -255,18 +252,17 @@ abstract class TrunksUacregAbstract
             ->setExpires($dto->getExpires())
             ->setFlags($dto->getFlags())
             ->setRegDelay($dto->getRegDelay())
-            ->setMultiddi($dto->getMultiddi())
             ->setAuthHa1($dto->getAuthHa1())
-            ->setBrand($dto->getBrand())
-            ->setPeeringContract($dto->getPeeringContract());
+            ->setDdiProviderRegistration($fkTransformer->transform($dto->getDdiProviderRegistration()))
+            ->setBrand($fkTransformer->transform($dto->getBrand()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TrunksUacregDto
      */
@@ -285,10 +281,9 @@ abstract class TrunksUacregAbstract
             ->setExpires(self::getExpires())
             ->setFlags(self::getFlags())
             ->setRegDelay(self::getRegDelay())
-            ->setMultiddi(self::getMultiddi())
             ->setAuthHa1(self::getAuthHa1())
-            ->setBrand(\Ivoz\Provider\Domain\Model\Brand\Brand::entityToDto(self::getBrand(), $depth))
-            ->setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContract::entityToDto(self::getPeeringContract(), $depth));
+            ->setDdiProviderRegistration(\Ivoz\Provider\Domain\Model\DdiProviderRegistration\DdiProviderRegistration::entityToDto(self::getDdiProviderRegistration(), $depth))
+            ->setBrand(\Ivoz\Provider\Domain\Model\Brand\Brand::entityToDto(self::getBrand(), $depth));
     }
 
     /**
@@ -309,14 +304,11 @@ abstract class TrunksUacregAbstract
             'expires' => self::getExpires(),
             'flags' => self::getFlags(),
             'reg_delay' => self::getRegDelay(),
-            'multiDdi' => self::getMultiddi(),
             'auth_ha1' => self::getAuthHa1(),
-            'brandId' => self::getBrand() ? self::getBrand()->getId() : null,
-            'peeringContractId' => self::getPeeringContract() ? self::getPeeringContract()->getId() : null
+            'ddiProviderRegistrationId' => self::getDdiProviderRegistration()->getId(),
+            'brandId' => self::getBrand()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -324,9 +316,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $lUuid
      *
-     * @return self
+     * @return static
      */
-    public function setLUuid($lUuid)
+    protected function setLUuid($lUuid)
     {
         Assertion::notNull($lUuid, 'lUuid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($lUuid, 64, 'lUuid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -351,9 +343,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $lUsername
      *
-     * @return self
+     * @return static
      */
-    public function setLUsername($lUsername)
+    protected function setLUsername($lUsername)
     {
         Assertion::notNull($lUsername, 'lUsername value "%s" is null, but non null value was expected.');
         Assertion::maxLength($lUsername, 64, 'lUsername value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -378,9 +370,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $lDomain
      *
-     * @return self
+     * @return static
      */
-    public function setLDomain($lDomain)
+    protected function setLDomain($lDomain)
     {
         Assertion::notNull($lDomain, 'lDomain value "%s" is null, but non null value was expected.');
         Assertion::maxLength($lDomain, 190, 'lDomain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -405,9 +397,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $rUsername
      *
-     * @return self
+     * @return static
      */
-    public function setRUsername($rUsername)
+    protected function setRUsername($rUsername)
     {
         Assertion::notNull($rUsername, 'rUsername value "%s" is null, but non null value was expected.');
         Assertion::maxLength($rUsername, 64, 'rUsername value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -432,9 +424,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $rDomain
      *
-     * @return self
+     * @return static
      */
-    public function setRDomain($rDomain)
+    protected function setRDomain($rDomain)
     {
         Assertion::notNull($rDomain, 'rDomain value "%s" is null, but non null value was expected.');
         Assertion::maxLength($rDomain, 190, 'rDomain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -459,9 +451,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $realm
      *
-     * @return self
+     * @return static
      */
-    public function setRealm($realm)
+    protected function setRealm($realm)
     {
         Assertion::notNull($realm, 'realm value "%s" is null, but non null value was expected.');
         Assertion::maxLength($realm, 64, 'realm value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -486,9 +478,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $authUsername
      *
-     * @return self
+     * @return static
      */
-    public function setAuthUsername($authUsername)
+    protected function setAuthUsername($authUsername)
     {
         Assertion::notNull($authUsername, 'authUsername value "%s" is null, but non null value was expected.');
         Assertion::maxLength($authUsername, 64, 'authUsername value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -513,9 +505,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $authPassword
      *
-     * @return self
+     * @return static
      */
-    public function setAuthPassword($authPassword)
+    protected function setAuthPassword($authPassword)
     {
         Assertion::notNull($authPassword, 'authPassword value "%s" is null, but non null value was expected.');
         Assertion::maxLength($authPassword, 64, 'authPassword value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -540,9 +532,9 @@ abstract class TrunksUacregAbstract
      *
      * @param string $authProxy
      *
-     * @return self
+     * @return static
      */
-    public function setAuthProxy($authProxy)
+    protected function setAuthProxy($authProxy)
     {
         Assertion::notNull($authProxy, 'authProxy value "%s" is null, but non null value was expected.');
         Assertion::maxLength($authProxy, 64, 'authProxy value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -567,14 +559,14 @@ abstract class TrunksUacregAbstract
      *
      * @param integer $expires
      *
-     * @return self
+     * @return static
      */
-    public function setExpires($expires)
+    protected function setExpires($expires)
     {
         Assertion::notNull($expires, 'expires value "%s" is null, but non null value was expected.');
         Assertion::integerish($expires, 'expires value "%s" is not an integer or a number castable to integer.');
 
-        $this->expires = $expires;
+        $this->expires = (int) $expires;
 
         return $this;
     }
@@ -594,14 +586,14 @@ abstract class TrunksUacregAbstract
      *
      * @param integer $flags
      *
-     * @return self
+     * @return static
      */
-    public function setFlags($flags)
+    protected function setFlags($flags)
     {
         Assertion::notNull($flags, 'flags value "%s" is null, but non null value was expected.');
         Assertion::integerish($flags, 'flags value "%s" is not an integer or a number castable to integer.');
 
-        $this->flags = $flags;
+        $this->flags = (int) $flags;
 
         return $this;
     }
@@ -621,14 +613,14 @@ abstract class TrunksUacregAbstract
      *
      * @param integer $regDelay
      *
-     * @return self
+     * @return static
      */
-    public function setRegDelay($regDelay)
+    protected function setRegDelay($regDelay)
     {
         Assertion::notNull($regDelay, 'regDelay value "%s" is null, but non null value was expected.');
         Assertion::integerish($regDelay, 'regDelay value "%s" is not an integer or a number castable to integer.');
 
-        $this->regDelay = $regDelay;
+        $this->regDelay = (int) $regDelay;
 
         return $this;
     }
@@ -644,40 +636,13 @@ abstract class TrunksUacregAbstract
     }
 
     /**
-     * Set multiddi
-     *
-     * @param boolean $multiddi
-     *
-     * @return self
-     */
-    public function setMultiddi($multiddi)
-    {
-        Assertion::notNull($multiddi, 'multiddi value "%s" is null, but non null value was expected.');
-        Assertion::between(intval($multiddi), 0, 1, 'multiddi provided "%s" is not a valid boolean value.');
-
-        $this->multiddi = $multiddi;
-
-        return $this;
-    }
-
-    /**
-     * Get multiddi
-     *
-     * @return boolean
-     */
-    public function getMultiddi()
-    {
-        return $this->multiddi;
-    }
-
-    /**
      * Set authHa1
      *
      * @param string $authHa1
      *
-     * @return self
+     * @return static
      */
-    public function setAuthHa1($authHa1)
+    protected function setAuthHa1($authHa1)
     {
         Assertion::notNull($authHa1, 'authHa1 value "%s" is null, but non null value was expected.');
         Assertion::maxLength($authHa1, 128, 'authHa1 value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -698,13 +663,37 @@ abstract class TrunksUacregAbstract
     }
 
     /**
+     * Set ddiProviderRegistration
+     *
+     * @param \Ivoz\Provider\Domain\Model\DdiProviderRegistration\DdiProviderRegistrationInterface $ddiProviderRegistration
+     *
+     * @return static
+     */
+    public function setDdiProviderRegistration(\Ivoz\Provider\Domain\Model\DdiProviderRegistration\DdiProviderRegistrationInterface $ddiProviderRegistration)
+    {
+        $this->ddiProviderRegistration = $ddiProviderRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Get ddiProviderRegistration
+     *
+     * @return \Ivoz\Provider\Domain\Model\DdiProviderRegistration\DdiProviderRegistrationInterface
+     */
+    public function getDdiProviderRegistration()
+    {
+        return $this->ddiProviderRegistration;
+    }
+
+    /**
      * Set brand
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
+    protected function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
     {
         $this->brand = $brand;
 
@@ -721,32 +710,5 @@ abstract class TrunksUacregAbstract
         return $this->brand;
     }
 
-    /**
-     * Set peeringContract
-     *
-     * @param \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract
-     *
-     * @return self
-     */
-    public function setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract)
-    {
-        $this->peeringContract = $peeringContract;
-
-        return $this;
-    }
-
-    /**
-     * Get peeringContract
-     *
-     * @return \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
-     */
-    public function getPeeringContract()
-    {
-        return $this->peeringContract;
-    }
-
-
-
     // @codeCoverageIgnoreEnd
 }
-

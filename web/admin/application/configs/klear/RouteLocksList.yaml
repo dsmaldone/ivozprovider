@@ -16,7 +16,7 @@ production:
       title: _("List of %s %2s", ngettext('Route Lock', 'Route Locks', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/company/route_locks.html"
+        href: "/doc/en/administration_portal/client/vpbx/routing_tools/route_locks.html"
       forcedValues:
         <<: *forcedCompany
       fields: &routeLocks_fieldsLink
@@ -31,16 +31,16 @@ production:
         options:
           title: _("Options")
           screens:
-            routeLocksEdit_screen: true
+            routeLocksEdit_screen: ${auth.acls.RouteLocks.update}
           dialogs:
-            routeLocksDel_dialog: true
+            routeLocksDel_dialog: ${auth.acls.RouteLocks.delete}
           default: routeLocksEdit_screen
       options:
         title: _("Options")
         screens:
-          routeLocksNew_screen: true
+          routeLocksNew_screen: ${auth.acls.RouteLocks.create}
         dialogs:
-          routeLocksDel_dialog: true
+          routeLocksDel_dialog: ${auth.acls.RouteLocks.delete}
 
     routeLocksNew_screen: &routeLocksNew_screenLink
       <<: *RouteLocks

@@ -16,7 +16,7 @@ production:
       title: _("List of %s %2s", ngettext('Music on Hold', 'Musics on Hold', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/company/music_on_hold.html"
+        href: "/doc/en/administration_portal/client/vpbx/multimedia/music_on_hold.html"
       forcedValues:
         <<: *forcedCompany
         "self::brand": null
@@ -24,9 +24,9 @@ production:
         options:
           title: _("Options")
           screens:
-            musicOnHoldEdit_screen: true
+            musicOnHoldEdit_screen: ${auth.acls.MusicOnHold.update}
           dialogs:
-            musicOnHoldDel_dialog: true
+            musicOnHoldDel_dialog: ${auth.acls.MusicOnHold.delete}
           default: musicOnHoldEdit_screen
         order: &musicOnHold_orderLink
           company: true
@@ -37,9 +37,9 @@ production:
       options:
         title: _("Options")
         screens:
-          musicOnHoldNew_screen: true
+          musicOnHoldNew_screen: ${auth.acls.MusicOnHold.create}
         dialogs:
-          musicOnHoldDel_dialog: true
+          musicOnHoldDel_dialog: ${auth.acls.MusicOnHold.delete}
 
     musicOnHoldNew_screen: &musicOnHoldNew_screenLink
       <<: *MusicOnHold

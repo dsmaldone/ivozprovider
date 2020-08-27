@@ -23,7 +23,7 @@ set_include_path(
     )
 );
 
-$loader = require __DIR__ . '/../../../web/rest/app/autoload.php';
+$loader = require __DIR__ . '/../../../web/rest/platform/vendor/autoload.php';
 
 /** Zend_Application */
 require_once 'Zend/Application.php';
@@ -41,17 +41,16 @@ $wrapper->run();
 
 class TemplateWrapper
 {
-    public function __construct($datos)
-    {
-        foreach (unserialize(base64_decode($datos)) as $key => $val) {
-
-            $this->$key = $val;
-        }
+public function __construct($datos)
+{
+    foreach (unserialize(base64_decode($datos)) as $key => $val) {
+        $this->$key = $val;
     }
+}
 
-    public function run()
+public function run()
     {
-        error_reporting( error_reporting() & ~E_NOTICE );
+        error_reporting(error_reporting() & ~E_NOTICE);
 
 ?>
 

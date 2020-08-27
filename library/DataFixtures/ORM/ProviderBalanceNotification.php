@@ -18,23 +18,33 @@ class ProviderBalanceNotification extends Fixture implements DependentFixtureInt
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(BalanceNotification::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
 
         /** @var BalanceNotificationInterface $item1 */
-        $item1 = $this->createEntityInstanceWithPublicMethods(BalanceNotification::class);
-        $item1->setToAddress("balance@ivozprovider.com");
-        $item1->setThreshold(4.5000);
-        $item1->setCompany($this->getReference('_reference_ProviderCompany1'));
+        $item1 = $this->createEntityInstance(BalanceNotification::class);
+        (function () use ($fixture) {
+            $this->setToAddress("balance@ivozprovider.com");
+            $this->setThreshold(4.5000);
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany1'));
+            $this->setNotificationTemplate(
+                $fixture->getReference('_reference_ProviderNotificationTemplate1')
+            );
+        })->call($item1);
+
         $this->addReference('_reference_ProviderBalanceNotification1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);
 
         /** @var BalanceNotificationInterface $item2 */
-        $item2 = $this->createEntityInstanceWithPublicMethods(BalanceNotification::class);
-        $item2->setToAddress("balance2@ivozprovider.com");
-        $item2->setThreshold(0);
-        $item2->setCompany($this->getReference('_reference_ProviderCompany1'));
+        $item2 = $this->createEntityInstance(BalanceNotification::class);
+        (function () use ($fixture) {
+            $this->setToAddress("balance2@ivozprovider.com");
+            $this->setThreshold(0);
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany1'));
+        })->call($item2);
+
         $this->addReference('_reference_ProviderBalanceNotification2', $item2);
         $this->sanitizeEntityValues($item2);
         $manager->persist($item2);
@@ -45,7 +55,8 @@ class ProviderBalanceNotification extends Fixture implements DependentFixtureInt
     public function getDependencies()
     {
         return array(
-            ProviderCompany::class
+            ProviderCompany::class,
+            ProviderNotificationTemplate::class,
         );
     }
 }

@@ -35,13 +35,13 @@ abstract class TpAccountActionAbstract
 
     /**
      * column: action_plan_tag
-     * @var string
+     * @var string | null
      */
     protected $actionPlanTag;
 
     /**
      * column: action_triggers_tag
-     * @var string
+     * @var string | null
      */
     protected $actionTriggersTag;
 
@@ -49,12 +49,12 @@ abstract class TpAccountActionAbstract
      * column: allow_negative
      * @var boolean
      */
-    protected $allowNegative = 0;
+    protected $allowNegative = false;
 
     /**
      * @var boolean
      */
-    protected $disabled = 0;
+    protected $disabled = false;
 
     /**
      * column: created_at
@@ -63,9 +63,14 @@ abstract class TpAccountActionAbstract
     protected $createdAt;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     protected $company;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
+     */
+    protected $carrier;
 
 
     use ChangelogTrait;
@@ -95,7 +100,8 @@ abstract class TpAccountActionAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TpAccountAction",
             $this->getId()
         );
@@ -119,7 +125,8 @@ abstract class TpAccountActionAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TpAccountActionInterface|null $entity
      * @param int $depth
      * @return TpAccountActionDto|null
      */
@@ -139,19 +146,22 @@ abstract class TpAccountActionAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TpAccountActionDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpAccountActionDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpAccountActionDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpAccountActionDto::class);
 
         $self = new static(
@@ -161,29 +171,30 @@ abstract class TpAccountActionAbstract
             $dto->getAccount(),
             $dto->getAllowNegative(),
             $dto->getDisabled(),
-            $dto->getCreatedAt());
+            $dto->getCreatedAt()
+        );
 
         $self
             ->setActionPlanTag($dto->getActionPlanTag())
             ->setActionTriggersTag($dto->getActionTriggersTag())
-            ->setCompany($dto->getCompany())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpAccountActionDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpAccountActionDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpAccountActionDto::class);
 
         $this
@@ -196,15 +207,16 @@ abstract class TpAccountActionAbstract
             ->setAllowNegative($dto->getAllowNegative())
             ->setDisabled($dto->getDisabled())
             ->setCreatedAt($dto->getCreatedAt())
-            ->setCompany($dto->getCompany());
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TpAccountActionDto
      */
@@ -220,7 +232,8 @@ abstract class TpAccountActionAbstract
             ->setAllowNegative(self::getAllowNegative())
             ->setDisabled(self::getDisabled())
             ->setCreatedAt(self::getCreatedAt())
-            ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth));
+            ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
+            ->setCarrier(\Ivoz\Provider\Domain\Model\Carrier\Carrier::entityToDto(self::getCarrier(), $depth));
     }
 
     /**
@@ -238,11 +251,10 @@ abstract class TpAccountActionAbstract
             'allow_negative' => self::getAllowNegative(),
             'disabled' => self::getDisabled(),
             'created_at' => self::getCreatedAt(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null
+            'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
+            'carrierId' => self::getCarrier() ? self::getCarrier()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -250,9 +262,9 @@ abstract class TpAccountActionAbstract
      *
      * @param string $tpid
      *
-     * @return self
+     * @return static
      */
-    public function setTpid($tpid)
+    protected function setTpid($tpid)
     {
         Assertion::notNull($tpid, 'tpid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($tpid, 64, 'tpid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -277,9 +289,9 @@ abstract class TpAccountActionAbstract
      *
      * @param string $loadid
      *
-     * @return self
+     * @return static
      */
-    public function setLoadid($loadid)
+    protected function setLoadid($loadid)
     {
         Assertion::notNull($loadid, 'loadid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($loadid, 64, 'loadid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -304,9 +316,9 @@ abstract class TpAccountActionAbstract
      *
      * @param string $tenant
      *
-     * @return self
+     * @return static
      */
-    public function setTenant($tenant)
+    protected function setTenant($tenant)
     {
         Assertion::notNull($tenant, 'tenant value "%s" is null, but non null value was expected.');
         Assertion::maxLength($tenant, 64, 'tenant value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -331,9 +343,9 @@ abstract class TpAccountActionAbstract
      *
      * @param string $account
      *
-     * @return self
+     * @return static
      */
-    public function setAccount($account)
+    protected function setAccount($account)
     {
         Assertion::notNull($account, 'account value "%s" is null, but non null value was expected.');
         Assertion::maxLength($account, 64, 'account value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -356,11 +368,11 @@ abstract class TpAccountActionAbstract
     /**
      * Set actionPlanTag
      *
-     * @param string $actionPlanTag
+     * @param string $actionPlanTag | null
      *
-     * @return self
+     * @return static
      */
-    public function setActionPlanTag($actionPlanTag = null)
+    protected function setActionPlanTag($actionPlanTag = null)
     {
         if (!is_null($actionPlanTag)) {
             Assertion::maxLength($actionPlanTag, 64, 'actionPlanTag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -374,7 +386,7 @@ abstract class TpAccountActionAbstract
     /**
      * Get actionPlanTag
      *
-     * @return string
+     * @return string | null
      */
     public function getActionPlanTag()
     {
@@ -384,11 +396,11 @@ abstract class TpAccountActionAbstract
     /**
      * Set actionTriggersTag
      *
-     * @param string $actionTriggersTag
+     * @param string $actionTriggersTag | null
      *
-     * @return self
+     * @return static
      */
-    public function setActionTriggersTag($actionTriggersTag = null)
+    protected function setActionTriggersTag($actionTriggersTag = null)
     {
         if (!is_null($actionTriggersTag)) {
             Assertion::maxLength($actionTriggersTag, 64, 'actionTriggersTag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -402,7 +414,7 @@ abstract class TpAccountActionAbstract
     /**
      * Get actionTriggersTag
      *
-     * @return string
+     * @return string | null
      */
     public function getActionTriggersTag()
     {
@@ -414,12 +426,13 @@ abstract class TpAccountActionAbstract
      *
      * @param boolean $allowNegative
      *
-     * @return self
+     * @return static
      */
-    public function setAllowNegative($allowNegative)
+    protected function setAllowNegative($allowNegative)
     {
         Assertion::notNull($allowNegative, 'allowNegative value "%s" is null, but non null value was expected.');
         Assertion::between(intval($allowNegative), 0, 1, 'allowNegative provided "%s" is not a valid boolean value.');
+        $allowNegative = (bool) $allowNegative;
 
         $this->allowNegative = $allowNegative;
 
@@ -441,12 +454,13 @@ abstract class TpAccountActionAbstract
      *
      * @param boolean $disabled
      *
-     * @return self
+     * @return static
      */
-    public function setDisabled($disabled)
+    protected function setDisabled($disabled)
     {
         Assertion::notNull($disabled, 'disabled value "%s" is null, but non null value was expected.');
         Assertion::between(intval($disabled), 0, 1, 'disabled provided "%s" is not a valid boolean value.');
+        $disabled = (bool) $disabled;
 
         $this->disabled = $disabled;
 
@@ -468,15 +482,19 @@ abstract class TpAccountActionAbstract
      *
      * @param \DateTime $createdAt
      *
-     * @return self
+     * @return static
      */
-    public function setCreatedAt($createdAt)
+    protected function setCreatedAt($createdAt)
     {
         Assertion::notNull($createdAt, 'createdAt value "%s" is null, but non null value was expected.');
         $createdAt = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $createdAt,
             'CURRENT_TIMESTAMP'
         );
+
+        if ($this->createdAt == $createdAt) {
+            return $this;
+        }
 
         $this->createdAt = $createdAt;
 
@@ -490,17 +508,17 @@ abstract class TpAccountActionAbstract
      */
     public function getCreatedAt()
     {
-        return $this->createdAt;
+        return clone $this->createdAt;
     }
 
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
     {
         $this->company = $company;
 
@@ -510,15 +528,36 @@ abstract class TpAccountActionAbstract
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany()
     {
         return $this->company;
     }
 
+    /**
+     * Set carrier
+     *
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier | null
+     *
+     * @return static
+     */
+    protected function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier = null)
+    {
+        $this->carrier = $carrier;
 
+        return $this;
+    }
+
+    /**
+     * Get carrier
+     *
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
+     */
+    public function getCarrier()
+    {
+        return $this->carrier;
+    }
 
     // @codeCoverageIgnoreEnd
 }
-

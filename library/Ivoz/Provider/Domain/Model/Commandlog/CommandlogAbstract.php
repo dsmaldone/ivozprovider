@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class CommandlogAbstract
 {
     /**
-     * @var guid
+     * @var string
      */
     protected $requestId;
 
@@ -24,14 +24,19 @@ abstract class CommandlogAbstract
     protected $class;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $method;
 
     /**
-     * @var array
+     * @var array | null
      */
     protected $arguments;
+
+    /**
+     * @var array | null
+     */
+    protected $agent;
 
     /**
      * @var \DateTime
@@ -65,7 +70,8 @@ abstract class CommandlogAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Commandlog",
             $this->getId()
         );
@@ -89,7 +95,8 @@ abstract class CommandlogAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param CommandlogInterface|null $entity
      * @param int $depth
      * @return CommandlogDto|null
      */
@@ -109,47 +116,51 @@ abstract class CommandlogAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var CommandlogDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CommandlogDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CommandlogDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CommandlogDto::class);
 
         $self = new static(
             $dto->getRequestId(),
             $dto->getClass(),
             $dto->getCreatedOn(),
-            $dto->getMicrotime());
+            $dto->getMicrotime()
+        );
 
         $self
             ->setMethod($dto->getMethod())
             ->setArguments($dto->getArguments())
+            ->setAgent($dto->getAgent())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CommandlogDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CommandlogDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CommandlogDto::class);
 
         $this
@@ -157,16 +168,17 @@ abstract class CommandlogAbstract
             ->setClass($dto->getClass())
             ->setMethod($dto->getMethod())
             ->setArguments($dto->getArguments())
+            ->setAgent($dto->getAgent())
             ->setCreatedOn($dto->getCreatedOn())
             ->setMicrotime($dto->getMicrotime());
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return CommandlogDto
      */
@@ -177,6 +189,7 @@ abstract class CommandlogAbstract
             ->setClass(self::getClass())
             ->setMethod(self::getMethod())
             ->setArguments(self::getArguments())
+            ->setAgent(self::getAgent())
             ->setCreatedOn(self::getCreatedOn())
             ->setMicrotime(self::getMicrotime());
     }
@@ -191,22 +204,21 @@ abstract class CommandlogAbstract
             'class' => self::getClass(),
             'method' => self::getMethod(),
             'arguments' => self::getArguments(),
+            'agent' => self::getAgent(),
             'createdOn' => self::getCreatedOn(),
             'microtime' => self::getMicrotime()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set requestId
      *
-     * @param guid $requestId
+     * @param string $requestId
      *
-     * @return self
+     * @return static
      */
-    public function setRequestId($requestId)
+    protected function setRequestId($requestId)
     {
         Assertion::notNull($requestId, 'requestId value "%s" is null, but non null value was expected.');
 
@@ -218,7 +230,7 @@ abstract class CommandlogAbstract
     /**
      * Get requestId
      *
-     * @return guid
+     * @return string
      */
     public function getRequestId()
     {
@@ -230,9 +242,9 @@ abstract class CommandlogAbstract
      *
      * @param string $class
      *
-     * @return self
+     * @return static
      */
-    public function setClass($class)
+    protected function setClass($class)
     {
         Assertion::notNull($class, 'class value "%s" is null, but non null value was expected.');
         Assertion::maxLength($class, 50, 'class value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -255,11 +267,11 @@ abstract class CommandlogAbstract
     /**
      * Set method
      *
-     * @param string $method
+     * @param string $method | null
      *
-     * @return self
+     * @return static
      */
-    public function setMethod($method = null)
+    protected function setMethod($method = null)
     {
         if (!is_null($method)) {
             Assertion::maxLength($method, 64, 'method value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -273,7 +285,7 @@ abstract class CommandlogAbstract
     /**
      * Get method
      *
-     * @return string
+     * @return string | null
      */
     public function getMethod()
     {
@@ -283,15 +295,12 @@ abstract class CommandlogAbstract
     /**
      * Set arguments
      *
-     * @param array $arguments
+     * @param array $arguments | null
      *
-     * @return self
+     * @return static
      */
-    public function setArguments($arguments = null)
+    protected function setArguments($arguments = null)
     {
-        if (!is_null($arguments)) {
-        }
-
         $this->arguments = $arguments;
 
         return $this;
@@ -300,7 +309,7 @@ abstract class CommandlogAbstract
     /**
      * Get arguments
      *
-     * @return array
+     * @return array | null
      */
     public function getArguments()
     {
@@ -308,19 +317,47 @@ abstract class CommandlogAbstract
     }
 
     /**
+     * Set agent
+     *
+     * @param array $agent | null
+     *
+     * @return static
+     */
+    protected function setAgent($agent = null)
+    {
+        $this->agent = $agent;
+
+        return $this;
+    }
+
+    /**
+     * Get agent
+     *
+     * @return array | null
+     */
+    public function getAgent()
+    {
+        return $this->agent;
+    }
+
+    /**
      * Set createdOn
      *
      * @param \DateTime $createdOn
      *
-     * @return self
+     * @return static
      */
-    public function setCreatedOn($createdOn)
+    protected function setCreatedOn($createdOn)
     {
         Assertion::notNull($createdOn, 'createdOn value "%s" is null, but non null value was expected.');
         $createdOn = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $createdOn,
             null
         );
+
+        if ($this->createdOn == $createdOn) {
+            return $this;
+        }
 
         $this->createdOn = $createdOn;
 
@@ -334,7 +371,7 @@ abstract class CommandlogAbstract
      */
     public function getCreatedOn()
     {
-        return $this->createdOn;
+        return clone $this->createdOn;
     }
 
     /**
@@ -342,14 +379,14 @@ abstract class CommandlogAbstract
      *
      * @param integer $microtime
      *
-     * @return self
+     * @return static
      */
-    public function setMicrotime($microtime)
+    protected function setMicrotime($microtime)
     {
         Assertion::notNull($microtime, 'microtime value "%s" is null, but non null value was expected.');
         Assertion::integerish($microtime, 'microtime value "%s" is not an integer or a number castable to integer.');
 
-        $this->microtime = $microtime;
+        $this->microtime = (int) $microtime;
 
         return $this;
     }
@@ -364,8 +401,5 @@ abstract class CommandlogAbstract
         return $this->microtime;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

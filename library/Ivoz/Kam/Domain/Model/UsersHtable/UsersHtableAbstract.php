@@ -23,13 +23,13 @@ abstract class UsersHtableAbstract
      * column: key_type
      * @var integer
      */
-    protected $keyType = '0';
+    protected $keyType = 0;
 
     /**
      * column: value_type
      * @var integer
      */
-    protected $valueType = '0';
+    protected $valueType = 0;
 
     /**
      * column: key_value
@@ -40,7 +40,7 @@ abstract class UsersHtableAbstract
     /**
      * @var integer
      */
-    protected $expires = '0';
+    protected $expires = 0;
 
 
     use ChangelogTrait;
@@ -66,7 +66,8 @@ abstract class UsersHtableAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "UsersHtable",
             $this->getId()
         );
@@ -90,7 +91,8 @@ abstract class UsersHtableAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param UsersHtableInterface|null $entity
      * @param int $depth
      * @return UsersHtableDto|null
      */
@@ -110,19 +112,22 @@ abstract class UsersHtableAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var UsersHtableDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersHtableDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersHtableDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersHtableDto::class);
 
         $self = new static(
@@ -130,25 +135,23 @@ abstract class UsersHtableAbstract
             $dto->getKeyType(),
             $dto->getValueType(),
             $dto->getKeyValue(),
-            $dto->getExpires());
+            $dto->getExpires()
+        );
 
-        $self;
-
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersHtableDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersHtableDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersHtableDto::class);
 
         $this
@@ -160,11 +163,11 @@ abstract class UsersHtableAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return UsersHtableDto
      */
@@ -191,8 +194,6 @@ abstract class UsersHtableAbstract
             'expires' => self::getExpires()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -200,9 +201,9 @@ abstract class UsersHtableAbstract
      *
      * @param string $keyName
      *
-     * @return self
+     * @return static
      */
-    public function setKeyName($keyName)
+    protected function setKeyName($keyName)
     {
         Assertion::notNull($keyName, 'keyName value "%s" is null, but non null value was expected.');
         Assertion::maxLength($keyName, 64, 'keyName value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -227,14 +228,14 @@ abstract class UsersHtableAbstract
      *
      * @param integer $keyType
      *
-     * @return self
+     * @return static
      */
-    public function setKeyType($keyType)
+    protected function setKeyType($keyType)
     {
         Assertion::notNull($keyType, 'keyType value "%s" is null, but non null value was expected.');
         Assertion::integerish($keyType, 'keyType value "%s" is not an integer or a number castable to integer.');
 
-        $this->keyType = $keyType;
+        $this->keyType = (int) $keyType;
 
         return $this;
     }
@@ -254,14 +255,14 @@ abstract class UsersHtableAbstract
      *
      * @param integer $valueType
      *
-     * @return self
+     * @return static
      */
-    public function setValueType($valueType)
+    protected function setValueType($valueType)
     {
         Assertion::notNull($valueType, 'valueType value "%s" is null, but non null value was expected.');
         Assertion::integerish($valueType, 'valueType value "%s" is not an integer or a number castable to integer.');
 
-        $this->valueType = $valueType;
+        $this->valueType = (int) $valueType;
 
         return $this;
     }
@@ -281,9 +282,9 @@ abstract class UsersHtableAbstract
      *
      * @param string $keyValue
      *
-     * @return self
+     * @return static
      */
-    public function setKeyValue($keyValue)
+    protected function setKeyValue($keyValue)
     {
         Assertion::notNull($keyValue, 'keyValue value "%s" is null, but non null value was expected.');
         Assertion::maxLength($keyValue, 128, 'keyValue value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -308,14 +309,14 @@ abstract class UsersHtableAbstract
      *
      * @param integer $expires
      *
-     * @return self
+     * @return static
      */
-    public function setExpires($expires)
+    protected function setExpires($expires)
     {
         Assertion::notNull($expires, 'expires value "%s" is null, but non null value was expected.');
         Assertion::integerish($expires, 'expires value "%s" is not an integer or a number castable to integer.');
 
-        $this->expires = $expires;
+        $this->expires = (int) $expires;
 
         return $this;
     }
@@ -330,8 +331,5 @@ abstract class UsersHtableAbstract
         return $this->expires;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

@@ -2,8 +2,8 @@
 
 namespace Ivoz\Provider\Domain\Model\Ddi;
 
-use Ivoz\Provider\Domain\Traits\RoutableTrait;
 use Assert\Assertion;
+use Ivoz\Provider\Domain\Traits\RoutableTrait;
 
 /**
  * Ddi
@@ -38,9 +38,10 @@ class Ddi extends DdiAbstract implements DdiInterface
      */
     public function __toString()
     {
-        return sprintf("%s [ddi%d]",
+        return sprintf(
+            "%s [%s]",
             $this->getDdie164(),
-            $this->getId()
+            parent::__toString()
         );
     }
 
@@ -53,10 +54,9 @@ class Ddi extends DdiAbstract implements DdiInterface
             . $this->getDdi()
         );
 
-        // If billInboundCalls is set, peeringContract must have externallyRated to 1
-        if (
-            $this->getBillInboundCalls()
-            && !$this->getPeeringContract()->getExternallyRated()
+        // If billInboundCalls is set, carrier must have externallyRated to 1
+        if ($this->getBillInboundCalls()
+            && !$this->getDdiProvider()->getExternallyRated()
         ) {
             throw new \DomainException(
                 'Inbound Calls cannot be billed as PeeringContract is not externally rated',
@@ -75,45 +75,20 @@ class Ddi extends DdiAbstract implements DdiInterface
     }
 
     /**
-     * @return string Domain
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     public function getDomain()
     {
-        /**
-         * @var CompanyInterface $company
-         */
         $company = $this->getCompany();
-        if(!$company) {
-
-            return null;
-        }
-
-        /**
-         * @var Brand $brand
-         */
         $brand = $company->getBrand();
-        if(!$brand) {
 
-            return null;
-        }
-
-        /**
-         * @todo this does not exist
-         */
         return $brand->getDomain();
     }
 
     public function getLanguageCode()
     {
-        /**
-         * @var Language $language
-         */
         $language = $this->getLanguage();
         if (!$language) {
-
-            /**
-             * @var Company $company
-             */
             $company = $this->getCompany();
 
             return $company->getLanguageCode();
@@ -148,6 +123,9 @@ class Ddi extends DdiAbstract implements DdiInterface
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getDdie164()
     {
         return
@@ -155,4 +133,3 @@ class Ddi extends DdiAbstract implements DdiInterface
             $this->getDdi();
     }
 }
-

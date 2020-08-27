@@ -3,8 +3,10 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\Administrator\AdministratorRepository;
+use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 use Ivoz\Provider\Domain\Model\Administrator\Administrator;
+use Ivoz\Provider\Domain\Model\Administrator\AdministratorInterface;
+use Ivoz\Provider\Domain\Model\Administrator\AdministratorRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -18,5 +20,97 @@ class AdministratorDoctrineRepository extends ServiceEntityRepository implements
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Administrator::class);
+    }
+
+    /**
+     * @inheritdoc
+     * @see AdministratorRepository::getInnerGlobalAdmin
+     */
+    public function getInnerGlobalAdmin()
+    {
+        $qb = $this->createQueryBuilder('self');
+
+        $qb
+            ->select('self')
+            ->addCriteria(
+                CriteriaHelper::fromArray([
+                    ['id', 'eq', 0],
+                    ['active', 'eq', 0],
+                    ['brand', 'isNUll'],
+                    ['company', 'isNUll']
+                ])
+            );
+
+        $result = $qb->getQuery()->getResult();
+        $privateAdmin = current($result);
+        if (!$privateAdmin) {
+            throw new \RuntimeException('Unable to find inner global admin');
+        }
+
+        return $privateAdmin;
+    }
+
+    /**
+     * @param string $username
+     * @return null| AdministratorInterface
+     */
+    public function findPlatformAdminByUsername(string $username)
+    {
+        /** @var AdministratorInterface | null $admin */
+        $admin = $this->findOneBy([
+            'username' => $username,
+            'brand' => null,
+            'company' => null
+        ]);
+
+        return $admin;
+    }
+
+    /**
+     * @param string $username
+     * @return null| AdministratorInterface
+     */
+    public function findBrandAdminByUsername(string $username)
+    {
+        $criteria = [
+            ['username', 'eq', $username],
+            ['brand', 'isNotNull'],
+            ['company', 'isNull']
+        ];
+
+        return $this->findOneByCriteria(
+            $criteria
+        );
+    }
+
+    /**
+     * @param string $username
+     * @return null| AdministratorInterface
+     */
+    public function findClientAdminByUsername(string $username)
+    {
+        $criteria = [
+            ['username', 'eq', $username],
+            ['brand', 'isNotNull'],
+            ['company', 'isNotNull']
+        ];
+
+        return $this->findOneByCriteria(
+            $criteria
+        );
+    }
+
+    private function findOneByCriteria(array $criteria)
+    {
+        $qb = $this->createQueryBuilder('self');
+
+        $qb
+            ->select('self')
+            ->addCriteria(
+                CriteriaHelper::fromArray($criteria)
+            );
+        $query = $qb->getQuery();
+
+        return $query->getOneOrNullResult();
     }
 }

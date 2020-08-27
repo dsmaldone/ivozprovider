@@ -50,7 +50,7 @@ abstract class UsersActiveWatcherAbstract
 
     /**
      * column: event_id
-     * @var string
+     * @var string | null
      */
     protected $eventId;
 
@@ -90,7 +90,7 @@ abstract class UsersActiveWatcherAbstract
 
     /**
      * column: record_route
-     * @var string
+     * @var string | null
      */
     protected $recordRoute;
 
@@ -102,17 +102,17 @@ abstract class UsersActiveWatcherAbstract
     /**
      * @var integer
      */
-    protected $status = '2';
+    protected $status = 2;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $reason;
 
     /**
      * @var integer
      */
-    protected $version = '0';
+    protected $version = 0;
 
     /**
      * column: socket_info
@@ -152,7 +152,7 @@ abstract class UsersActiveWatcherAbstract
     /**
      * @var integer
      */
-    protected $flags = '0';
+    protected $flags = 0;
 
     /**
      * column: user_agent
@@ -220,7 +220,8 @@ abstract class UsersActiveWatcherAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "UsersActiveWatcher",
             $this->getId()
         );
@@ -244,7 +245,8 @@ abstract class UsersActiveWatcherAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param UsersActiveWatcherInterface|null $entity
      * @param int $depth
      * @return UsersActiveWatcherDto|null
      */
@@ -264,19 +266,22 @@ abstract class UsersActiveWatcherAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var UsersActiveWatcherDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersActiveWatcherDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersActiveWatcherDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersActiveWatcherDto::class);
 
         $self = new static(
@@ -302,7 +307,8 @@ abstract class UsersActiveWatcherAbstract
             $dto->getUpdated(),
             $dto->getUpdatedWinfo(),
             $dto->getFlags(),
-            $dto->getUserAgent());
+            $dto->getUserAgent()
+        );
 
         $self
             ->setEventId($dto->getEventId())
@@ -310,21 +316,20 @@ abstract class UsersActiveWatcherAbstract
             ->setReason($dto->getReason())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersActiveWatcherDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersActiveWatcherDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersActiveWatcherDto::class);
 
         $this
@@ -357,11 +362,11 @@ abstract class UsersActiveWatcherAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return UsersActiveWatcherDto
      */
@@ -430,8 +435,6 @@ abstract class UsersActiveWatcherAbstract
             'user_agent' => self::getUserAgent()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -439,9 +442,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $presentityUri
      *
-     * @return self
+     * @return static
      */
-    public function setPresentityUri($presentityUri)
+    protected function setPresentityUri($presentityUri)
     {
         Assertion::notNull($presentityUri, 'presentityUri value "%s" is null, but non null value was expected.');
         Assertion::maxLength($presentityUri, 128, 'presentityUri value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -466,9 +469,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $watcherUsername
      *
-     * @return self
+     * @return static
      */
-    public function setWatcherUsername($watcherUsername)
+    protected function setWatcherUsername($watcherUsername)
     {
         Assertion::notNull($watcherUsername, 'watcherUsername value "%s" is null, but non null value was expected.');
         Assertion::maxLength($watcherUsername, 64, 'watcherUsername value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -493,9 +496,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $watcherDomain
      *
-     * @return self
+     * @return static
      */
-    public function setWatcherDomain($watcherDomain)
+    protected function setWatcherDomain($watcherDomain)
     {
         Assertion::notNull($watcherDomain, 'watcherDomain value "%s" is null, but non null value was expected.');
         Assertion::maxLength($watcherDomain, 64, 'watcherDomain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -520,9 +523,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $toUser
      *
-     * @return self
+     * @return static
      */
-    public function setToUser($toUser)
+    protected function setToUser($toUser)
     {
         Assertion::notNull($toUser, 'toUser value "%s" is null, but non null value was expected.');
         Assertion::maxLength($toUser, 64, 'toUser value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -547,9 +550,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $toDomain
      *
-     * @return self
+     * @return static
      */
-    public function setToDomain($toDomain)
+    protected function setToDomain($toDomain)
     {
         Assertion::notNull($toDomain, 'toDomain value "%s" is null, but non null value was expected.');
         Assertion::maxLength($toDomain, 190, 'toDomain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -574,9 +577,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $event
      *
-     * @return self
+     * @return static
      */
-    public function setEvent($event)
+    protected function setEvent($event)
     {
         Assertion::notNull($event, 'event value "%s" is null, but non null value was expected.');
         Assertion::maxLength($event, 64, 'event value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -599,11 +602,11 @@ abstract class UsersActiveWatcherAbstract
     /**
      * Set eventId
      *
-     * @param string $eventId
+     * @param string $eventId | null
      *
-     * @return self
+     * @return static
      */
-    public function setEventId($eventId = null)
+    protected function setEventId($eventId = null)
     {
         if (!is_null($eventId)) {
             Assertion::maxLength($eventId, 64, 'eventId value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -617,7 +620,7 @@ abstract class UsersActiveWatcherAbstract
     /**
      * Get eventId
      *
-     * @return string
+     * @return string | null
      */
     public function getEventId()
     {
@@ -629,9 +632,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $toTag
      *
-     * @return self
+     * @return static
      */
-    public function setToTag($toTag)
+    protected function setToTag($toTag)
     {
         Assertion::notNull($toTag, 'toTag value "%s" is null, but non null value was expected.');
         Assertion::maxLength($toTag, 64, 'toTag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -656,9 +659,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $fromTag
      *
-     * @return self
+     * @return static
      */
-    public function setFromTag($fromTag)
+    protected function setFromTag($fromTag)
     {
         Assertion::notNull($fromTag, 'fromTag value "%s" is null, but non null value was expected.');
         Assertion::maxLength($fromTag, 64, 'fromTag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -683,9 +686,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $callid
      *
-     * @return self
+     * @return static
      */
-    public function setCallid($callid)
+    protected function setCallid($callid)
     {
         Assertion::notNull($callid, 'callid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($callid, 255, 'callid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -710,14 +713,14 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param integer $localCseq
      *
-     * @return self
+     * @return static
      */
-    public function setLocalCseq($localCseq)
+    protected function setLocalCseq($localCseq)
     {
         Assertion::notNull($localCseq, 'localCseq value "%s" is null, but non null value was expected.');
         Assertion::integerish($localCseq, 'localCseq value "%s" is not an integer or a number castable to integer.');
 
-        $this->localCseq = $localCseq;
+        $this->localCseq = (int) $localCseq;
 
         return $this;
     }
@@ -737,14 +740,14 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param integer $remoteCseq
      *
-     * @return self
+     * @return static
      */
-    public function setRemoteCseq($remoteCseq)
+    protected function setRemoteCseq($remoteCseq)
     {
         Assertion::notNull($remoteCseq, 'remoteCseq value "%s" is null, but non null value was expected.');
         Assertion::integerish($remoteCseq, 'remoteCseq value "%s" is not an integer or a number castable to integer.');
 
-        $this->remoteCseq = $remoteCseq;
+        $this->remoteCseq = (int) $remoteCseq;
 
         return $this;
     }
@@ -764,9 +767,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $contact
      *
-     * @return self
+     * @return static
      */
-    public function setContact($contact)
+    protected function setContact($contact)
     {
         Assertion::notNull($contact, 'contact value "%s" is null, but non null value was expected.');
         Assertion::maxLength($contact, 128, 'contact value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -789,11 +792,11 @@ abstract class UsersActiveWatcherAbstract
     /**
      * Set recordRoute
      *
-     * @param string $recordRoute
+     * @param string $recordRoute | null
      *
-     * @return self
+     * @return static
      */
-    public function setRecordRoute($recordRoute = null)
+    protected function setRecordRoute($recordRoute = null)
     {
         if (!is_null($recordRoute)) {
             Assertion::maxLength($recordRoute, 65535, 'recordRoute value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -807,7 +810,7 @@ abstract class UsersActiveWatcherAbstract
     /**
      * Get recordRoute
      *
-     * @return string
+     * @return string | null
      */
     public function getRecordRoute()
     {
@@ -819,14 +822,14 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param integer $expires
      *
-     * @return self
+     * @return static
      */
-    public function setExpires($expires)
+    protected function setExpires($expires)
     {
         Assertion::notNull($expires, 'expires value "%s" is null, but non null value was expected.');
         Assertion::integerish($expires, 'expires value "%s" is not an integer or a number castable to integer.');
 
-        $this->expires = $expires;
+        $this->expires = (int) $expires;
 
         return $this;
     }
@@ -846,14 +849,14 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param integer $status
      *
-     * @return self
+     * @return static
      */
-    public function setStatus($status)
+    protected function setStatus($status)
     {
         Assertion::notNull($status, 'status value "%s" is null, but non null value was expected.');
         Assertion::integerish($status, 'status value "%s" is not an integer or a number castable to integer.');
 
-        $this->status = $status;
+        $this->status = (int) $status;
 
         return $this;
     }
@@ -871,11 +874,11 @@ abstract class UsersActiveWatcherAbstract
     /**
      * Set reason
      *
-     * @param string $reason
+     * @param string $reason | null
      *
-     * @return self
+     * @return static
      */
-    public function setReason($reason = null)
+    protected function setReason($reason = null)
     {
         if (!is_null($reason)) {
             Assertion::maxLength($reason, 64, 'reason value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -889,7 +892,7 @@ abstract class UsersActiveWatcherAbstract
     /**
      * Get reason
      *
-     * @return string
+     * @return string | null
      */
     public function getReason()
     {
@@ -901,14 +904,14 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param integer $version
      *
-     * @return self
+     * @return static
      */
-    public function setVersion($version)
+    protected function setVersion($version)
     {
         Assertion::notNull($version, 'version value "%s" is null, but non null value was expected.');
         Assertion::integerish($version, 'version value "%s" is not an integer or a number castable to integer.');
 
-        $this->version = $version;
+        $this->version = (int) $version;
 
         return $this;
     }
@@ -928,9 +931,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $socketInfo
      *
-     * @return self
+     * @return static
      */
-    public function setSocketInfo($socketInfo)
+    protected function setSocketInfo($socketInfo)
     {
         Assertion::notNull($socketInfo, 'socketInfo value "%s" is null, but non null value was expected.');
         Assertion::maxLength($socketInfo, 64, 'socketInfo value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -955,9 +958,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $localContact
      *
-     * @return self
+     * @return static
      */
-    public function setLocalContact($localContact)
+    protected function setLocalContact($localContact)
     {
         Assertion::notNull($localContact, 'localContact value "%s" is null, but non null value was expected.');
         Assertion::maxLength($localContact, 128, 'localContact value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -982,9 +985,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $fromUser
      *
-     * @return self
+     * @return static
      */
-    public function setFromUser($fromUser)
+    protected function setFromUser($fromUser)
     {
         Assertion::notNull($fromUser, 'fromUser value "%s" is null, but non null value was expected.');
         Assertion::maxLength($fromUser, 64, 'fromUser value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -1009,9 +1012,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $fromDomain
      *
-     * @return self
+     * @return static
      */
-    public function setFromDomain($fromDomain)
+    protected function setFromDomain($fromDomain)
     {
         Assertion::notNull($fromDomain, 'fromDomain value "%s" is null, but non null value was expected.');
         Assertion::maxLength($fromDomain, 190, 'fromDomain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -1036,14 +1039,14 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param integer $updated
      *
-     * @return self
+     * @return static
      */
-    public function setUpdated($updated)
+    protected function setUpdated($updated)
     {
         Assertion::notNull($updated, 'updated value "%s" is null, but non null value was expected.');
         Assertion::integerish($updated, 'updated value "%s" is not an integer or a number castable to integer.');
 
-        $this->updated = $updated;
+        $this->updated = (int) $updated;
 
         return $this;
     }
@@ -1063,14 +1066,14 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param integer $updatedWinfo
      *
-     * @return self
+     * @return static
      */
-    public function setUpdatedWinfo($updatedWinfo)
+    protected function setUpdatedWinfo($updatedWinfo)
     {
         Assertion::notNull($updatedWinfo, 'updatedWinfo value "%s" is null, but non null value was expected.');
         Assertion::integerish($updatedWinfo, 'updatedWinfo value "%s" is not an integer or a number castable to integer.');
 
-        $this->updatedWinfo = $updatedWinfo;
+        $this->updatedWinfo = (int) $updatedWinfo;
 
         return $this;
     }
@@ -1090,14 +1093,14 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param integer $flags
      *
-     * @return self
+     * @return static
      */
-    public function setFlags($flags)
+    protected function setFlags($flags)
     {
         Assertion::notNull($flags, 'flags value "%s" is null, but non null value was expected.');
         Assertion::integerish($flags, 'flags value "%s" is not an integer or a number castable to integer.');
 
-        $this->flags = $flags;
+        $this->flags = (int) $flags;
 
         return $this;
     }
@@ -1117,9 +1120,9 @@ abstract class UsersActiveWatcherAbstract
      *
      * @param string $userAgent
      *
-     * @return self
+     * @return static
      */
-    public function setUserAgent($userAgent)
+    protected function setUserAgent($userAgent)
     {
         Assertion::notNull($userAgent, 'userAgent value "%s" is null, but non null value was expected.');
         Assertion::maxLength($userAgent, 255, 'userAgent value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -1139,8 +1142,5 @@ abstract class UsersActiveWatcherAbstract
         return $this->userAgent;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

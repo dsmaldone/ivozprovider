@@ -12,8 +12,18 @@ class TpRateLifecycleServiceCollection implements LifecycleServiceCollectionInte
 {
     use LifecycleServiceCollectionTrait;
 
-    protected function addService(TpRateLifecycleEventHandlerInterface $service)
+    public static $bindedBaseServices = [
+        "on_commit" =>
+        [
+            \Ivoz\Cgr\Domain\Service\TpRate\UpdatedTpRateNotificator::class => 200,
+        ],
+    ];
+
+    /**
+     * @return void
+     */
+    protected function addService(string $event, TpRateLifecycleEventHandlerInterface $service)
     {
-        $this->services[] = $service;
+        $this->services[$event][] = $service;
     }
 }

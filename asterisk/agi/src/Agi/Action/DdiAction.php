@@ -3,6 +3,7 @@
 namespace Agi\Action;
 
 use Agi\Wrapper;
+use Ivoz\Provider\Domain\Model\CalendarPeriod\CalendarPeriod;
 use Ivoz\Provider\Domain\Model\Ddi\DdiInterface;
 use Ivoz\Provider\Domain\Model\HolidayDate\HolidayDate;
 
@@ -24,7 +25,7 @@ class DdiAction
     protected $externalFilterAction;
 
     /**
-     * @var DdiInterface
+     * @var DdiInterface|null
      */
     protected $_ddi;
 
@@ -39,8 +40,7 @@ class DdiAction
         Wrapper $agi,
         RouterAction $routerAction,
         ExternalFilterAction $externalFilterAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->routerAction = $routerAction;
         $this->externalFilterAction = $externalFilterAction;
@@ -57,7 +57,7 @@ class DdiAction
     }
 
     /**
-     * @throws \Assert\AssertionFailedException
+     * @throws \InvalidArgumentException
      */
     public function process()
     {
@@ -73,7 +73,7 @@ class DdiAction
 
         // Check And Process if necesary external call filters
         $externalCallFilter = $ddi->getExternalCallFilter();
-        if (! empty($externalCallFilter)) {
+        if (!empty($externalCallFilter)) {
             // Some feedback for asterisk cli
             $this->agi->notice("DDI <white>%s</white> has filter %s", $ddi, $externalCallFilter);
 
@@ -91,6 +91,7 @@ class DdiAction
             if ($externalCallFilter->isWhitelisted($origin)) {
                 $this->agi->notice("%s matches filter's whitelist. Calendar/Schedules checks will be skipped.", $origin);
             } else {
+                // Process Holiday dates for today
                 /** @var HolidayDate $holidayDate */
                 $holidayDate = $externalCallFilter->getHolidayDateForToday();
                 if (! empty($holidayDate)) {
@@ -98,23 +99,40 @@ class DdiAction
                     $this->externalFilterAction
                         ->setDDI($ddi)
                         ->setFilter($externalCallFilter)
-                        ->setLocution($holidayDate->getLocution())
+                        ->setHolidayDate($holidayDate)
                         ->processHoliday();
                     return;
                 }
 
-                if ($externalCallFilter->isOutOfSchedule()) {
-                    $this->agi->verbose("DDI %s is on Out of schedule.", $ddi);
-                    $this->externalFilterAction
-                        ->setDDI($ddi)
-                        ->setFilter($externalCallFilter)
-                        ->processOutOfSchedule();
-                    return;
+                // Process Calendar Period Schedules for today
+                /** @var CalendarPeriod $calendarPeriod */
+                $calendarPeriod = $externalCallFilter->getCalendarPeriodForToday();
+                if (!empty($calendarPeriod)) {
+                    $this->agi->verbose("DDI %s has %s for today.", $ddi, $calendarPeriod);
+                    if ($calendarPeriod->isOutOfSchedule()) {
+                        $this->agi->verbose("DDI %s is on %s Out of Schedule.", $ddi, $calendarPeriod);
+                        $this->externalFilterAction
+                            ->setDDI($ddi)
+                            ->setFilter($externalCallFilter)
+                            ->setCalendarPeriod($calendarPeriod)
+                            ->processOutOfSchedule();
+                        return;
+                    }
+                } else {
+                    // Process External Call Filter Schedules for today
+                    if ($externalCallFilter->isOutOfSchedule()) {
+                        $this->agi->verbose("DDI %s is on Out of schedule.", $ddi);
+                        $this->externalFilterAction
+                            ->setDDI($ddi)
+                            ->setFilter($externalCallFilter)
+                            ->processOutOfSchedule();
+                        return;
+                    }
                 }
             }
 
             // Play Welcome message
-            $this->agi->playback($externalCallFilter->getWelcomeLocution());
+            $this->agi->playbackLocution($externalCallFilter->getWelcomeLocution());
         }
 
         // Check if this DDI has custom Display Name
@@ -134,7 +152,7 @@ class DdiAction
             ->setRouteConferenceRoom($ddi->getConferenceRoom())
             ->setRouteFriendDestination($ddi->getFriendValue())
             ->setRouteQueue($ddi->getQueue())
-            ->setRouteRetail($ddi->getRetailAccount())
+            ->setRouteResidential($ddi->getResidentialDevice())
             ->setRouteConditional($ddi->getConditionalRoute())
             ->route();
     }

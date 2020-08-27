@@ -3,7 +3,6 @@
 namespace DataFixtures\ORM;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySet;
@@ -17,20 +16,24 @@ class ProviderMediaRelaySet extends Fixture
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(MediaRelaySet::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
     
-        $item0 = $this->createEntityInstanceWithPublicMethods(MediaRelaySet::class);
-        $item0->setName("Default");
-        $item0->setDescription("Default media relay set");
-        $this->addReference('_reference_ProviderMediaRelaySetMediaRelaySet0', $item0);
-        $this->sanitizeEntityValues($item0);
-        $manager->persist($item0);
+        $manager->getConnection()->exec(
+            "INSERT INTO MediaRelaySets (id, name, description) VALUES (0, 'Default','Default media relay set')"
+        );
 
-        $item1 = $this->createEntityInstanceWithPublicMethods(MediaRelaySet::class);
-        $item1->setName("Test");
-        $item1->setDescription("Test media relay set");
-        $this->addReference('_reference_ProviderMediaRelaySetMediaRelaySet1', $item1);
+        $item0 = $manager->find(MediaRelaySet::class, 0);
+        $this->addReference('_reference_ProviderMediaRelaySet', $item0);
+
+        $item1 = $this->createEntityInstance(MediaRelaySet::class);
+        (function () use ($fixture) {
+            $this->setName("Test");
+            $this->setDescription("Test media relay set");
+        })->call($item1);
+
+        $this->addReference('_reference_ProviderMediaRelaySet1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);
 

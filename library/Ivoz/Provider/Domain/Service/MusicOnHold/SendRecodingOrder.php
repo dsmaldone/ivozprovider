@@ -2,9 +2,9 @@
 
 namespace Ivoz\Provider\Domain\Service\MusicOnHold;
 
+use Ivoz\Core\Infrastructure\Domain\Service\Gearman\Jobs\Recoder;
 use Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHold;
 use Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface;
-use Ivoz\Core\Infrastructure\Domain\Service\Gearman\Jobs\Recoder;
 
 /**
  * Class RecodingOrder
@@ -12,6 +12,8 @@ use Ivoz\Core\Infrastructure\Domain\Service\Gearman\Jobs\Recoder;
  */
 class SendRecodingOrder implements MusicOnHoldLifecycleEventHandlerInterface
 {
+    const ON_COMMIT_PRIORITY = self::PRIORITY_NORMAL;
+
     /**
      * @var Recoder
      */
@@ -26,10 +28,13 @@ class SendRecodingOrder implements MusicOnHoldLifecycleEventHandlerInterface
     public static function getSubscribedEvents()
     {
         return [
-            self::EVENT_POST_PERSIST => 10
+            self::EVENT_ON_COMMIT => self::ON_COMMIT_PRIORITY
         ];
     }
 
+    /**
+     * @return void
+     */
     public function execute(MusicOnHoldInterface $entity)
     {
         $pendingStatus = $entity->getStatus() === 'pending';
@@ -41,6 +46,5 @@ class SendRecodingOrder implements MusicOnHoldLifecycleEventHandlerInterface
                 ->setEntityName(MusicOnHold::class)
                 ->send();
         }
-
     }
 }

@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Service;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -25,7 +23,7 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     /**
      * @var boolean
      */
-    private $extraArgs = '0';
+    private $extraArgs = false;
 
     /**
      * @var integer
@@ -45,12 +43,32 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     /**
      * @var string
      */
+    private $nameCa = '';
+
+    /**
+     * @var string
+     */
+    private $nameIt = '';
+
+    /**
+     * @var string
+     */
     private $descriptionEn = '';
 
     /**
      * @var string
      */
     private $descriptionEs = '';
+
+    /**
+     * @var string
+     */
+    private $descriptionCa = '';
+
+    /**
+     * @var string
+     */
+    private $descriptionIt = '';
 
 
     use DtoNormalizer;
@@ -63,7 +81,7 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -74,8 +92,8 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
             'defaultCode' => 'defaultCode',
             'extraArgs' => 'extraArgs',
             'id' => 'id',
-            'name' => ['en','es'],
-            'description' => ['en','es']
+            'name' => ['en','es','ca','it'],
+            'description' => ['en','es','ca','it']
         ];
     }
 
@@ -84,36 +102,37 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'iden' => $this->getIden(),
             'defaultCode' => $this->getDefaultCode(),
             'extraArgs' => $this->getExtraArgs(),
             'id' => $this->getId(),
             'name' => [
                 'en' => $this->getNameEn(),
-                'es' => $this->getNameEs()
+                'es' => $this->getNameEs(),
+                'ca' => $this->getNameCa(),
+                'it' => $this->getNameIt()
             ],
             'description' => [
                 'en' => $this->getDescriptionEn(),
-                'es' => $this->getDescriptionEs()
+                'es' => $this->getDescriptionEs(),
+                'ca' => $this->getDescriptionCa(),
+                'it' => $this->getDescriptionIt()
             ]
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -129,7 +148,7 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getIden()
     {
@@ -149,7 +168,7 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDefaultCode()
     {
@@ -169,7 +188,7 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getExtraArgs()
     {
@@ -189,7 +208,7 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -209,7 +228,7 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNameEn()
     {
@@ -229,11 +248,51 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNameEs()
     {
         return $this->nameEs;
+    }
+
+    /**
+     * @param string $nameCa
+     *
+     * @return static
+     */
+    public function setNameCa($nameCa = null)
+    {
+        $this->nameCa = $nameCa;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNameCa()
+    {
+        return $this->nameCa;
+    }
+
+    /**
+     * @param string $nameIt
+     *
+     * @return static
+     */
+    public function setNameIt($nameIt = null)
+    {
+        $this->nameIt = $nameIt;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNameIt()
+    {
+        return $this->nameIt;
     }
 
     /**
@@ -249,7 +308,7 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescriptionEn()
     {
@@ -269,12 +328,50 @@ abstract class ServiceDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescriptionEs()
     {
         return $this->descriptionEs;
     }
+
+    /**
+     * @param string $descriptionCa
+     *
+     * @return static
+     */
+    public function setDescriptionCa($descriptionCa = null)
+    {
+        $this->descriptionCa = $descriptionCa;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getDescriptionCa()
+    {
+        return $this->descriptionCa;
+    }
+
+    /**
+     * @param string $descriptionIt
+     *
+     * @return static
+     */
+    public function setDescriptionIt($descriptionIt = null)
+    {
+        $this->descriptionIt = $descriptionIt;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getDescriptionIt()
+    {
+        return $this->descriptionIt;
+    }
 }
-
-

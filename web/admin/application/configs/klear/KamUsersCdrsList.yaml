@@ -1,5 +1,6 @@
 #include conf.d/mapperList.yaml
 #include conf.d/actions.yaml
+#include conf.d/documentationLink.yaml
 
 production:
   main:
@@ -9,6 +10,7 @@ production:
   screens: &kamUsersCdrs_screensLink
     kamUsersCdrsList_screen: &kamUsersCdrsList_screenLink
       controller: list
+      rawCondition: "UsersCdr.hidden = 0 AND UsersCdr.startTime >= DATESUB(CURRENT_DATE(), 1, 'YEAR')"
       order:
         field:
           - UsersCdr.startTime desc
@@ -17,24 +19,25 @@ production:
       <<: *KamUsersCdrs
       class: ui-silk-text-list-bullets
       title: _("List of %s %2s", ngettext('Call', 'Calls', 0), "[format| (%parent%)]")
+      info:
+        <<: *documentationLink
+        href: "/doc/en/administration_portal/client/vpbx/calls/call_registry.html"
       forcedValues:
         <<: *forcedCompany
       fields: &kamUsersCdrs_fieldsLink
         blacklist:
-          endTime: true
-          callidHash: true
-          user: true
-          friend: true
-          retailAccount: ${auth.companyVPBX}
-          direction: ${auth.companyVPBX}
-          brand: true
           callid: true
+          callidHash: true
           xcallid: true
+          caller: ${auth.companyVPBX}
+          callee: ${auth.companyVPBX}
+          party: ${auth.companyNotVPBX}
         order:
           startTime: true
-          retailAccount: true
+          owner: true
           direction: true
           caller: true
+          party: true
           callee: true
           duration: true
         options:
@@ -51,25 +54,24 @@ production:
       disableSave: true
       labelOnPostAction: _("View %s %2s", ngettext('Call', 'Calls', 1), "[format| (%item%)]")
       title: _("View %s %2s", ngettext('Call', 'Calls', 1), "[format| (%item%)]")
+      forcedValues:
+        <<: *forcedCompany
       fields:
         blacklist:
           callidHash: ${auth.isCompanyOperator}
           callid: ${auth.isCompanyOperator}
           xcallid: ${auth.isCompanyOperator}
-          brand: true
-          user: true
-          friend: true
-          retailAccount: ${auth.companyVPBX}
-          direction: ${auth.companyVPBX}
-          company: true
-          endTime: true
+          caller: ${auth.companyVPBX}
+          callee: ${auth.companyVPBX}
+          party: ${auth.companyNotVPBX}
         order:
           startTime: true
           duration: true
-          caller: true
-          callee: true
-          retailAccount: true
+          owner: true
           direction: true
+          caller: true
+          party: true
+          callee: true
           callid: true
           callidHash: true
           xcallid: true
@@ -80,17 +82,17 @@ production:
           fields:
             startTime: 6
             duration: 6
-            endTime: 6
-            caller: 6
-            callee: 6
-            retailAccount: 6
+            owner: 6
             direction: 6
+            caller: 6
+            party: 6
+            callee: 6
         group2:
-          label: _("Identify Call")
+          label: _("Extra Information")
           colsPerRow: 12
           fields:
-            callid: 12
-            callidHash: 12
+            callid: 8
+            callidHash: 4
             xcallid: 12
 
 staging:

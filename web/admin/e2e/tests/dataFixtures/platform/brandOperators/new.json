@@ -1,7 +1,6 @@
 {
-  "username": "test admin",
-  "pass": "test password",
-  "timezone": "145",
+  "username": "test_brand_admin",
+  "pass": "1234",
   "name": "night",
   "lastname": "watch",
   "email": "nightwatch@irontec.com"

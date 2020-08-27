@@ -2,9 +2,7 @@
 
 namespace Ivoz\Provider\Domain\Model\Terminal;
 
-use Assert\Assert;
 use Assert\Assertion;
-use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface;
 
 /**
  * Terminal
@@ -18,12 +16,10 @@ class Terminal extends TerminalAbstract implements TerminalInterface
      */
     public function getChangeSet()
     {
-        $changeSet = parent::getChangeSet();
-        if (isset($changeSet['password'])) {
-            $changeSet['password'] = '****';
-        }
+        $response = parent::getChangeSet();
+        unset($response['lastProvisionDate']);
 
-        return $changeSet;
+        return $response;
     }
 
     /**
@@ -42,7 +38,8 @@ class Terminal extends TerminalAbstract implements TerminalInterface
      */
     public function __toString()
     {
-        return sprintf("%s [%s]",
+        return sprintf(
+            "%s [%s]",
             $this->getName(),
             parent::__toString()
         );
@@ -59,6 +56,7 @@ class Terminal extends TerminalAbstract implements TerminalInterface
 
     /**
      * {@inheritDoc}
+     * @throws \InvalidArgumentException
      */
     public function setName($name = null)
     {
@@ -71,6 +69,7 @@ class Terminal extends TerminalAbstract implements TerminalInterface
 
     /**
      * {@inheritDoc}
+     * @throws \InvalidArgumentException
      */
     public function setPassword($password)
     {
@@ -132,7 +131,7 @@ class Terminal extends TerminalAbstract implements TerminalInterface
     }
 
     /**
-     * @return PsEndpointInterface
+     * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface | null
      */
     public function getAstPsEndpoint()
     {
@@ -155,4 +154,3 @@ class Terminal extends TerminalAbstract implements TerminalInterface
         return parent::setMac($mac);
     }
 }
-

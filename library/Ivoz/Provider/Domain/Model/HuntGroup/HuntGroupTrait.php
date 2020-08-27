@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\HuntGroup;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,7 +18,7 @@ trait HuntGroupTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $huntGroupsRelUsers;
 
@@ -33,20 +32,29 @@ trait HuntGroupTrait
         $this->huntGroupsRelUsers = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param HuntGroupDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto HuntGroupDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getHuntGroupsRelUsers()) {
-            $self->replaceHuntGroupsRelUsers($dto->getHuntGroupsRelUsers());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getHuntGroupsRelUsers())) {
+            $self->replaceHuntGroupsRelUsers(
+                $fkTransformer->transformCollection(
+                    $dto->getHuntGroupsRelUsers()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -56,22 +64,30 @@ trait HuntGroupTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param HuntGroupDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto HuntGroupDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getHuntGroupsRelUsers()) {
-            $this->replaceHuntGroupsRelUsers($dto->getHuntGroupsRelUsers());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getHuntGroupsRelUsers())) {
+            $this->replaceHuntGroupsRelUsers(
+                $fkTransformer->transformCollection(
+                    $dto->getHuntGroupsRelUsers()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return HuntGroupDto
      */
@@ -91,14 +107,12 @@ trait HuntGroupTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add huntGroupsRelUser
      *
      * @param \Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface $huntGroupsRelUser
      *
-     * @return HuntGroupTrait
+     * @return static
      */
     public function addHuntGroupsRelUser(\Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface $huntGroupsRelUser)
     {
@@ -120,10 +134,10 @@ trait HuntGroupTrait
     /**
      * Replace huntGroupsRelUsers
      *
-     * @param \Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface[] $huntGroupsRelUsers
-     * @return self
+     * @param ArrayCollection $huntGroupsRelUsers of Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface
+     * @return static
      */
-    public function replaceHuntGroupsRelUsers(Collection $huntGroupsRelUsers)
+    public function replaceHuntGroupsRelUsers(ArrayCollection $huntGroupsRelUsers)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -153,7 +167,7 @@ trait HuntGroupTrait
 
     /**
      * Get huntGroupsRelUsers
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface[]
      */
     public function getHuntGroupsRelUsers(Criteria $criteria = null)
@@ -164,7 +178,4 @@ trait HuntGroupTrait
 
         return $this->huntGroupsRelUsers->toArray();
     }
-
-
 }
-

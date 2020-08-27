@@ -14,14 +14,9 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class FixedCostsRelInvoiceAbstract
 {
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $quantity;
-
-    /**
-     * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface
-     */
-    protected $brand;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\FixedCost\FixedCostInterface
@@ -29,7 +24,7 @@ abstract class FixedCostsRelInvoiceAbstract
     protected $fixedCost;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface
+     * @var \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface | null
      */
     protected $invoice;
 
@@ -41,14 +36,14 @@ abstract class FixedCostsRelInvoiceAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "FixedCostsRelInvoice",
             $this->getId()
         );
@@ -72,7 +67,8 @@ abstract class FixedCostsRelInvoiceAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param FixedCostsRelInvoiceInterface|null $entity
      * @param int $depth
      * @return FixedCostsRelInvoiceDto|null
      */
@@ -92,60 +88,60 @@ abstract class FixedCostsRelInvoiceAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var FixedCostsRelInvoiceDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FixedCostsRelInvoiceDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FixedCostsRelInvoiceDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FixedCostsRelInvoiceDto::class);
 
         $self = new static();
 
         $self
             ->setQuantity($dto->getQuantity())
-            ->setBrand($dto->getBrand())
-            ->setFixedCost($dto->getFixedCost())
-            ->setInvoice($dto->getInvoice())
+            ->setFixedCost($fkTransformer->transform($dto->getFixedCost()))
+            ->setInvoice($fkTransformer->transform($dto->getInvoice()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FixedCostsRelInvoiceDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FixedCostsRelInvoiceDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FixedCostsRelInvoiceDto::class);
 
         $this
             ->setQuantity($dto->getQuantity())
-            ->setBrand($dto->getBrand())
-            ->setFixedCost($dto->getFixedCost())
-            ->setInvoice($dto->getInvoice());
+            ->setFixedCost($fkTransformer->transform($dto->getFixedCost()))
+            ->setInvoice($fkTransformer->transform($dto->getInvoice()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return FixedCostsRelInvoiceDto
      */
@@ -153,7 +149,6 @@ abstract class FixedCostsRelInvoiceAbstract
     {
         return self::createDto()
             ->setQuantity(self::getQuantity())
-            ->setBrand(\Ivoz\Provider\Domain\Model\Brand\Brand::entityToDto(self::getBrand(), $depth))
             ->setFixedCost(\Ivoz\Provider\Domain\Model\FixedCost\FixedCost::entityToDto(self::getFixedCost(), $depth))
             ->setInvoice(\Ivoz\Provider\Domain\Model\Invoice\Invoice::entityToDto(self::getInvoice(), $depth));
     }
@@ -165,28 +160,25 @@ abstract class FixedCostsRelInvoiceAbstract
     {
         return [
             'quantity' => self::getQuantity(),
-            'brandId' => self::getBrand() ? self::getBrand()->getId() : null,
-            'fixedCostId' => self::getFixedCost() ? self::getFixedCost()->getId() : null,
+            'fixedCostId' => self::getFixedCost()->getId(),
             'invoiceId' => self::getInvoice() ? self::getInvoice()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set quantity
      *
-     * @param integer $quantity
+     * @param integer $quantity | null
      *
-     * @return self
+     * @return static
      */
-    public function setQuantity($quantity = null)
+    protected function setQuantity($quantity = null)
     {
         if (!is_null($quantity)) {
-            if (!is_null($quantity)) {
-                Assertion::integerish($quantity, 'quantity value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($quantity, 'quantity value "%s" is not an integer or a number castable to integer.');
+            Assertion::greaterOrEqualThan($quantity, 0, 'quantity provided "%s" is not greater or equal than "%s".');
+            $quantity = (int) $quantity;
         }
 
         $this->quantity = $quantity;
@@ -197,7 +189,7 @@ abstract class FixedCostsRelInvoiceAbstract
     /**
      * Get quantity
      *
-     * @return integer
+     * @return integer | null
      */
     public function getQuantity()
     {
@@ -205,37 +197,13 @@ abstract class FixedCostsRelInvoiceAbstract
     }
 
     /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
-    {
-        $this->brand = $brand;
-
-        return $this;
-    }
-
-    /**
-     * Get brand
-     *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
-     */
-    public function getBrand()
-    {
-        return $this->brand;
-    }
-
-    /**
      * Set fixedCost
      *
      * @param \Ivoz\Provider\Domain\Model\FixedCost\FixedCostInterface $fixedCost
      *
-     * @return self
+     * @return static
      */
-    public function setFixedCost(\Ivoz\Provider\Domain\Model\FixedCost\FixedCostInterface $fixedCost)
+    protected function setFixedCost(\Ivoz\Provider\Domain\Model\FixedCost\FixedCostInterface $fixedCost)
     {
         $this->fixedCost = $fixedCost;
 
@@ -255,9 +223,9 @@ abstract class FixedCostsRelInvoiceAbstract
     /**
      * Set invoice
      *
-     * @param \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface $invoice
+     * @param \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface $invoice | null
      *
-     * @return self
+     * @return static
      */
     public function setInvoice(\Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface $invoice = null)
     {
@@ -269,15 +237,12 @@ abstract class FixedCostsRelInvoiceAbstract
     /**
      * Get invoice
      *
-     * @return \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface
+     * @return \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface | null
      */
     public function getInvoice()
     {
         return $this->invoice;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

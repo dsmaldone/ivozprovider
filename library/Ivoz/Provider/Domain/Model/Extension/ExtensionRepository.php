@@ -2,8 +2,22 @@
 
 namespace Ivoz\Provider\Domain\Model\Extension;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
-interface ExtensionRepository extends ObjectRepository, Selectable {}
+interface ExtensionRepository extends ObjectRepository, Selectable
+{
 
+    /**
+     * @param int $id
+     * @return ExtensionInterface[]
+     */
+    public function findByCompanyId($id);
+
+    /**
+     * @param int $companyId
+     * @param int $extensionNumber
+     * @return ExtensionInterface | null
+     */
+    public function findCompanyExtension(int $companyId, int $extensionNumber);
+}

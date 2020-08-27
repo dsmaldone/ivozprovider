@@ -15,11 +15,14 @@ class TransformationRuleSetSpec extends ObjectBehavior
         $dto = new TransformationRuleSetDto();
         $dto
             ->setNameEn('en')
-            ->setNameEs('es');
+            ->setNameEs('es')
+            ->setNameCa('ca')
+            ->setNameIt('it');
+
 
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 

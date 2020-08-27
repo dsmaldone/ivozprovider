@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\TransformationRuleSet;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -40,7 +38,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     /**
      * @var boolean
      */
-    private $generateRules = 0;
+    private $generateRules = false;
 
     /**
      * @var integer
@@ -56,6 +54,16 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
      * @var string
      */
     private $nameEs;
+
+    /**
+     * @var string
+     */
+    private $nameCa;
+
+    /**
+     * @var string
+     */
+    private $nameIt;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
@@ -83,7 +91,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -97,7 +105,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
             'nationalLen' => 'nationalLen',
             'generateRules' => 'generateRules',
             'id' => 'id',
-            'name' => ['en','es'],
+            'name' => ['en','es','ca','it'],
             'brandId' => 'brand',
             'countryId' => 'country'
         ];
@@ -108,7 +116,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'description' => $this->getDescription(),
             'internationalCode' => $this->getInternationalCode(),
             'trunkPrefix' => $this->getTrunkPrefix(),
@@ -118,43 +126,27 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
             'id' => $this->getId(),
             'name' => [
                 'en' => $this->getNameEn(),
-                'es' => $this->getNameEs()
+                'es' => $this->getNameEs(),
+                'ca' => $this->getNameCa(),
+                'it' => $this->getNameIt()
             ],
             'brand' => $this->getBrand(),
             'country' => $this->getCountry(),
             'rules' => $this->getRules()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        $this->country = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Country\\Country', $this->getCountryId());
-        if (!is_null($this->rules)) {
-            $items = $this->getRules();
-            $this->rules = [];
-            foreach ($items as $item) {
-                $this->rules[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\TransformationRule\\TransformationRule',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->rules = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\TransformationRule\\TransformationRule',
-            $this->rules
-        );
+        return $response;
     }
 
     /**
@@ -170,7 +162,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -190,7 +182,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInternationalCode()
     {
@@ -210,7 +202,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTrunkPrefix()
     {
@@ -230,7 +222,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getAreaCode()
     {
@@ -250,7 +242,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getNationalLen()
     {
@@ -270,7 +262,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getGenerateRules()
     {
@@ -290,7 +282,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -310,7 +302,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNameEn()
     {
@@ -330,11 +322,51 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNameEs()
     {
         return $this->nameEs;
+    }
+
+    /**
+     * @param string $nameCa
+     *
+     * @return static
+     */
+    public function setNameCa($nameCa = null)
+    {
+        $this->nameCa = $nameCa;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNameCa()
+    {
+        return $this->nameCa;
+    }
+
+    /**
+     * @param string $nameIt
+     *
+     * @return static
+     */
+    public function setNameIt($nameIt = null)
+    {
+        $this->nameIt = $nameIt;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNameIt()
+    {
+        return $this->nameIt;
     }
 
     /**
@@ -350,7 +382,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -358,7 +390,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -372,7 +404,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -396,7 +428,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto | null
      */
     public function getCountry()
     {
@@ -404,7 +436,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -418,7 +450,7 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCountryId()
     {
@@ -442,12 +474,10 @@ abstract class TransformationRuleSetDtoAbstract implements DataTransferObjectInt
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getRules()
     {
         return $this->rules;
     }
 }
-
-

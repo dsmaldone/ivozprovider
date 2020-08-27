@@ -11,7 +11,6 @@ use Ivoz\Provider\Domain\Model\Company\CompanyRepository;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
 use RouteHandlerAbstract;
 
-
 class Headers extends RouteHandlerAbstract
 {
     /**
@@ -33,8 +32,7 @@ class Headers extends RouteHandlerAbstract
         Wrapper $agi,
         EntityManagerInterface $em,
         EndpointResolver $endpointResolver
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->em = $em;
         $this->endpointResolver = $endpointResolver;
@@ -55,41 +53,68 @@ class Headers extends RouteHandlerAbstract
         $company = $companyRepository->find($companyId);
 
         // Add headers for Friendly Kamailio  Proxy;-))
-        $this->agi->setSIPHeader("X-Call-Id",            $this->agi->getVariable("CALL_ID"));
-        $this->agi->setSIPHeader("X-Info-BrandId",       $company->getBrand()->getId());
-        $this->agi->setSIPHeader("X-Info-CompanyId",     $company->getId());
-        $this->agi->setSIPHeader("X-Info-Type",          $company->getType());
+        $this->agi->setSIPHeader("X-Call-Id", $this->agi->getVariable("CALL_ID"));
+        $this->agi->setSIPHeader("X-Info-BrandId", $company->getBrand()->getId());
+        $this->agi->setSIPHeader("X-Info-CompanyId", $company->getId());
+        $this->agi->setSIPHeader("X-Info-Type", $company->getType());
 
         // Get Calle data, take if from called endpoint
         $endpoint = $this->endpointResolver->getEndpointFromName($this->agi->getEndpoint());
         if (!empty($endpoint)) {
             $terminal = $endpoint->getTerminal();
+            $exten = $this->agi->getExtension();
             if (!is_null($terminal)) {
                 /** @var UserInterface $user */
                 $user = $terminal->getUser();
                 $this->agi->setSIPHeader("X-Info-Callee", $user->getExtensionNumber());
-            }
-            $friend = $endpoint->getFriend();
-            if (!is_null($friend)) {
-                $this->agi->setSIPHeader("X-Info-Callee", $this->agi->getExtension());
-                $this->agi->setSIPHeader("X-Info-Location", $friend->getRequestURI($exten));
-            }
-            $retail = $endpoint->getRetailAccount();
-            if (!is_null($retail)) {
-                $this->agi->setSIPHeader("X-Info-Callee", $this->agi->getExtension());
-                $this->agi->setSIPHeader("X-Info-Location", $retail->getRequestURI($exten));
-
+            } else {
+                $this->agi->setSIPHeader("X-Info-Callee", $exten);
             }
 
             // Set on-demand recording header (only for proxyusers)
             if ($company->getOnDemandRecord()) {
                 $this->agi->setVariable("FEATUREMAP(automixmon)", $company->getOnDemandRecordDTMFs());
             }
-
         } else {
             // Set special headers for Fax outgoing calls
-            if ($this->agi->getVariable("FAXFILE_ID")) {
+            if ($this->agi->getVariable("FAXFILE_ID") || $this->agi->getVariable("T38PASSTHROUGH")) {
                 $this->agi->setSIPHeader("X-Info-Special", "fax");
+            }
+
+            // Get residentialDevice from channel variables
+            $residentialDeviceId = $this->agi->getVariable("RESIDENTIALDEVICEID");
+            if (!empty($residentialDeviceId)) {
+                $this->agi->setSIPHeader("X-Info-ResidentialDeviceId", $residentialDeviceId);
+            }
+
+            // Get retailAccount from channel variables
+            $retailAccountId = $this->agi->getVariable("RETAILACCOUNTID");
+            if (!empty($retailAccountId)) {
+                $this->agi->setSIPHeader("X-Info-RetailAccount", $retailAccountId);
+            }
+
+            // Get user from channel variables
+            $userId = $this->agi->getVariable("USERID");
+            if (!empty($userId)) {
+                $this->agi->setSIPHeader("X-Info-UserId", $userId);
+            }
+
+            // Get friend from channel variables
+            $friendId = $this->agi->getVariable("FRIENDID");
+            if (!empty($friendId)) {
+                $this->agi->setSIPHeader("X-Info-FriendId", $friendId);
+            }
+
+            // Get fax from channel variables
+            $faxId = $this->agi->getVariable("FAXID");
+            if (!empty($faxId)) {
+                $this->agi->setSIPHeader("X-Info-FaxId", $faxId);
+            }
+
+            // Get ddi from channel variables
+            $ddiId = $this->agi->getVariable("DDIID");
+            if (!empty($ddiId)) {
+                $this->agi->setSIPHeader("X-Info-DdiId", $ddiId);
             }
         }
 
@@ -103,5 +128,4 @@ class Headers extends RouteHandlerAbstract
             $this->agi->setVariable("CHANNEL(namedcallgroup)", $this->agi->getVariable("CHANNEL(namedpickupgroup)"));
         }
     }
-
 }

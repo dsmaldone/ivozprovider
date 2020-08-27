@@ -3,6 +3,7 @@
 namespace Dialplan;
 
 use Agi\Action\DdiAction;
+use Agi\Agents\DdiAgent;
 use Agi\ChannelInfo;
 use Agi\Wrapper;
 use Assert\Assertion;
@@ -45,8 +46,7 @@ class Trunks extends RouteHandlerAbstract
         ChannelInfo $channelInfo,
         EntityManagerInterface $em,
         DDIAction $ddiAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->channelInfo = $channelInfo;
         $this->em = $em;
@@ -56,7 +56,7 @@ class Trunks extends RouteHandlerAbstract
     /**
      * Incomming from from external numbers
      *
-     * @throws \Assert\AssertionFailedException
+     * @throws \InvalidArgumentException
      */
     public function process()
     {
@@ -67,9 +67,7 @@ class Trunks extends RouteHandlerAbstract
         $ddiRepository = $this->em->getRepository(Ddi::class);
 
         /** @var \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi */
-        $ddi = $ddiRepository->findOneBy([
-            "ddie164" => $exten
-        ]);
+        $ddi = $ddiRepository->findOneByDdiE164($exten);
 
         // Check if incoming DDI is for us
         Assertion::notNull(
@@ -100,12 +98,11 @@ class Trunks extends RouteHandlerAbstract
         }
 
         // Set DDI as the caller
-        $this->channelInfo->setChannelCaller($ddi);
+        $this->channelInfo->setChannelCaller(new DdiAgent($this->agi, $ddi));
 
         // Process this DDI
         $this->ddiAction
             ->setDDI($ddi)
             ->process();
     }
-
 }

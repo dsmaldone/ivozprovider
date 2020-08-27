@@ -6,10 +6,10 @@ use \Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrand;
 use \Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandDto;
 
 /**
- * Class IvozProvider_Klear_Filter_Features
+ * Class IvozProvider_Klear_Filter_RetailFeatures
  *
  * Filter Features Multiselect to avoid selecting Features not enabled by the Brand
- * Filter Features Multiselect to avoid selecting Features not available to Retail Clients
+ * Filter Features Multiselect to avoid selecting Features not available to Retails Clients
  */
 class IvozProvider_Klear_Filter_RetailFeatures implements KlearMatrix_Model_Field_Select_Filter_Interface
 {
@@ -39,8 +39,11 @@ class IvozProvider_Klear_Filter_RetailFeatures implements KlearMatrix_Model_Fiel
             Feature::CONFERENCES,
             Feature::BILLING,
             Feature::INVOICES,
+            Feature::RESIDENTIAL,
             Feature::RETAIL,
             Feature::WHOLESALE,
+            Feature::VPBX,
+            Feature::FAXES,
         );
 
         $featureIds = [];

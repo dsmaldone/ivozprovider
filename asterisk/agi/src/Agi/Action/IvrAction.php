@@ -20,7 +20,7 @@ class IvrAction
     protected $routerAction;
 
     /**
-     * @var IvrInterface
+     * @var IvrInterface|null
      */
     protected $ivr;
 
@@ -33,8 +33,7 @@ class IvrAction
     public function __construct(
         Wrapper $agi,
         RouterAction $routerAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->routerAction = $routerAction;
     }
@@ -63,13 +62,13 @@ class IvrAction
         $this->agi->notice("Processing IVR %s", $ivr);
 
         // Get IVR all Locutions
-        $welcomeLocution = "";
+        $welcomeLocution = null;
         if (!empty($ivr->getWelcomeLocution())) {
             $welcomeLocution = $ivr->getWelcomeLocution();
         }
 
         // Play locution and expect user press
-        $userPressed = $this->agi->read($welcomeLocution, $ivr->getTimeout(), $ivr->getMaxDigits());
+        $userPressed = $this->agi->readLocution($welcomeLocution, $ivr->getTimeout(), $ivr->getMaxDigits());
         $this->agi->verbose("IVR: User entered: %s", $userPressed);
 
         // User prefer Human interaction
@@ -78,7 +77,7 @@ class IvrAction
         }
 
         // User hasn't pressed anything
-        if (empty($userPressed)) {
+        if ($userPressed === "") {
             $this->processNoInput();
             return;
         }
@@ -87,7 +86,6 @@ class IvrAction
         /** @var IvrEntryInterface[] $entries */
         $entries = $ivr->getEntries();
         foreach ($entries as $entry) {
-
             // Numeric entry, handle as just a number
             if (is_numeric($entry->getEntry())) {
                 $entryMatched = $entry->getEntry() == $userPressed;
@@ -101,16 +99,20 @@ class IvrAction
                 $this->agi->notice("Entered value %d matches entry %s.", $userPressed, $entry->getEntry());
 
                 // Entered data matched one of the entries, play success (if any)
-                $this->agi->playback($ivr->getSuccessLocution());
+                $this->agi->playbackLocution($ivr->getSuccessLocution());
 
-                // Play entry success (if any)
-                $this->agi->playback($entry->getWelcomeLocution());
+                // Play success locution (if any)
+                $successLocution = is_null($entry->getWelcomeLocution())
+                    ? $ivr->getSuccessLocution()
+                    : $entry->getWelcomeLocution();
+
+                $this->agi->playbackLocution($successLocution);
 
                 // Route to destination
                 $this->routerAction
                     ->setRouteType($entry->getRouteType())
                     ->setRouteExtension($entry->getExtension())
-                    ->setRouteVoicemail($entry->getVoiceMailUser())
+                    ->setRouteVoicemailUser($entry->getVoiceMailUser())
                     ->setRouteExternal($entry->getNumberValueE164())
                     ->setRouteConditional($entry->getConditionalRoute())
                     ->route();
@@ -122,7 +124,6 @@ class IvrAction
 
         // No Ivr entry matched, check if dialing extensions is supported
         if ($ivr->getAllowExtensions()) {
-
             // Check if the dialed number belongs to a company Extension
             $company = $ivr->getCompany();
             $extension = $company->getExtension($userPressed);
@@ -142,7 +143,7 @@ class IvrAction
                 $this->agi->notice("Entered value %d matches company extension %s", $userPressed, $extension);
 
                 // Entered data matched one of company extensions, play success (if any)
-                $this->agi->playback($ivr->getSuccessLocution());
+                $this->agi->playbackLocution($ivr->getSuccessLocution());
 
                 // Route to dialed extension
                 $this->routerAction
@@ -167,13 +168,13 @@ class IvrAction
         $this->agi->verbose("Processing IVR no input handler.");
 
         // Play No Input Locution
-        $this->agi->playback($this->ivr->getNoInputLocution());
+        $this->agi->playbackLocution($this->ivr->getNoInputLocution());
 
         // Route to destination
         $this->routerAction
             ->setRouteType($this->ivr->getNoInputRouteType())
             ->setRouteExtension($this->ivr->getNoInputExtension())
-            ->setRouteVoicemail($this->ivr->getNoInputVoiceMailUser())
+            ->setRouteVoicemailUser($this->ivr->getNoInputVoiceMailUser())
             ->setRouteExternal($this->ivr->getNoInputNumberValueE164())
             ->route();
     }
@@ -186,15 +187,14 @@ class IvrAction
         $this->agi->verbose("Processing IVR error handler.");
 
         // Play Error Locution
-        $this->agi->playback($this->ivr->getErrorLocution());
+        $this->agi->playbackLocution($this->ivr->getErrorLocution());
 
         // Route to destination
         $this->routerAction
             ->setRouteType($this->ivr->getErrorRouteType())
             ->setRouteExtension($this->ivr->getErrorExtension())
-            ->setRouteVoicemail($this->ivr->getErrorVoiceMailUser())
+            ->setRouteVoicemailUser($this->ivr->getErrorVoiceMailUser())
             ->setRouteExternal($this->ivr->getErrorNumberValueE164())
             ->route();
     }
-
 }

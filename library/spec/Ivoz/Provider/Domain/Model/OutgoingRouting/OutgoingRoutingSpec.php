@@ -2,6 +2,7 @@
 
 namespace spec\Ivoz\Provider\Domain\Model\OutgoingRouting;
 
+use Ivoz\Provider\Domain\Model\Brand\BrandInterface;
 use Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRouting;
 use Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingDto;
 use Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface;
@@ -19,15 +20,24 @@ class OutgoingRoutingSpec extends ObjectBehavior
      */
     protected $dto;
 
-    function let() {
+    function let(
+        BrandInterface $brand
+    ) {
         $this->dto = $dto = new OutgoingRoutingDto();
 
         $dto->setPriority(1);
         $dto->setWeight(2);
 
+        $this->hydrate(
+            $dto,
+            [
+                'brand' => $brand->getWrappedObject()
+            ]
+        );
+
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 
@@ -95,7 +105,8 @@ class OutgoingRoutingSpec extends ObjectBehavior
     }
 
 
-    function it_throws_exception_on_unexpected_type() {
+    function it_throws_exception_on_unexpected_type()
+    {
 
         $dto = clone $this->dto;
         $dto->setType('something');
@@ -103,6 +114,6 @@ class OutgoingRoutingSpec extends ObjectBehavior
         $exception = new \Exception('Incorrect Outgoing Routing Type');
         $this
             ->shouldThrow($exception)
-            ->during('updateFromDto', [$dto]);
+            ->during('updateFromDto', [$dto, new \spec\DtoToEntityFakeTransformer()]);
     }
 }

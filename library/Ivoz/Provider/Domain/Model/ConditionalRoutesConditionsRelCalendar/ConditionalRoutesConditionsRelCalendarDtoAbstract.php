@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\ConditionalRoutesConditionsRelCalendar;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -38,7 +36,7 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -56,28 +54,24 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'id' => $this->getId(),
             'condition' => $this->getCondition(),
             'calendar' => $this->getCalendar()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->condition = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\ConditionalRoutesCondition\\ConditionalRoutesCondition', $this->getConditionId());
-        $this->calendar = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Calendar\\Calendar', $this->getCalendarId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -93,7 +87,7 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -113,7 +107,7 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionDto
+     * @return \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionDto | null
      */
     public function getCondition()
     {
@@ -121,7 +115,7 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -135,7 +129,7 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getConditionId()
     {
@@ -159,7 +153,7 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Calendar\CalendarDto
+     * @return \Ivoz\Provider\Domain\Model\Calendar\CalendarDto | null
      */
     public function getCalendar()
     {
@@ -167,7 +161,7 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -181,7 +175,7 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCalendarId()
     {
@@ -192,5 +186,3 @@ abstract class ConditionalRoutesConditionsRelCalendarDtoAbstract implements Data
         return null;
     }
 }
-
-

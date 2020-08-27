@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Recording;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -18,7 +16,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     private $callid;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $calldate = 'CURRENT_TIMESTAMP';
 
@@ -30,7 +28,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     /**
      * @var float
      */
-    private $duration = '0.000';
+    private $duration = 0.0;
 
     /**
      * @var string
@@ -83,7 +81,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -108,7 +106,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'callid' => $this->getCallid(),
             'calldate' => $this->getCalldate(),
             'type' => $this->getType(),
@@ -124,22 +122,19 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
             ],
             'company' => $this->getCompany()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -155,7 +150,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallid()
     {
@@ -175,7 +170,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCalldate()
     {
@@ -195,7 +190,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getType()
     {
@@ -215,7 +210,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return float
+     * @return float | null
      */
     public function getDuration()
     {
@@ -235,7 +230,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCaller()
     {
@@ -255,7 +250,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallee()
     {
@@ -275,7 +270,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRecorder()
     {
@@ -295,7 +290,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -315,7 +310,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getRecordedFileFileSize()
     {
@@ -335,7 +330,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRecordedFileMimeType()
     {
@@ -355,7 +350,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRecordedFileBaseName()
     {
@@ -375,7 +370,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -383,7 +378,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -397,7 +392,7 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -408,5 +403,3 @@ abstract class RecordingDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

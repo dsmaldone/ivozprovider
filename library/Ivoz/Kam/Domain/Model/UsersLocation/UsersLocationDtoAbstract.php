@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\UsersLocation;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -43,14 +41,14 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     private $path;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $expires = '2030-05-28 21:32:15';
 
     /**
      * @var float
      */
-    private $q = '1.00';
+    private $q = 1.0;
 
     /**
      * @var string
@@ -60,22 +58,22 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $cseq = '1';
+    private $cseq = 1;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $lastModified = '1900-01-01 00:00:01';
 
     /**
      * @var integer
      */
-    private $flags = '0';
+    private $flags = 0;
 
     /**
      * @var integer
      */
-    private $cflags = '0';
+    private $cflags = 0;
 
     /**
      * @var string
@@ -100,27 +98,27 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $regId = '0';
+    private $regId = 0;
 
     /**
      * @var integer
      */
-    private $serverId = '0';
+    private $serverId = 0;
 
     /**
      * @var integer
      */
-    private $connectionId = '0';
+    private $connectionId = 0;
 
     /**
      * @var integer
      */
-    private $keepalive = '0';
+    private $keepalive = 0;
 
     /**
      * @var integer
      */
-    private $partition = '0';
+    private $partition = 0;
 
     /**
      * @var integer
@@ -138,7 +136,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -176,7 +174,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'ruid' => $this->getRuid(),
             'username' => $this->getUsername(),
             'domain' => $this->getDomain(),
@@ -201,22 +199,19 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
             'partition' => $this->getPartition(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -232,7 +227,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRuid()
     {
@@ -252,7 +247,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getUsername()
     {
@@ -272,7 +267,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDomain()
     {
@@ -292,7 +287,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getContact()
     {
@@ -312,7 +307,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getReceived()
     {
@@ -332,7 +327,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPath()
     {
@@ -352,7 +347,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getExpires()
     {
@@ -372,7 +367,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return float
+     * @return float | null
      */
     public function getQ()
     {
@@ -392,7 +387,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallid()
     {
@@ -412,7 +407,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getCseq()
     {
@@ -432,7 +427,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getLastModified()
     {
@@ -452,7 +447,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getFlags()
     {
@@ -472,7 +467,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getCflags()
     {
@@ -492,7 +487,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getUserAgent()
     {
@@ -512,7 +507,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSocket()
     {
@@ -532,7 +527,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getMethods()
     {
@@ -552,7 +547,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInstance()
     {
@@ -572,7 +567,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getRegId()
     {
@@ -592,7 +587,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getServerId()
     {
@@ -612,7 +607,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getConnectionId()
     {
@@ -632,7 +627,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getKeepalive()
     {
@@ -652,7 +647,7 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPartition()
     {
@@ -672,12 +667,10 @@ abstract class UsersLocationDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

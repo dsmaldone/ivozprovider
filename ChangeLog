@@ -1,170 +1,887 @@
-Thu, 07 Jun 2018 13:40:17 +0200 IvozProvider Team <dev@list-ivozprovider.irontec.com>
+Web, 10 Jun 2020 11:27:22 +0100  IvozProvider Team <vozip+ivozprovider@irontec.com>
 
-   * IvozProvider 2.3 released
+    * IvozProvider 2.15.2 released
 
-   * Wholesale:
+    * Application Server
+        - Diversion related minor improvements
+        - Fixed a loop in HuntGroup user call forwards
 
-     - Added support for audio transcoding using rtpengine
-     - Added support for routing tags
+    * Core
+        - Fixed unsolicited MWI for residential clients
+        - Fixed encoding issues on rate importer
 
-   * Proxies:
+    * Proxies
+        - Added userId/faxId/friendId for external inbound calls CDRs
+        - Fixed empty pointer free warning log
+        - No user CDR for non-vpbx calls
+        - Disabled antiflood for trunks proxy
+        - Reduced log messages
+        - Anti brute-force attack mechanism
+        - Ban addresses rejected by IP filter
+        - Increased registration min expires to 900
 
-     - Upgraded Kamailio version to 5.1.2
-     - Improved DDI Bouncing logic (outgoing calls to platform DDIs)
-     - Refactored configuration files routes
-     - PeerServers with unresolvable domains are now skipped
+    * Billing
+        - Deductible Connection Fee (minCost)
 
-   * Routing:
+    * API
+        - Registration summary brand/client endpoint
+        - Improved client-level endpoint ACLs
 
-     - Added support for routing based on routing tags
-     - Removed support for regular expressions in routing patterns
+    * Portals
+        - New Carrier / CarrierServer status icon
+        - Fixed emulations issues
 
-   * PBX:
+Web, 12 May 2020 15:13:22 +0100  IvozProvider Team <vozip+ivozprovider@irontec.com>
 
-     - Fixed a bug on external calls forwarded to external numbers
+    * IvozProvider 2.15.1 released
 
-   * Web:
+    * Application Server
+        - Ignore user call timeout when call forwards are disabled
 
-     - Added english translation for user portal
-     - Menu entries are now properly displayed based on enabled features
+    * Proxies
+        - Roadwarrior registration ip filter fix
+        - Fix unreachable cfwd for direct retails
+        - Improve wholesale call logic
+        - No carrierId for bounced calls
+        - Patch Kamailio-redis reconnection logic
+        - Realtime fix edge cases
 
-   * Core:
+    * Billing
+        - No cost calculation for bounced calls
 
-     - Reworked Kamailio LCR rules logic
+    * Recordings
+        - Fixed recording speed when call had silent RTP gaps
 
-   * Provisioning:
+    * Portals
+        - New ALG/STUN guesser on register status
+        - New restriction in destination rates file importer maximum length, up to 75000 lines
+        - New realtime calls filter form
+        - Several realtime bug fixes
 
-     - Added latest Cisco combined CA
+Web, 08 Apr 2020 15:13:22 +0100  IvozProvider Team <vozip+ivozprovider@irontec.com>
 
-Fri, 04 May 2018 15:38:00 +0200 IvozProvider Team <dev@list-ivozprovider.irontec.com>
+    * IvozProvider 2.15.0 released
 
-   * IvozProvider 2.2 released
+    * Application Server
+        - Follow user call forward settings in HuntGroups (configurable)
+        - External numbers as Huntgroup members
+        - Configurable missed calls in Queues
+        - IntervPBX friends need no regexps
 
-   * Wholesale:
+    * Core
+        - ACLs for web portal users (limit access to specific sections)
+        - Changes in user call forward coexistence
+        - Show client entities in CDRS (user, friend, fax, retail account and residential device)
+        - Show client DDI in CDRs
+        - Show carrier for outbound call in CDRS
+        - CSV scheduler by client entity (user, friend, fax, retail account, residential device)
+        - CSV scheduler by client DDI
+        - CSV scheduler by carrier for outbound calls
+        - DDI In sane defaults and improved help
 
-     - New client type without features
-       - IP authenticated only (no register, no SIP auth)
-       - No Application Server in signalling/media path
-       - Outgoing calls only
+    * Proxies
+        - Support for multiple signalling IPs in KamTrunks
+        - On-demand record dual simultaneous mode: DTMFs + SIP INFO
+        - IP filter for non-INVITE requests
+        - Save DDI Provider in external inbound calls
 
-   * Billing:
+    * Portals
+        - New Active calls god section with realtime call information dashboard
+        - New Active calls brand section with realtime call information dashboard
+        - New Active calls client section with realtime call information dashboard
+        - New Users brand section to see register status of all users
+        - New Antiflood blocked addresses god section
+        - New IP filter blocked addresses brand section
+        - Extension to number CSV importer (aliases)
+        - Redesign SIP domains section
 
-     - Merge CGrateS rating tables into DestinationRates
-     - Allow download of latest imported rates CSV from DestinationRates
-     - Added support to decrease Prepaid balances
-     - Added a call pricing simulators in Company and Rating Plan sections
-     - Improve CGrates reloading logic
+    * API
+        - ACLs for API users (permissions to certain operations in specific endpoints)
+        - Maximun items per page increased from 500 to 5k on client API and from 500 to 10k on brand and platform APIs.
+        - Optimized memory usage on unpaginated API requests, especially with JSON response format
 
-   * Proxies:
+Web, 05 Feb 2020 15:13:22 +0100  IvozProvider Team <vozip+ivozprovider@irontec.com>
 
-     - Upgrade Kamailio version to 5.1.2
-     - Added support for rtpengine media relay sets
+    * IvozProvider 2.14.1 released
 
-   * Documentation:
+    * Application Server
+        - Disabled direcmedia for every friend to prevent issues.
 
-     - Reorder documentation to match the menu format from administration portal
-     - Added a link to documentation in each portal screen
+    * Core
+        - Error prevention on scheduled invoices
+        - Fix offline billing CGRateS request to calculate cost
+        - Recover disableDestination flag logic for CSV imports
+
+    * Proxies
+        - Fix interpbx friends device call forwards
+        - Apply fax routes to retail T.38 accounts
+        - Fix parsed value for inbound calls
+
+    * Portals
+        - Fixed invoice template tester
+        - DirectConnectivity defaults to No for new retail/residential/friend
+        - ddiIn defaults to No for new retail/residential/friends
+        - round daily usage value
+
+    * API
+        - Deprecated /api/brand/users_cdrs endpoint
+
+Tue, 21 Jan 2020 15:13:22 +0100  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.14.0 released
+
+    * Application Server
+        - Fixed a bug where only first Calendar period were being checked
+        - Added services codes to enable and disable Residential call forward settings
+
+    * Proxies
+        - Fixed call distribution between Carriers with same weight and different servers count
+        - Added stopper as new Outgoing Routing type
+        - Added Residential Account Id field is in CDRs
+
+    * Billing
+        - Fixed a bug in Daily Max usage threshold not being properly stored
+
+    * Invoicing
+        - Fixed default Invoice Templates contents
+
+    * Core
+        - Companies CDRs are no longer removed when Company is deleted
+        - Added new entity Special Numbers that are skipped from CDRs
+
+    * Portals
+        - Imported Destination Rates CSV data is now properly validated
+
+    * API
+        - Company Id are no longer displayed nor requested in Client API
 
 
-Wed, 28 Mar 2018 18:41:49 +0100 IvozProvider Team <dev@list-ivozprovider.irontec.com>
+Tue, 17 Dec 2019 15:55:04 +0100  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.13.2 released
+
+    * Portals
+        - Fixed External Calls Client Filter
+        - maxDailyusage default value is now 1000000 for all type of clients
+        - Fixed Terminal Model templates backup overwrite
+        - Reviewed Catalan translations in Administration and User portals
+        - Remove Brand fields from Invoice Templates
+        - IVR entry Welcome locutions is now known as Success locution
+        - Not Registered Call Forward type is now known as Unreachable
+        - Call Registry is now only available to vPBX clients
+
+    * Proxies
+        - Improved default Transformation Rules to handle more number formats
+        - Fixed incoming retail calls with T.38 passthrough enabled
+
+    * vPBX
+        - Fixed a bug while checking weekday in External Call Filter Schedules
+        - Skipped voicemail intro when user has recorded message
+
+    * API
+        - Added null/notnull as valid filter value for nullable fields
+        - Improved performance for unpaginated API requests
+        - WebPortal endpoint now includes type field
+
+    * Other
+        - Added documentation for basic API usage
+
+
+Mon, 18 Nov 2019 10:41:25 +0100  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.13.1 released
+
+    * Portals
+        - Fixed a bug where default Invoice templates was being assigned to emulated brand
+        - Fixed a bug where recordings could be deleted when it shouldn't
+        - Restored Externally rater custom options in Company screens
+
+    * Billing
+        - Improved CGRateS reloads when Destinations have not changed
+
+    * Invoicing
+        - Fixed Brand invoice data display in default Invoice templates
+
+    * Proxies
+        - Fixed a bug with wholesale Diversion header domains
+
+    * API
+        - Billable calls cost field can now be edited from Rest API
+        - Added missing CalendarPeriod endpoint
+
+
+Wed, 30 Oct 2019 12:34:00 +0200  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.13 released
+
+    * Portals
+        - Hide recordings delete button based on client configuration
+        - New platform section to create Invoice templates that any brand in the platform can reuse
+        - Added four new Brand fields to configure Clients notifications templates default value
+
+    * Billing
+        - New feature to set a maximum daily usage by client (1000000 € by default)
+
+    * Proxies
+        - Added block routes concept to Outgoing Routings
+        - Added cgrates_mode runtime parameter that allows national calls to be allowed in CGRateS down scenarios
+
+    * API
+        - Added PUT /billable_calls/{callid}/rate endpoint on platform and brand APIs
+        - Removed deprecated brand attribute from brand API (as it can be auto resolved)
+
+    * Other
+        - Fixed routing pattern creation/edition logic
+        - Fixed some deprecation warnings
+        - Fixed regression on balance operations (both company and carrier)
+
+        See specific API changelog for detailed information on changes for each level
+
+Wed, 09 Oct 2019 10:01:15 +0200  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.12.1 released
+
+    * Portals
+        - Added translated strings for Catalan language
+        - Filter timezone dropdowns based on selected Country
+        - Added missing country code field in Residential External call filters
+        - Carrier cost fields are no longer displayed when Billing feature is disabled
+        - Fix carrier External calls list CSV export
+        - Fix client rating profiles CSV export
+
+    * Billing
+        - Do not generate carrier CDR if calculate cost is disabled
+        - Avoid unreal error log messages
+
+    * Proxies
+        - Retail client calls are now recorded based on DDI record configuration
+
+    * Documentation
+        - Improved documentation for Holiday Dates and Calendar Periods
+        - Improved documentation for imported DestinationRates CSV files
+
+    * Packaging
+        - Added Catalan and Italian in default portal language menu
+        - Removed 32 bits package support
+
+    * API
+        - Exposed some inverse relationships on PUT and POST methods
+        - Added register status endpoint on ddi provider registrations
+
+    * Other
+        - Improve CDR mixer memory usage
+
+        See specific API changelog for detailed information on changes for each level
+
+
+Thu, 29 Aug 2019 15:35:24 +0200  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.12.0 released
+
+    * Proxies
+        - Fixed error when a carrier of LCR route cannot bill given destination
+        - Allow within country calls if billing engine is unreachable
+
+    * vPBX
+        - Fixed how holiday dates are matched
+
+    * Portals
+        - Added Italian language support (no .po or locutions yet)
+        - Added Catalan language (no .po or locutions yet)
+        - Add DDI Provider registration status
+
+    * Invoicing
+        - Try to rate automatically any unrated call included in scheduled invoices
+
+    * API
+        - Added exists filter for foreign keys
+
+        See specific API changelog for detailed information on changes for each level
+
+Wed, 24 Jul 2019 10:11:24 +0200  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.11.2 released
+
+    * Proxies
+        - Reimplemented Outgoing DDI presentation using prefix
+        - Fixed a bug in LCR routes that caused Carrier deactivation
+        - Changed default parallel forking Q-value to 1.00
+
+    * vPBX
+        - Fixed a bug in Outgoing DDI presentation using match lists
+        - DND users are no longer disturbed by queue calls
+        - Calendar events now also trigger on start and end date
+
+    * Portals
+        - Fixed a bug in Calendar events Locutions and Schedules filters
+        - Fixed Rating plan CSV exporter for Brand and God administators
+        - Fixed a bug in Retail client call simulator
+        - Fixed a bug in Residential onDemandRecordCode display
+
+    * API
+        - Endpoint Registration status is now also available in brand API
+
+        See specific API changelog for detailed information on changes for each level
+
+Wed, 03 Jul 2019 10:00:00 +0200  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.11.1 released
+
+    * Billing
+        - Fixed error message on rating plan weight collision
+        - Simplified invoice validity checks so that they match the rules described on the documentation
+
+    * Proxies
+        - Fixed Outgoing DDI Rule prefix logic
+
+    * vPBX
+        - Fixed a bug with 0 entry in IVRs
+
+    * Portals:
+        - Forced close of edit/add tabs when a brand/client is emulated preventing unexpected behaviours
+        - Fixed sort by destination on rates
+        - Improved foreign key based sorting performance on big tables
+        - Fixed holiday date importer
+
+    * API
+        - Fixed create user regression
+        - Added file upload restrictions
+
+        See specific API changelog for detailed information on changes for each level
+
+
+Wed, 19 Jun 2019 10:26:26 +0200  IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.11.0 released
+
+    * Billing
+        - Added command line script to reload Brand configurations
+        - Enabled automatic offline billing in cdr mixer
+
+    * Proxies
+        - Fixed a bug that removed P-Asserted-Identity display name
+        - Fixed a bug that prevented external transferred calls
+        - Carriers are now marked inactive only on requests timeout
+
+    * Retail
+        - Fixed a bug that prevented bounced calls from Retail accounts
+
+    * vPBX
+        - Allow outgoing DDI selection using prefixes in Outgoing DDI Rules
+        - Fixed locutions for Route Locks services
+        - Prevent default voicemail unavailable locution if user has one defined
+        - Calendars can no override External call filters Schedules
+        - Call Forwards Settings route is no longer mandatory
+
+    * API
+        - Added support for upload and download of file objects
+        - Added endpoints to get endpoints registration status
+        - Endpoint passwords are now visible in plain text
+        - Reviewed API access controls based on logged user role
+        - Reviewed entity fields access based on api level
+
+    * Other
+        - Fixed a bug while sending multiple email notifications
+        - Rename scheme to schema in all scripts an directories
+
+    See specific API changelog for detailed information on changes for each level
+
+
+Mon, 29 Apr 2019 16:42:45 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.10.0 released
+
+    * Proxies
+        - External rejected calls due to brand or client max limit will now be answered with 486 Busy
+        - Replaced XMLRPC server module with JSONRPC module
+
+    * API
+        - Added new endpoints to get current active calls counters
+        - Brand and Client API logins are now validated using URL domain
+
+    * Web
+        - Billable calls list is now known as External calls list and it also displays incoming calls
+        - Carrier ASR and ACD fields have been removed
+        - Brand URLs are now known as Web Portals and have different filtering for each level
+
+    * vPBX
+        - Fixed a bug in ExternalCallFilters Schedule timezones
+        - vPBX can now place internal calls between them using Inter vPBX Friends
+        - VoiceMail now plays unavailable locution if recorded using internal configuration menu
+        - Added support for T.38 passthrough for Terminals and Friends
+
+    * Residential
+        - Added support for T.38 passthrough for Residential Devices
+
+    * Retail
+        - Added support for T.38 passthrough for Retail Accounts
+
+    * Invoices
+        - Fixed automatic invoice number assignment through invoice scheduler
+
+Thu, 14 Mar 2019 12:32:55 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.9.3 released
+
+    * Proxies
+        - Fixed a bug with unsolicited MWI NOTIFYs not being properly handled
+
+    * Web
+        - Demo Brand has now all features enabled by default
+        - Fixed a crash while sorting tables by outgoingDDI field
+        - Brand creation screen has now all Locale fields visible
+        - Removed Hunt Group relation table from User edit screen
+
+    * API
+        - Added Routing, Destination and Rating endpoints to brand API
+
+    * vPBX
+        - Fixed a bug with PickupGroups not being properly updated
+
+    * Packaging
+        - Added missed dependency on ghostscript for PDF thumbnails
+        - Avoid initial scheme import if database already exists
+
+    * Other
+        - Improved changes detection for entity changelog tables
+
+
+Wed, 27 Feb 2019 10:10:30 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.9.2 released
+
+    * Billing
+        - Added Redis Sentinel support to CGrateS
+
+    * Proxies
+        - Fixed incoming DDI recognition logic
+        - Added an option to configure how bounced calls are handled
+
+    * Web
+        - Improved API search and order strategies
+        - Added new response headers with pagination information
+        - Added date conversions from/to client user timezone
+        - Added global Numeric transformation for E.164 without + sign
+        - Added max concurrent calls field in residential devices
+        - Fixed a bug while exporting calls CSVs from Brand and Client portals
+
+    * Packaging
+        - Removed all mysql replication information from debian packages
+
+Tue, 12 Feb 2019 16:52:41 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.9.1 released
+
+    * vPBX
+        - Fix call-forward in 302 Moved Temporarily from UACs handling
+
+    * Web
+        - Improve performance on big CSV files generation
+        - Reduce memory usage on unpaginated API requests
+        - API specs on /docs.json instead of swagger.json
+        - Make APIs fully OpenAPI 2.0 spec compliant
+
+    * CI
+        - Tests are now configured using Jenkinsfile
+        - Add new API validator tests
+
+Mon, 04 Feb 2019 15:13:33 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.9.0 released
+
+    * Billing
+        - Add support for multi currencies per brand
+        - Allow calls when CGRateS is down
+        - Offline billing for calls during CGRateS downtime
+
+    * Proxies
+        - Add support for KamUsers additional IP addresses
+        - Fallback external number call-forward for unreachable retail accounts
+        - Fix bouncing on shared IP setup
+        - Fix BLF presence
+
+    * Core
+        - Retail configurable recordings by DDI
+        - Email notification for 'all companies' CSV reports
+
+    * vPBX
+        - Add calendar event with time periods
+        - Refactored and merged all external calls AGI logics
+        - Add diversion header to all incoming call that generates an outgoing call
+
+    * Documentation
+        - Translate to spanish initial installation section
+        - Translate to spanish platform roles section
+        - Add basic faq documentation
+
+Mon, 24 Dec 2018 11:13:33 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.8.1 released
+
+    * Billing
+        - Fix CGRateS timezone handling
+
+    * Proxies
+        - Improve maxcalls security mechanism
+        - Fix R-URI on terminals calls (DDI_IN regression)
+
+    * Core
+        - Fix call CSV wrong date calculation
+
+    * Documentation
+        - Translate to spanish user portal section
+        - Translate to spanish third party integrations section
+        - Translate to spanish security section
+
+Wed, 28 Nov 2018 15:22:53 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.8.0 released
+
+    * Portals
+        - Fixed a crash while displaying CGRateS realtime fields
+        - Removed billing inbound calls related fields (not yet implemented)
+        - Changed Zend framework env to production by default (will be managed by synfony envs from now on)
+        - Default notification templates will now be displayed in main administration portal
+        - Notification body can now be sent as HTML or plain text
+        - Added Billable calls CSV exporters
+        - Added day and removed year from CSV schedulers period options
+        - CSV schedulers will now diplay last execution status
+        - CSV schedulers can now export all brand's clients calls
+
+    * Proxies
+        - Improved bounced calls detection (when called destination belongs to current platform)
+        - Bounced calls are now properly recorded for both call endpoints
+        - Removed obsolete configuration files
+        - Added a DDI-in toggle in friends, residential and retail to change R-URI behaviour
+
+    * Residential
+        - Added support to voicemail (ported from oasis release)
+        - Added support to basic call forwarding (ported from oasis release)
+
+    * vPBX
+        - Fixed virtual fax reception AGI process
+        - Voicemails will now say the origin caller number
+
+    * Core
+        - Fixed Music on hold encoding being requested before data was stored in database
+        - Added checks to avoid retail and residentials with the same name
+        - Added checks to aviod friends and terminals with the same name
+
+    * Standalone
+        - Enable ivozprovider-cdr timer to merge cdr tables into BillableCalls
+
+Thu, 11 Oct 2018 16:58:23 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.7.1 released
+
+    * Web
+        - Organized administration portal sections into groups
+        - Download multiple recordings in ZIP file
+        - Changed new recordings file name
+        - Allowed invoice regeneration
+
+    * Billing
+        - Fixed prepaid duplicate rating
+
+    * vPBX
+        - Fixed queue periodic announcement
+        - Removed duplicate g dial option for hunt group
+
+    * Other
+        - Updated documentation (english version only)
+        - Updated ORM tests
+
+Tue, 18 Sep 2018 17:04:15 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.7.0 released
+
+    * Proxies
+        - Added Least Cost Routing support
+        - Added simple Numeric transformations to Static Outgoing Routings
+        - Improved routes failover behaviour
+        - Fix credit expiration autogenerated BYE
+
+    * API
+        - Upgraded api-platform version to 2.2
+        - Added Billable calls API endpoints
+        - Splitted current Rest API endpoints into more specific APIs: Platform, Brand and Client
+
+    * Core
+        - Revamped Kamailio LCR entities lifecycles
+        - Revamped CGRateS entities lifecycles
+        - CGRateS reloads are now done using an async worker
+        - Created Bussiness entities to handle all CGRateS tables
+
+    * Web
+        - Added Billable Calls menu entry to all client types
+        - Added a brand/client section for Call CSV reports scheduling
+        - Added a client section for Pricing Profiles CSV downloads
+        - Balance fields now display realtime values from billing engine
+        - Fixed spanish translations for all popup screens
+        - Fixed destination select in DestinationRates subsection
+
+    * Application Server
+        - Fixed multiple bugs on vPBX External Call Filters
+        - Fixed a bug on Call ACLs matchlists evaluation
+        - Fixed a bug on IVRs locution playback
+
+    * Other
+        - Fixed rtpengine addresses configuration from debian packages
+        - Standarized all library codestyle to PSR2
+
+
+Thu, 16 Aug 2018 13:29:25 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.6 released
+
+    * Application Server
+        - Fixed a crash when no welcome Locution was supplied to IVRs
+
+    * Proxies
+        - Removed unused X-Info-Location logics for dynamic endpoints
+
+    * Billing
+        - Added support for Rating profiles per Routing Tag in Wholesale/Retail clients
+        - Added support for Timings in Rating profiles configuration
+        - Added support for call cost calculation based on Carrier rating profiles
+        - Added support for prepaid balances on Carriers
+        - Added support for balance notifications for Carriers
+        - Added support for quality metrics on Carriers
+        - Migrated Destination Rates and Rating Plan entities to Provider namespace
+
+    * Web
+        - Improved call simulators to support routing tags
+
+    * Other
+        - Added a new entity BillableCall to merge information from Kamailio/CGRates tables
+        - Fixed async workers not being rescheduled properly
+
+Fri, 20 Jul 2018 12:35:45 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.5 released
+
+    * Peering
+        - Contract Peering has been splitted into DDI Providers and Carriers
+            * DDI Provider are servers for incoming DDI calls
+            * Carriers are server for placing outgoing calls
+
+    * Retail
+        - New retail entity without Application Server features
+            * Allow incoming calls from DDIProviders to Retail Accounts
+            * Allow outgoing calls from Retail Accounts to Carriers
+            * Recording support
+            * Routing Tag support
+
+    * Invoices
+        - Improved Invoices number sequences integration
+        - New scheduler for periodic Invoices generation and email notifications
+
+    * Web
+        - Improved Global administration fallback when URL does not match any configured
+        - Virtual PBX sections can now be toggled by vPBX Brand feature
+
+Fri, 29 Jun 2018 10:49:46 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.4 released
+
+    * Core
+        - Replaced Retail Clients with Residential Clients
+
+    * Portals
+        - Enable HTTP2 protocol by default
+        - Improved performance during assets loading
+
+    * Proxies
+        - Removed support for rtpproxy media relays
+        - Added support for rtpengine recordings
+        - Rework all numeric transformations logics in kamailio.cfg
+
+    * Invoices
+        - Added Automatic invoices formats to create sequencial numbering
+
+    * Billing
+        - Calls now can be re-rated with latest rating plan changes
+
+    * Packaging
+        - Improved standalone postinstall scripts
+        - dpkg-reconfigure should now allow changing initial configurations
+
+
+Thu, 07 Jun 2018 13:40:17 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.3 released
+
+    * Wholesale:
+        - Added support for audio transcoding using rtpengine
+        - Added support for routing tags
+
+    * Proxies:
+        - Upgraded Kamailio version to 5.1.2
+        - Improved DDI Bouncing logic (outgoing calls to platform DDIs)
+        - Refactored configuration files routes
+        - PeerServers with unresolvable domains are now skipped
+
+    * Routing:
+        - Added support for routing based on routing tags
+        - Removed support for regular expressions in routing patterns
+
+    * PBX:
+        - Fixed a bug on external calls forwarded to external numbers
+
+    * Web:
+        - Added english translation for user portal
+        - Menu entries are now properly displayed based on enabled features
+
+    * Core:
+        - Reworked Kamailio LCR rules logic
+
+    * Provisioning:
+        - Added latest Cisco combined CA
+
+Fri, 04 May 2018 15:38:00 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
+
+    * IvozProvider 2.2 released
+
+    * Wholesale:
+        - New client type without features
+        - IP authenticated only (no register, no SIP auth)
+        - No Application Server in signalling/media path
+        - Outgoing calls only
+
+    * Billing:
+        - Merge CGrateS rating tables into DestinationRates
+        - Allow download of latest imported rates CSV from DestinationRates
+        - Added support to decrease Prepaid balances
+        - Added a call pricing simulators in Company and Rating Plan sections
+        - Improve CGrates reloading logic
+
+    * Proxies:
+        - Upgrade Kamailio version to 5.1.2
+        - Added support for rtpengine media relay sets
+
+    * Documentation:
+        - Reorder documentation to match the menu format from administration portal
+        - Added a link to documentation in each portal screen
+
+
+Wed, 28 Mar 2018 18:41:49 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 2.1 released
 
     * Billing:
-
-      - Prepaid/Pseudoprepaid billing
-      - Basic CSV price importer
-      - Low balance notifications
-      - New section: Balances (list and increase balances)
+        - Prepaid/Pseudoprepaid billing
+        - Basic CSV price importer
+        - Low balance notifications
+        - New section: Balances (list and increase balances)
 
     * vPBX:
-
-      - Add route-locks as conditional route criteria
-      - Avoid missed calls setting for huntgroups
-      - Fix user-extension-mailbox trigger and logics
-      - User cfw settings can now be enabled/disabled
+        - Add route-locks as conditional route criteria
+        - Avoid missed calls setting for huntgroups
+        - Fix user-extension-mailbox trigger and logics
+        - User cfw settings can now be enabled/disabled
 
     * Portals:
-
-      - Brand Notification templates for Voicemail/Faxes/LowBalances
+        - Brand Notification templates for Voicemail/Faxes/LowBalances
 
     * Proxies:
-
-      - Limit voice channel per brand
-      - Avoid crash when malformed request was received
+        - Limit voice channel per brand
+        - Avoid crash when malformed request was received
 
     * Provisioning
+        - Terminal provisioning services migrated to symfony
 
-      - Terminal provisioning services migrated to symfony
-
-Wed, 22 Nov 2017 18:58:49 +0100 IvozProvider Team <dev@list-ivozprovider.irontec.com>
+Wed, 22 Nov 2017 18:58:49 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 2.0 released
 
     * Core goals:
-
-      - Migrate from Debian 8 to Debian 9 (PHP 7.0, MySQL 5.7, etc.)
-      - Rewrite core libraries from Zendframework1 to Symfony3
-      - Migrate existing applications to new library: AGIs, async workers, etc.
-      - Create a new restful API based on OpenAPI specification
-      - Billing logic migrated from custom scripts to CGrateS billing engine
-      - Numeric Transformation for number i18n fully rewritten
-        - All transformations are made in Kamailio now: AS only talk E.164 format (with '+')
-      - Remove CDR async worker, making simpler CDRs but unambiguously linked to a user/friend/retailAccount
+        - Migrate from Debian 8 to Debian 9 (PHP 7.0, MySQL 5.7, etc.)
+        - Rewrite core libraries from Zendframework1 to Symfony3
+        - Migrate existing applications to new library: AGIs, async workers, etc.
+        - Create a new restful API based on OpenAPI specification
+        - Billing logic migrated from custom scripts to CGrateS billing engine
+        - Numeric Transformation for number i18n fully rewritten
+            * All transformations are made in Kamailio now: AS only talk E.164 format (with '+')
+        - Remove CDR async worker, making simpler CDRs but unambiguously linked to a user/friend/retailAccount
 
     * vPBX:
-
-      - Merge IVR common and IVR custom sections
-      - Enable autofill options for queues
+        - Merge IVR common and IVR custom sections
+        - Enable autofill options for queues
 
     * Kamailio:
-
-      - New default call distribution method (hash based)
-      - Disable DB insert per SIP transaction
-      - Add evapi module for CGrateS and all needed logics
-      - Implement 422 Session Interval Too Small logic
-      - Avoid using invalid SIP credentials more than once
+        - New default call distribution method (hash based)
+        - Disable DB insert per SIP transaction
+        - Add evapi module for CGrateS and all needed logics
+        - Implement 422 Session Interval Too Small logic
+        - Avoid using invalid SIP credentials more than once
 
     * Portals:
-
-      - All external number entries have a country prefix selector now
-      - Migrate userportal to new API
-      - Call-User relationship is unique now
-      - Call ACL use matchlists now
+        - All external number entries have a country prefix selector now
+        - Migrate userportal to new API
+        - Call-User relationship is unique now
+        - Call ACL use matchlists now
 
     * Scheme:
-
-      - Domain logic reworked to avoid stale references and unnecessary hooks
-      - Remove the existing unique db-trigger
-      - Add cgrates tables
+        - Domain logic reworked to avoid stale references and unnecessary hooks
+        - Remove the existing unique db-trigger
+        - Add cgrates tables
 
     * Billing:
-
-      - Migration logic from old billing entities to CGrateS ones
-      - Added redis as stordb running on proxy profile
-      - Invoice worker rewritten to retrieve CGrateS billing information
+        - Migration logic from old billing entities to CGrateS ones
+        - Added redis as stordb running on proxy profile
+        - Invoice worker rewritten to retrieve CGrateS billing information
 
     * Tests:
+        - Most of the entities are now tested through e2e test in admin portal
+        - More than of 200 unit tests of entity services
+        - SIP BBS tests enhanced
 
-      - Most of the entities are now tested through e2e test in admin portal
-      - More than of 200 unit tests of entity services
-      - SIP BBS tests enhanced
+Mon, 01 Oct 2018 19:05:10 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
 
-Wed, 05 Mar 2018 18:52:49 +0100 IvozProvider Team <dev@list-ivozprovider.irontec.com>
+    * IvozProvider 1.7.1 released
+
+    * Portals
+        - Change name for new recordings
+        - Download several recording files in ZIP
+        - Make CDR sections faster
+        - Fix invoice timezone conversion
+
+    * User portal
+        - Fix terminal status information
+
+    * Virtual PBX
+        - Set generic email date format
+        - Fix queue retry setting
+
+    * Proxies
+        - Fix routing due to wrong Contact
+        - Avoid failover for 480 responses
+        - Skip carriers with non-resolvable domains
+        - Fix drop call on call limit retrieval error
+        - Decrease log volume
+
+Wed, 05 Mar 2018 18:52:49 +0100 IvozProvider Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 1.7 released
 
-    * vPBX: Add route-locks as conditional route criteria
-    * vPBX: Avoid missed calls setting for huntgroups
-    * vPBX: fix user-extension-mailbox trigger and logics
-    * retail: Add call forward settings per retail account
-    * retail: Add voicemail per retail account
-    * Portals: Add enable/disable toggle for user cfw settings
-    * Portals: Limit voice channel per brand
-    * Kam: Avoid crash when malformed request was received
-    * Kam: Disable DB insert per transaction
+    * Virtual PBX
+        - Add route-locks as conditional route criteria
+        - Avoid missed calls setting for huntgroups
+        - Fix user-extension-mailbox trigger and logics
 
-Wed, 28 Aug 2017 13:57:21 +0200 IvozProvider Team <dev@list-ivozprovider.irontec.com>
+    * Retail
+        - Add call forward settings per retail account
+        - Add voicemail per retail account
+
+    * Portals
+        - Add enable/disable toggle for user cfw settings
+        - Limit voice channel per brand
+
+    * Proxies
+        - Avoid crash when malformed request was received
+        - Disable DB insert per transaction
+
+Wed, 28 Aug 2017 13:57:21 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 1.6 released
 
@@ -174,7 +891,7 @@ Wed, 28 Aug 2017 13:57:21 +0200 IvozProvider Team <dev@list-ivozprovider.irontec
         - Removed outgoingDDIRules field from Retail client screens
 
     * Application Server
-        - Upgraded asterisk version to 13.17.0 (see UPGRADE-1.6.md)
+       - Upgraded asterisk version to 13.17.0 (see UPGRADE-1.6.md)
 
     * Proxy Users
         - Improved presence changes notification
@@ -191,7 +908,7 @@ Wed, 28 Aug 2017 13:57:21 +0200 IvozProvider Team <dev@list-ivozprovider.irontec
         - Added multiple SIP bbs tests
         - Minor documentation improvements
 
-Wed, 26 Jul 2017 15:27:20 +0200 IvozProvider Team <dev@list-ivozprovider.irontec.com>
+Wed, 26 Jul 2017 15:27:20 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 1.5 released
 
@@ -236,7 +953,7 @@ Wed, 26 Jul 2017 15:27:20 +0200 IvozProvider Team <dev@list-ivozprovider.irontec
     * Other
         - Switched software license from EUPLv1.1 to GPLv3
 
-Wed, 14 Jun 2017 10:52:03 +0200 IvozProvider Team <dev@list-ivozprovider.irontec.com>
+Wed, 14 Jun 2017 10:52:03 +0200 IvozProvider Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 1.4 released
 
@@ -276,7 +993,7 @@ Wed, 14 Jun 2017 10:52:03 +0200 IvozProvider Team <dev@list-ivozprovider.irontec
         - Added basic Rest API tests for mappers and models
         - Added basic SIP tests simulating multiple UAC and Unassigned
 
-Fri, 19 May 2017 17:29:03 +0200 IvozProvider Development Team <dev@list-ivozprovider.irontec.com>
+Fri, 19 May 2017 17:29:03 +0200 IvozProvider Development Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 1.3 released
 
@@ -287,14 +1004,14 @@ Fri, 19 May 2017 17:29:03 +0200 IvozProvider Development Team <dev@list-ivozprov
         - Fixed Company domain not being saved on new created companies
         - Companies and Brands now have some features that can be toggled in order to hide/show
           different sections of the web or special behaviours:
-              * Friends
-              * Recordings
-              * Faxes
-              * Conferences
-              * Queues
-              * Invoices
-              * Billing
-              * Voice error notifications
+            * Friends
+            * Recordings
+            * Faxes
+            * Conferences
+            * Queues
+            * Invoices
+            * Billing
+            * Voice error notifications
 
     * PBX
         - Add support for default Company Outgoing DDI
@@ -302,12 +1019,12 @@ Fri, 19 May 2017 17:29:03 +0200 IvozProvider Development Team <dev@list-ivozprov
         - Friends Diversion headers are removed before placing external calls
         - Friends can use any company DDI as outgoing DDI for external calls
         - Added error notifications over progress:
-            - Enabled via Brand/Companies Features
-            - Plays a fixed locution when configuration does not allow to call (ACL, Pricing, etc)
+        - Enabled via Brand/Companies Features
+        - Plays a fixed locution when configuration does not allow to call (ACL, Pricing, etc)
         - Added Queues support:
-            - Beta Stage: This requires more testing for distributed installations
-            - Enabled via Brand/Companies Features
-            - Very basic queue and members configuration
+        - Beta Stage: This requires more testing for distributed installations
+        - Enabled via Brand/Companies Features
+        - Very basic queue and members configuration
 
     * Proxies
         - Replaced call waiting logics with max calls
@@ -331,7 +1048,7 @@ Fri, 19 May 2017 17:29:03 +0200 IvozProvider Development Team <dev@list-ivozprov
         - Improvements and fixes for Spanish translation
 
 
-Fri Apr 7 12:08:18 2017 +0200 IvozProvider Development Team <dev@list-ivozprovider.irontec.com>
+Fri Apr 7 12:08:18 2017 +0200 IvozProvider Development Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 1.2 released
 
@@ -395,7 +1112,7 @@ Fri Apr 7 12:08:18 2017 +0200 IvozProvider Development Team <dev@list-ivozprovid
         - Removed ntp dependency in favor of systemd-timesyncd
 
 
-Mon Jan 2 17:15:31 2017 +0100 IvozProvider Development Team <dev@list-ivozprovider.irontec.com>
+Mon Jan 2 17:15:31 2017 +0100 IvozProvider Development Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 1.1 released
 
@@ -439,9 +1156,7 @@ Mon Jan 2 17:15:31 2017 +0100 IvozProvider Development Team <dev@list-ivozprovid
         - Improved NAT detection mechanism to avoid detecting NAT on LAN installations
         - Refactorized kamailio configuration logics to improve calls concurrency
 
-Mon Nov 14 19:12:30 2016 +0100 IvozProvider Development Team <dev@list-ivozprovider.irontec.com>
+Mon Nov 14 19:12:30 2016 +0100 IvozProvider Development Team <vozip+ivozprovider@irontec.com>
 
     * IvozProvider 1.0 released
     * Initial release
-
-

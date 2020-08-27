@@ -3,26 +3,19 @@
 namespace Ivoz\Cgr\Domain\Service\TpDestinationRate;
 
 use Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface;
-use Ivoz\Core\Infrastructure\Domain\Service\Redis\Client as RedisClient;
+use Ivoz\Cgr\Domain\Service\CgratesReloadNotificator;
 
-class UpdatedTpDestinationRateNotificator implements TpDestinationRateLifecycleEventHandlerInterface
+class UpdatedTpDestinationRateNotificator extends CgratesReloadNotificator implements TpDestinationRateLifecycleEventHandlerInterface
 {
-    private $client;
-
-    public function __construct(RedisClient $client)
+    /**
+     * Reload CGRates Configuration
+     *
+     * @param TpDestinationRateInterface $tpDestinationRate
+     *
+     * @return void
+     */
+    public function execute(TpDestinationRateInterface $tpDestinationRate)
     {
-        $this->client = $client;
-    }
-
-    public static function getSubscribedEvents()
-    {
-        return [
-            self::EVENT_ON_COMMIT => 10
-        ];
-    }
-
-    public function execute(TpDestinationRateInterface $entity)
-    {
-        $this->client->scheduleFullReload();
+        $this->reload($tpDestinationRate->getTpid());
     }
 }

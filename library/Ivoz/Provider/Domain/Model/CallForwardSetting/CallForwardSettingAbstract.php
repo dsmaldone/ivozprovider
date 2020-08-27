@@ -27,44 +27,54 @@ abstract class CallForwardSettingAbstract
 
     /**
      * comment: enum:number|extension|voicemail
-     * @var string
+     * @var string | null
      */
     protected $targetType;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $numberValue;
 
     /**
      * @var integer
      */
-    protected $noAnswerTimeout = '10';
+    protected $noAnswerTimeout = 10;
 
     /**
      * @var boolean
      */
-    protected $enabled = '1';
+    protected $enabled = true;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     protected $user;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     protected $extension;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     protected $voiceMailUser;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     protected $numberCountry;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
+     */
+    protected $residentialDevice;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
+     */
+    protected $retailAccount;
 
 
     use ChangelogTrait;
@@ -75,13 +85,11 @@ abstract class CallForwardSettingAbstract
     protected function __construct(
         $callTypeFilter,
         $callForwardType,
-        $targetType,
         $noAnswerTimeout,
         $enabled
     ) {
         $this->setCallTypeFilter($callTypeFilter);
         $this->setCallForwardType($callForwardType);
-        $this->setTargetType($targetType);
         $this->setNoAnswerTimeout($noAnswerTimeout);
         $this->setEnabled($enabled);
     }
@@ -90,7 +98,8 @@ abstract class CallForwardSettingAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "CallForwardSetting",
             $this->getId()
         );
@@ -114,7 +123,8 @@ abstract class CallForwardSettingAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param CallForwardSettingInterface|null $entity
      * @param int $depth
      * @return CallForwardSettingDto|null
      */
@@ -134,51 +144,56 @@ abstract class CallForwardSettingAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var CallForwardSettingDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CallForwardSettingDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CallForwardSettingDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CallForwardSettingDto::class);
 
         $self = new static(
             $dto->getCallTypeFilter(),
             $dto->getCallForwardType(),
-            $dto->getTargetType(),
             $dto->getNoAnswerTimeout(),
-            $dto->getEnabled());
+            $dto->getEnabled()
+        );
 
         $self
+            ->setTargetType($dto->getTargetType())
             ->setNumberValue($dto->getNumberValue())
-            ->setUser($dto->getUser())
-            ->setExtension($dto->getExtension())
-            ->setVoiceMailUser($dto->getVoiceMailUser())
-            ->setNumberCountry($dto->getNumberCountry())
+            ->setUser($fkTransformer->transform($dto->getUser()))
+            ->setExtension($fkTransformer->transform($dto->getExtension()))
+            ->setVoiceMailUser($fkTransformer->transform($dto->getVoiceMailUser()))
+            ->setNumberCountry($fkTransformer->transform($dto->getNumberCountry()))
+            ->setResidentialDevice($fkTransformer->transform($dto->getResidentialDevice()))
+            ->setRetailAccount($fkTransformer->transform($dto->getRetailAccount()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CallForwardSettingDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CallForwardSettingDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CallForwardSettingDto::class);
 
         $this
@@ -188,18 +203,20 @@ abstract class CallForwardSettingAbstract
             ->setNumberValue($dto->getNumberValue())
             ->setNoAnswerTimeout($dto->getNoAnswerTimeout())
             ->setEnabled($dto->getEnabled())
-            ->setUser($dto->getUser())
-            ->setExtension($dto->getExtension())
-            ->setVoiceMailUser($dto->getVoiceMailUser())
-            ->setNumberCountry($dto->getNumberCountry());
+            ->setUser($fkTransformer->transform($dto->getUser()))
+            ->setExtension($fkTransformer->transform($dto->getExtension()))
+            ->setVoiceMailUser($fkTransformer->transform($dto->getVoiceMailUser()))
+            ->setNumberCountry($fkTransformer->transform($dto->getNumberCountry()))
+            ->setResidentialDevice($fkTransformer->transform($dto->getResidentialDevice()))
+            ->setRetailAccount($fkTransformer->transform($dto->getRetailAccount()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return CallForwardSettingDto
      */
@@ -215,7 +232,9 @@ abstract class CallForwardSettingAbstract
             ->setUser(\Ivoz\Provider\Domain\Model\User\User::entityToDto(self::getUser(), $depth))
             ->setExtension(\Ivoz\Provider\Domain\Model\Extension\Extension::entityToDto(self::getExtension(), $depth))
             ->setVoiceMailUser(\Ivoz\Provider\Domain\Model\User\User::entityToDto(self::getVoiceMailUser(), $depth))
-            ->setNumberCountry(\Ivoz\Provider\Domain\Model\Country\Country::entityToDto(self::getNumberCountry(), $depth));
+            ->setNumberCountry(\Ivoz\Provider\Domain\Model\Country\Country::entityToDto(self::getNumberCountry(), $depth))
+            ->setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDevice::entityToDto(self::getResidentialDevice(), $depth))
+            ->setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccount::entityToDto(self::getRetailAccount(), $depth));
     }
 
     /**
@@ -233,11 +252,11 @@ abstract class CallForwardSettingAbstract
             'userId' => self::getUser() ? self::getUser()->getId() : null,
             'extensionId' => self::getExtension() ? self::getExtension()->getId() : null,
             'voiceMailUserId' => self::getVoiceMailUser() ? self::getVoiceMailUser()->getId() : null,
-            'numberCountryId' => self::getNumberCountry() ? self::getNumberCountry()->getId() : null
+            'numberCountryId' => self::getNumberCountry() ? self::getNumberCountry()->getId() : null,
+            'residentialDeviceId' => self::getResidentialDevice() ? self::getResidentialDevice()->getId() : null,
+            'retailAccountId' => self::getRetailAccount() ? self::getRetailAccount()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -245,17 +264,17 @@ abstract class CallForwardSettingAbstract
      *
      * @param string $callTypeFilter
      *
-     * @return self
+     * @return static
      */
-    public function setCallTypeFilter($callTypeFilter)
+    protected function setCallTypeFilter($callTypeFilter)
     {
         Assertion::notNull($callTypeFilter, 'callTypeFilter value "%s" is null, but non null value was expected.');
         Assertion::maxLength($callTypeFilter, 25, 'callTypeFilter value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($callTypeFilter, array (
-          0 => 'internal',
-          1 => 'external',
-          2 => 'both',
-        ), 'callTypeFiltervalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($callTypeFilter, [
+            CallForwardSettingInterface::CALLTYPEFILTER_INTERNAL,
+            CallForwardSettingInterface::CALLTYPEFILTER_EXTERNAL,
+            CallForwardSettingInterface::CALLTYPEFILTER_BOTH
+        ], 'callTypeFiltervalue "%s" is not an element of the valid values: %s');
 
         $this->callTypeFilter = $callTypeFilter;
 
@@ -277,18 +296,18 @@ abstract class CallForwardSettingAbstract
      *
      * @param string $callForwardType
      *
-     * @return self
+     * @return static
      */
-    public function setCallForwardType($callForwardType)
+    protected function setCallForwardType($callForwardType)
     {
         Assertion::notNull($callForwardType, 'callForwardType value "%s" is null, but non null value was expected.');
         Assertion::maxLength($callForwardType, 25, 'callForwardType value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($callForwardType, array (
-          0 => 'inconditional',
-          1 => 'noAnswer',
-          2 => 'busy',
-          3 => 'userNotRegistered',
-        ), 'callForwardTypevalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($callForwardType, [
+            CallForwardSettingInterface::CALLFORWARDTYPE_INCONDITIONAL,
+            CallForwardSettingInterface::CALLFORWARDTYPE_NOANSWER,
+            CallForwardSettingInterface::CALLFORWARDTYPE_BUSY,
+            CallForwardSettingInterface::CALLFORWARDTYPE_USERNOTREGISTERED
+        ], 'callForwardTypevalue "%s" is not an element of the valid values: %s');
 
         $this->callForwardType = $callForwardType;
 
@@ -308,19 +327,20 @@ abstract class CallForwardSettingAbstract
     /**
      * Set targetType
      *
-     * @param string $targetType
+     * @param string $targetType | null
      *
-     * @return self
+     * @return static
      */
-    public function setTargetType($targetType)
+    protected function setTargetType($targetType = null)
     {
-        Assertion::notNull($targetType, 'targetType value "%s" is null, but non null value was expected.');
-        Assertion::maxLength($targetType, 25, 'targetType value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($targetType, array (
-          0 => 'number',
-          1 => 'extension',
-          2 => 'voicemail',
-        ), 'targetTypevalue "%s" is not an element of the valid values: %s');
+        if (!is_null($targetType)) {
+            Assertion::maxLength($targetType, 25, 'targetType value "%s" is too long, it should have no more than %d characters, but has %d characters.');
+            Assertion::choice($targetType, [
+                CallForwardSettingInterface::TARGETTYPE_NUMBER,
+                CallForwardSettingInterface::TARGETTYPE_EXTENSION,
+                CallForwardSettingInterface::TARGETTYPE_VOICEMAIL
+            ], 'targetTypevalue "%s" is not an element of the valid values: %s');
+        }
 
         $this->targetType = $targetType;
 
@@ -330,7 +350,7 @@ abstract class CallForwardSettingAbstract
     /**
      * Get targetType
      *
-     * @return string
+     * @return string | null
      */
     public function getTargetType()
     {
@@ -340,11 +360,11 @@ abstract class CallForwardSettingAbstract
     /**
      * Set numberValue
      *
-     * @param string $numberValue
+     * @param string $numberValue | null
      *
-     * @return self
+     * @return static
      */
-    public function setNumberValue($numberValue = null)
+    protected function setNumberValue($numberValue = null)
     {
         if (!is_null($numberValue)) {
             Assertion::maxLength($numberValue, 25, 'numberValue value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -358,7 +378,7 @@ abstract class CallForwardSettingAbstract
     /**
      * Get numberValue
      *
-     * @return string
+     * @return string | null
      */
     public function getNumberValue()
     {
@@ -370,14 +390,14 @@ abstract class CallForwardSettingAbstract
      *
      * @param integer $noAnswerTimeout
      *
-     * @return self
+     * @return static
      */
-    public function setNoAnswerTimeout($noAnswerTimeout)
+    protected function setNoAnswerTimeout($noAnswerTimeout)
     {
         Assertion::notNull($noAnswerTimeout, 'noAnswerTimeout value "%s" is null, but non null value was expected.');
         Assertion::integerish($noAnswerTimeout, 'noAnswerTimeout value "%s" is not an integer or a number castable to integer.');
 
-        $this->noAnswerTimeout = $noAnswerTimeout;
+        $this->noAnswerTimeout = (int) $noAnswerTimeout;
 
         return $this;
     }
@@ -397,12 +417,13 @@ abstract class CallForwardSettingAbstract
      *
      * @param boolean $enabled
      *
-     * @return self
+     * @return static
      */
-    public function setEnabled($enabled)
+    protected function setEnabled($enabled)
     {
         Assertion::notNull($enabled, 'enabled value "%s" is null, but non null value was expected.');
         Assertion::between(intval($enabled), 0, 1, 'enabled provided "%s" is not a valid boolean value.');
+        $enabled = (bool) $enabled;
 
         $this->enabled = $enabled;
 
@@ -422,9 +443,9 @@ abstract class CallForwardSettingAbstract
     /**
      * Set user
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user | null
      *
-     * @return self
+     * @return static
      */
     public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null)
     {
@@ -436,7 +457,7 @@ abstract class CallForwardSettingAbstract
     /**
      * Get user
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getUser()
     {
@@ -446,11 +467,11 @@ abstract class CallForwardSettingAbstract
     /**
      * Set extension
      *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension
+     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension | null
      *
-     * @return self
+     * @return static
      */
-    public function setExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension = null)
+    protected function setExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension = null)
     {
         $this->extension = $extension;
 
@@ -460,7 +481,7 @@ abstract class CallForwardSettingAbstract
     /**
      * Get extension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getExtension()
     {
@@ -470,11 +491,11 @@ abstract class CallForwardSettingAbstract
     /**
      * Set voiceMailUser
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $voiceMailUser
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $voiceMailUser | null
      *
-     * @return self
+     * @return static
      */
-    public function setVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $voiceMailUser = null)
+    protected function setVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $voiceMailUser = null)
     {
         $this->voiceMailUser = $voiceMailUser;
 
@@ -484,7 +505,7 @@ abstract class CallForwardSettingAbstract
     /**
      * Get voiceMailUser
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getVoiceMailUser()
     {
@@ -494,11 +515,11 @@ abstract class CallForwardSettingAbstract
     /**
      * Set numberCountry
      *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry | null
      *
-     * @return self
+     * @return static
      */
-    public function setNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry = null)
+    protected function setNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry = null)
     {
         $this->numberCountry = $numberCountry;
 
@@ -508,15 +529,60 @@ abstract class CallForwardSettingAbstract
     /**
      * Get numberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getNumberCountry()
     {
         return $this->numberCountry;
     }
 
+    /**
+     * Set residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice | null
+     *
+     * @return static
+     */
+    public function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice = null)
+    {
+        $this->residentialDevice = $residentialDevice;
 
+        return $this;
+    }
+
+    /**
+     * Get residentialDevice
+     *
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
+     */
+    public function getResidentialDevice()
+    {
+        return $this->residentialDevice;
+    }
+
+    /**
+     * Set retailAccount
+     *
+     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount | null
+     *
+     * @return static
+     */
+    public function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount = null)
+    {
+        $this->retailAccount = $retailAccount;
+
+        return $this;
+    }
+
+    /**
+     * Get retailAccount
+     *
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
+     */
+    public function getRetailAccount()
+    {
+        return $this->retailAccount;
+    }
 
     // @codeCoverageIgnoreEnd
 }
-

@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class OutgoingRoutingAbstract
 {
     /**
-     * @var string
+     * @var string | null
      */
     protected $type = 'group';
 
@@ -26,7 +26,33 @@ abstract class OutgoingRoutingAbstract
     /**
      * @var integer
      */
-    protected $weight = '1';
+    protected $weight = 1;
+
+    /**
+     * comment: enum:static|lcr|block
+     * @var string | null
+     */
+    protected $routingMode = 'static';
+
+    /**
+     * @var string | null
+     */
+    protected $prefix;
+
+    /**
+     * @var boolean
+     */
+    protected $stopper = false;
+
+    /**
+     * @var boolean | null
+     */
+    protected $forceClid = false;
+
+    /**
+     * @var string | null
+     */
+    protected $clid;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface
@@ -34,29 +60,34 @@ abstract class OutgoingRoutingAbstract
     protected $brand;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     protected $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
      */
-    protected $peeringContract;
+    protected $carrier;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface
+     * @var \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface | null
      */
     protected $routingPattern;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface
+     * @var \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface | null
      */
     protected $routingPatternGroup;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface
+     * @var \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface | null
      */
     protected $routingTag;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
+     */
+    protected $clidCountry;
 
 
     use ChangelogTrait;
@@ -64,17 +95,19 @@ abstract class OutgoingRoutingAbstract
     /**
      * Constructor
      */
-    protected function __construct($priority, $weight)
+    protected function __construct($priority, $weight, $stopper)
     {
         $this->setPriority($priority);
         $this->setWeight($weight);
+        $this->setStopper($stopper);
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "OutgoingRouting",
             $this->getId()
         );
@@ -98,7 +131,8 @@ abstract class OutgoingRoutingAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param OutgoingRoutingInterface|null $entity
      * @param int $depth
      * @return OutgoingRoutingDto|null
      */
@@ -118,70 +152,85 @@ abstract class OutgoingRoutingAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var OutgoingRoutingDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param OutgoingRoutingDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto OutgoingRoutingDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, OutgoingRoutingDto::class);
 
         $self = new static(
             $dto->getPriority(),
-            $dto->getWeight());
+            $dto->getWeight(),
+            $dto->getStopper()
+        );
 
         $self
             ->setType($dto->getType())
-            ->setBrand($dto->getBrand())
-            ->setCompany($dto->getCompany())
-            ->setPeeringContract($dto->getPeeringContract())
-            ->setRoutingPattern($dto->getRoutingPattern())
-            ->setRoutingPatternGroup($dto->getRoutingPatternGroup())
-            ->setRoutingTag($dto->getRoutingTag())
+            ->setRoutingMode($dto->getRoutingMode())
+            ->setPrefix($dto->getPrefix())
+            ->setForceClid($dto->getForceClid())
+            ->setClid($dto->getClid())
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()))
+            ->setRoutingPattern($fkTransformer->transform($dto->getRoutingPattern()))
+            ->setRoutingPatternGroup($fkTransformer->transform($dto->getRoutingPatternGroup()))
+            ->setRoutingTag($fkTransformer->transform($dto->getRoutingTag()))
+            ->setClidCountry($fkTransformer->transform($dto->getClidCountry()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param OutgoingRoutingDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto OutgoingRoutingDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, OutgoingRoutingDto::class);
 
         $this
             ->setType($dto->getType())
             ->setPriority($dto->getPriority())
             ->setWeight($dto->getWeight())
-            ->setBrand($dto->getBrand())
-            ->setCompany($dto->getCompany())
-            ->setPeeringContract($dto->getPeeringContract())
-            ->setRoutingPattern($dto->getRoutingPattern())
-            ->setRoutingPatternGroup($dto->getRoutingPatternGroup())
-            ->setRoutingTag($dto->getRoutingTag());
+            ->setRoutingMode($dto->getRoutingMode())
+            ->setPrefix($dto->getPrefix())
+            ->setStopper($dto->getStopper())
+            ->setForceClid($dto->getForceClid())
+            ->setClid($dto->getClid())
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()))
+            ->setRoutingPattern($fkTransformer->transform($dto->getRoutingPattern()))
+            ->setRoutingPatternGroup($fkTransformer->transform($dto->getRoutingPatternGroup()))
+            ->setRoutingTag($fkTransformer->transform($dto->getRoutingTag()))
+            ->setClidCountry($fkTransformer->transform($dto->getClidCountry()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return OutgoingRoutingDto
      */
@@ -191,12 +240,18 @@ abstract class OutgoingRoutingAbstract
             ->setType(self::getType())
             ->setPriority(self::getPriority())
             ->setWeight(self::getWeight())
+            ->setRoutingMode(self::getRoutingMode())
+            ->setPrefix(self::getPrefix())
+            ->setStopper(self::getStopper())
+            ->setForceClid(self::getForceClid())
+            ->setClid(self::getClid())
             ->setBrand(\Ivoz\Provider\Domain\Model\Brand\Brand::entityToDto(self::getBrand(), $depth))
             ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
-            ->setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContract::entityToDto(self::getPeeringContract(), $depth))
+            ->setCarrier(\Ivoz\Provider\Domain\Model\Carrier\Carrier::entityToDto(self::getCarrier(), $depth))
             ->setRoutingPattern(\Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPattern::entityToDto(self::getRoutingPattern(), $depth))
             ->setRoutingPatternGroup(\Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroup::entityToDto(self::getRoutingPatternGroup(), $depth))
-            ->setRoutingTag(\Ivoz\Provider\Domain\Model\RoutingTag\RoutingTag::entityToDto(self::getRoutingTag(), $depth));
+            ->setRoutingTag(\Ivoz\Provider\Domain\Model\RoutingTag\RoutingTag::entityToDto(self::getRoutingTag(), $depth))
+            ->setClidCountry(\Ivoz\Provider\Domain\Model\Country\Country::entityToDto(self::getClidCountry(), $depth));
     }
 
     /**
@@ -208,30 +263,31 @@ abstract class OutgoingRoutingAbstract
             'type' => self::getType(),
             'priority' => self::getPriority(),
             'weight' => self::getWeight(),
-            'brandId' => self::getBrand() ? self::getBrand()->getId() : null,
+            'routingMode' => self::getRoutingMode(),
+            'prefix' => self::getPrefix(),
+            'stopper' => self::getStopper(),
+            'forceClid' => self::getForceClid(),
+            'clid' => self::getClid(),
+            'brandId' => self::getBrand()->getId(),
             'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
-            'peeringContractId' => self::getPeeringContract() ? self::getPeeringContract()->getId() : null,
+            'carrierId' => self::getCarrier() ? self::getCarrier()->getId() : null,
             'routingPatternId' => self::getRoutingPattern() ? self::getRoutingPattern()->getId() : null,
             'routingPatternGroupId' => self::getRoutingPatternGroup() ? self::getRoutingPatternGroup()->getId() : null,
-            'routingTagId' => self::getRoutingTag() ? self::getRoutingTag()->getId() : null
+            'routingTagId' => self::getRoutingTag() ? self::getRoutingTag()->getId() : null,
+            'clidCountryId' => self::getClidCountry() ? self::getClidCountry()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set type
      *
-     * @param string $type
+     * @param string $type | null
      *
-     * @return self
+     * @return static
      */
-    public function setType($type = null)
+    protected function setType($type = null)
     {
-        if (!is_null($type)) {
-        }
-
         $this->type = $type;
 
         return $this;
@@ -240,7 +296,7 @@ abstract class OutgoingRoutingAbstract
     /**
      * Get type
      *
-     * @return string
+     * @return string | null
      */
     public function getType()
     {
@@ -252,15 +308,15 @@ abstract class OutgoingRoutingAbstract
      *
      * @param integer $priority
      *
-     * @return self
+     * @return static
      */
-    public function setPriority($priority)
+    protected function setPriority($priority)
     {
         Assertion::notNull($priority, 'priority value "%s" is null, but non null value was expected.');
         Assertion::integerish($priority, 'priority value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($priority, 0, 'priority provided "%s" is not greater or equal than "%s".');
 
-        $this->priority = $priority;
+        $this->priority = (int) $priority;
 
         return $this;
     }
@@ -280,15 +336,15 @@ abstract class OutgoingRoutingAbstract
      *
      * @param integer $weight
      *
-     * @return self
+     * @return static
      */
-    public function setWeight($weight)
+    protected function setWeight($weight)
     {
         Assertion::notNull($weight, 'weight value "%s" is null, but non null value was expected.');
         Assertion::integerish($weight, 'weight value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($weight, 0, 'weight provided "%s" is not greater or equal than "%s".');
 
-        $this->weight = $weight;
+        $this->weight = (int) $weight;
 
         return $this;
     }
@@ -304,13 +360,159 @@ abstract class OutgoingRoutingAbstract
     }
 
     /**
+     * Set routingMode
+     *
+     * @param string $routingMode | null
+     *
+     * @return static
+     */
+    protected function setRoutingMode($routingMode = null)
+    {
+        if (!is_null($routingMode)) {
+            Assertion::maxLength($routingMode, 25, 'routingMode value "%s" is too long, it should have no more than %d characters, but has %d characters.');
+            Assertion::choice($routingMode, [
+                OutgoingRoutingInterface::ROUTINGMODE_STATIC,
+                OutgoingRoutingInterface::ROUTINGMODE_LCR,
+                OutgoingRoutingInterface::ROUTINGMODE_BLOCK
+            ], 'routingModevalue "%s" is not an element of the valid values: %s');
+        }
+
+        $this->routingMode = $routingMode;
+
+        return $this;
+    }
+
+    /**
+     * Get routingMode
+     *
+     * @return string | null
+     */
+    public function getRoutingMode()
+    {
+        return $this->routingMode;
+    }
+
+    /**
+     * Set prefix
+     *
+     * @param string $prefix | null
+     *
+     * @return static
+     */
+    protected function setPrefix($prefix = null)
+    {
+        if (!is_null($prefix)) {
+            Assertion::maxLength($prefix, 25, 'prefix value "%s" is too long, it should have no more than %d characters, but has %d characters.');
+        }
+
+        $this->prefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * Get prefix
+     *
+     * @return string | null
+     */
+    public function getPrefix()
+    {
+        return $this->prefix;
+    }
+
+    /**
+     * Set stopper
+     *
+     * @param boolean $stopper
+     *
+     * @return static
+     */
+    protected function setStopper($stopper)
+    {
+        Assertion::notNull($stopper, 'stopper value "%s" is null, but non null value was expected.');
+        Assertion::between(intval($stopper), 0, 1, 'stopper provided "%s" is not a valid boolean value.');
+        $stopper = (bool) $stopper;
+
+        $this->stopper = $stopper;
+
+        return $this;
+    }
+
+    /**
+     * Get stopper
+     *
+     * @return boolean
+     */
+    public function getStopper()
+    {
+        return $this->stopper;
+    }
+
+    /**
+     * Set forceClid
+     *
+     * @param boolean $forceClid | null
+     *
+     * @return static
+     */
+    protected function setForceClid($forceClid = null)
+    {
+        if (!is_null($forceClid)) {
+            Assertion::between(intval($forceClid), 0, 1, 'forceClid provided "%s" is not a valid boolean value.');
+            $forceClid = (bool) $forceClid;
+        }
+
+        $this->forceClid = $forceClid;
+
+        return $this;
+    }
+
+    /**
+     * Get forceClid
+     *
+     * @return boolean | null
+     */
+    public function getForceClid()
+    {
+        return $this->forceClid;
+    }
+
+    /**
+     * Set clid
+     *
+     * @param string $clid | null
+     *
+     * @return static
+     */
+    protected function setClid($clid = null)
+    {
+        if (!is_null($clid)) {
+            Assertion::maxLength($clid, 25, 'clid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
+        }
+
+        $this->clid = $clid;
+
+        return $this;
+    }
+
+    /**
+     * Get clid
+     *
+     * @return string | null
+     */
+    public function getClid()
+    {
+        return $this->clid;
+    }
+
+    /**
      * Set brand
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null)
+    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
     {
         $this->brand = $brand;
 
@@ -330,11 +532,11 @@ abstract class OutgoingRoutingAbstract
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
     {
         $this->company = $company;
 
@@ -344,7 +546,7 @@ abstract class OutgoingRoutingAbstract
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany()
     {
@@ -352,35 +554,35 @@ abstract class OutgoingRoutingAbstract
     }
 
     /**
-     * Set peeringContract
+     * Set carrier
      *
-     * @param \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier | null
      *
-     * @return self
+     * @return static
      */
-    public function setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract = null)
+    public function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier = null)
     {
-        $this->peeringContract = $peeringContract;
+        $this->carrier = $carrier;
 
         return $this;
     }
 
     /**
-     * Get peeringContract
+     * Get carrier
      *
-     * @return \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
      */
-    public function getPeeringContract()
+    public function getCarrier()
     {
-        return $this->peeringContract;
+        return $this->carrier;
     }
 
     /**
      * Set routingPattern
      *
-     * @param \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern
+     * @param \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern | null
      *
-     * @return self
+     * @return static
      */
     public function setRoutingPattern(\Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern = null)
     {
@@ -392,7 +594,7 @@ abstract class OutgoingRoutingAbstract
     /**
      * Get routingPattern
      *
-     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface
+     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface | null
      */
     public function getRoutingPattern()
     {
@@ -402,9 +604,9 @@ abstract class OutgoingRoutingAbstract
     /**
      * Set routingPatternGroup
      *
-     * @param \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface $routingPatternGroup
+     * @param \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface $routingPatternGroup | null
      *
-     * @return self
+     * @return static
      */
     public function setRoutingPatternGroup(\Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface $routingPatternGroup = null)
     {
@@ -416,7 +618,7 @@ abstract class OutgoingRoutingAbstract
     /**
      * Get routingPatternGroup
      *
-     * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface
+     * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface | null
      */
     public function getRoutingPatternGroup()
     {
@@ -426,9 +628,9 @@ abstract class OutgoingRoutingAbstract
     /**
      * Set routingTag
      *
-     * @param \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface $routingTag
+     * @param \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface $routingTag | null
      *
-     * @return self
+     * @return static
      */
     public function setRoutingTag(\Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface $routingTag = null)
     {
@@ -440,15 +642,36 @@ abstract class OutgoingRoutingAbstract
     /**
      * Get routingTag
      *
-     * @return \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface
+     * @return \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface | null
      */
     public function getRoutingTag()
     {
         return $this->routingTag;
     }
 
+    /**
+     * Set clidCountry
+     *
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $clidCountry | null
+     *
+     * @return static
+     */
+    protected function setClidCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $clidCountry = null)
+    {
+        $this->clidCountry = $clidCountry;
 
+        return $this;
+    }
+
+    /**
+     * Get clidCountry
+     *
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
+     */
+    public function getClidCountry()
+    {
+        return $this->clidCountry;
+    }
 
     // @codeCoverageIgnoreEnd
 }
-

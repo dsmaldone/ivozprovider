@@ -3,9 +3,22 @@ Ivoz\Provider\Domain\Model\OutgoingDdiRulesPattern\OutgoingDdiRulesPatternAbstra
   uniqueConstraints:
     patternPriority:
       columns:
-        - outgoingDdiRuleId
+        - outgoingDDIRuleId
         - priority
   fields:
+    type:
+      type: string
+      nullable: false
+      length: 20
+      options:
+        fixed: false
+        comment: '[enum:prefix|destination]'
+    prefix:
+      type: string
+      nullable: true
+      length: 10
+      options:
+        fixed: false
     action:
       type: string
       nullable: false
@@ -18,7 +31,7 @@ Ivoz\Provider\Domain\Model\OutgoingDdiRulesPattern\OutgoingDdiRulesPatternAbstra
       nullable: false
       options:
         unsigned: false
-        default: '1'
+        default: 1
   manyToOne:
     outgoingDdiRule:
       targetEntity: Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface
@@ -27,7 +40,7 @@ Ivoz\Provider\Domain\Model\OutgoingDdiRulesPattern\OutgoingDdiRulesPatternAbstra
       mappedBy: null
       inversedBy: patterns
       joinColumns:
-        outgoingDdiRuleId:
+        outgoingDDIRuleId:
           referencedColumnName: id
           nullable: false
           onDelete: cascade
@@ -41,7 +54,7 @@ Ivoz\Provider\Domain\Model\OutgoingDdiRulesPattern\OutgoingDdiRulesPatternAbstra
       joinColumns:
         matchListId:
           referencedColumnName: id
-          nullable: false
+          nullable: true
           onDelete: cascade
       orphanRemoval: false
     forcedDdi:

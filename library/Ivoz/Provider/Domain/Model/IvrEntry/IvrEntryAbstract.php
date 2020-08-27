@@ -25,7 +25,7 @@ abstract class IvrEntryAbstract
     protected $routeType;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $numberValue;
 
@@ -35,27 +35,27 @@ abstract class IvrEntryAbstract
     protected $ivr;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     protected $welcomeLocution;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     protected $extension;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     protected $voiceMailUser;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface
+     * @var \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface | null
      */
     protected $conditionalRoute;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     protected $numberCountry;
 
@@ -75,7 +75,8 @@ abstract class IvrEntryAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "IvrEntry",
             $this->getId()
         );
@@ -99,7 +100,8 @@ abstract class IvrEntryAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param IvrEntryInterface|null $entity
      * @param int $depth
      * @return IvrEntryDto|null
      */
@@ -119,70 +121,73 @@ abstract class IvrEntryAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var IvrEntryDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param IvrEntryDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto IvrEntryDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, IvrEntryDto::class);
 
         $self = new static(
             $dto->getEntry(),
-            $dto->getRouteType());
+            $dto->getRouteType()
+        );
 
         $self
             ->setNumberValue($dto->getNumberValue())
-            ->setIvr($dto->getIvr())
-            ->setWelcomeLocution($dto->getWelcomeLocution())
-            ->setExtension($dto->getExtension())
-            ->setVoiceMailUser($dto->getVoiceMailUser())
-            ->setConditionalRoute($dto->getConditionalRoute())
-            ->setNumberCountry($dto->getNumberCountry())
+            ->setIvr($fkTransformer->transform($dto->getIvr()))
+            ->setWelcomeLocution($fkTransformer->transform($dto->getWelcomeLocution()))
+            ->setExtension($fkTransformer->transform($dto->getExtension()))
+            ->setVoiceMailUser($fkTransformer->transform($dto->getVoiceMailUser()))
+            ->setConditionalRoute($fkTransformer->transform($dto->getConditionalRoute()))
+            ->setNumberCountry($fkTransformer->transform($dto->getNumberCountry()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param IvrEntryDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto IvrEntryDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, IvrEntryDto::class);
 
         $this
             ->setEntry($dto->getEntry())
             ->setRouteType($dto->getRouteType())
             ->setNumberValue($dto->getNumberValue())
-            ->setIvr($dto->getIvr())
-            ->setWelcomeLocution($dto->getWelcomeLocution())
-            ->setExtension($dto->getExtension())
-            ->setVoiceMailUser($dto->getVoiceMailUser())
-            ->setConditionalRoute($dto->getConditionalRoute())
-            ->setNumberCountry($dto->getNumberCountry());
+            ->setIvr($fkTransformer->transform($dto->getIvr()))
+            ->setWelcomeLocution($fkTransformer->transform($dto->getWelcomeLocution()))
+            ->setExtension($fkTransformer->transform($dto->getExtension()))
+            ->setVoiceMailUser($fkTransformer->transform($dto->getVoiceMailUser()))
+            ->setConditionalRoute($fkTransformer->transform($dto->getConditionalRoute()))
+            ->setNumberCountry($fkTransformer->transform($dto->getNumberCountry()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return IvrEntryDto
      */
@@ -209,7 +214,7 @@ abstract class IvrEntryAbstract
             'entry' => self::getEntry(),
             'routeType' => self::getRouteType(),
             'numberValue' => self::getNumberValue(),
-            'ivrId' => self::getIvr() ? self::getIvr()->getId() : null,
+            'ivrId' => self::getIvr()->getId(),
             'welcomeLocutionId' => self::getWelcomeLocution() ? self::getWelcomeLocution()->getId() : null,
             'extensionId' => self::getExtension() ? self::getExtension()->getId() : null,
             'voiceMailUserId' => self::getVoiceMailUser() ? self::getVoiceMailUser()->getId() : null,
@@ -217,8 +222,6 @@ abstract class IvrEntryAbstract
             'numberCountryId' => self::getNumberCountry() ? self::getNumberCountry()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -226,9 +229,9 @@ abstract class IvrEntryAbstract
      *
      * @param string $entry
      *
-     * @return self
+     * @return static
      */
-    public function setEntry($entry)
+    protected function setEntry($entry)
     {
         Assertion::notNull($entry, 'entry value "%s" is null, but non null value was expected.');
         Assertion::maxLength($entry, 40, 'entry value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -253,18 +256,18 @@ abstract class IvrEntryAbstract
      *
      * @param string $routeType
      *
-     * @return self
+     * @return static
      */
-    public function setRouteType($routeType)
+    protected function setRouteType($routeType)
     {
         Assertion::notNull($routeType, 'routeType value "%s" is null, but non null value was expected.');
         Assertion::maxLength($routeType, 25, 'routeType value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($routeType, array (
-          0 => 'number',
-          1 => 'extension',
-          2 => 'voicemail',
-          3 => 'conditional',
-        ), 'routeTypevalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($routeType, [
+            IvrEntryInterface::ROUTETYPE_NUMBER,
+            IvrEntryInterface::ROUTETYPE_EXTENSION,
+            IvrEntryInterface::ROUTETYPE_VOICEMAIL,
+            IvrEntryInterface::ROUTETYPE_CONDITIONAL
+        ], 'routeTypevalue "%s" is not an element of the valid values: %s');
 
         $this->routeType = $routeType;
 
@@ -284,11 +287,11 @@ abstract class IvrEntryAbstract
     /**
      * Set numberValue
      *
-     * @param string $numberValue
+     * @param string $numberValue | null
      *
-     * @return self
+     * @return static
      */
-    public function setNumberValue($numberValue = null)
+    protected function setNumberValue($numberValue = null)
     {
         if (!is_null($numberValue)) {
             Assertion::maxLength($numberValue, 25, 'numberValue value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -302,7 +305,7 @@ abstract class IvrEntryAbstract
     /**
      * Get numberValue
      *
-     * @return string
+     * @return string | null
      */
     public function getNumberValue()
     {
@@ -314,9 +317,9 @@ abstract class IvrEntryAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr
      *
-     * @return self
+     * @return static
      */
-    public function setIvr(\Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr = null)
+    public function setIvr(\Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr)
     {
         $this->ivr = $ivr;
 
@@ -336,11 +339,11 @@ abstract class IvrEntryAbstract
     /**
      * Set welcomeLocution
      *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $welcomeLocution
+     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $welcomeLocution | null
      *
-     * @return self
+     * @return static
      */
-    public function setWelcomeLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $welcomeLocution = null)
+    protected function setWelcomeLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $welcomeLocution = null)
     {
         $this->welcomeLocution = $welcomeLocution;
 
@@ -350,7 +353,7 @@ abstract class IvrEntryAbstract
     /**
      * Get welcomeLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getWelcomeLocution()
     {
@@ -360,11 +363,11 @@ abstract class IvrEntryAbstract
     /**
      * Set extension
      *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension
+     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension | null
      *
-     * @return self
+     * @return static
      */
-    public function setExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension = null)
+    protected function setExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension = null)
     {
         $this->extension = $extension;
 
@@ -374,7 +377,7 @@ abstract class IvrEntryAbstract
     /**
      * Get extension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getExtension()
     {
@@ -384,11 +387,11 @@ abstract class IvrEntryAbstract
     /**
      * Set voiceMailUser
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $voiceMailUser
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $voiceMailUser | null
      *
-     * @return self
+     * @return static
      */
-    public function setVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $voiceMailUser = null)
+    protected function setVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $voiceMailUser = null)
     {
         $this->voiceMailUser = $voiceMailUser;
 
@@ -398,7 +401,7 @@ abstract class IvrEntryAbstract
     /**
      * Get voiceMailUser
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getVoiceMailUser()
     {
@@ -408,11 +411,11 @@ abstract class IvrEntryAbstract
     /**
      * Set conditionalRoute
      *
-     * @param \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute
+     * @param \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute | null
      *
-     * @return self
+     * @return static
      */
-    public function setConditionalRoute(\Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute = null)
+    protected function setConditionalRoute(\Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute = null)
     {
         $this->conditionalRoute = $conditionalRoute;
 
@@ -422,7 +425,7 @@ abstract class IvrEntryAbstract
     /**
      * Get conditionalRoute
      *
-     * @return \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface
+     * @return \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface | null
      */
     public function getConditionalRoute()
     {
@@ -432,11 +435,11 @@ abstract class IvrEntryAbstract
     /**
      * Set numberCountry
      *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry | null
      *
-     * @return self
+     * @return static
      */
-    public function setNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry = null)
+    protected function setNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry = null)
     {
         $this->numberCountry = $numberCountry;
 
@@ -446,15 +449,12 @@ abstract class IvrEntryAbstract
     /**
      * Get numberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getNumberCountry()
     {
         return $this->numberCountry;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

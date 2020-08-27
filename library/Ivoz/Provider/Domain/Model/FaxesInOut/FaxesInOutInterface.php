@@ -2,10 +2,15 @@
 
 namespace Ivoz\Provider\Domain\Model\FaxesInOut;
 
+use Ivoz\Core\Domain\Service\FileContainerInterface;
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
-interface FaxesInOutInterface extends LoggableEntityInterface
+interface FaxesInOutInterface extends FileContainerInterface, LoggableEntityInterface
 {
+    const TYPE_IN = 'In';
+    const TYPE_OUT = 'Out';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -15,16 +20,16 @@ interface FaxesInOutInterface extends LoggableEntityInterface
     /**
      * @return array
      */
-    public function getFileObjects();
+    public function getFileObjects(int $filter = null);
 
     /**
      * Set calldate
      *
-     * @param \DateTime $calldate
+     * @param \DateTime | null $calldate
      *
      * @return self
      */
-    public function setCalldate($calldate);
+    public function setCalldate($calldate = null);
 
     /**
      * Get the numberValue in E.164 format when routing to 'number'
@@ -41,93 +46,39 @@ interface FaxesInOutInterface extends LoggableEntityInterface
     public function getCalldate();
 
     /**
-     * Set src
-     *
-     * @param string $src
-     *
-     * @return self
-     */
-    public function setSrc($src = null);
-
-    /**
      * Get src
      *
-     * @return string
+     * @return string | null
      */
     public function getSrc();
 
     /**
-     * Set dst
-     *
-     * @param string $dst
-     *
-     * @return self
-     */
-    public function setDst($dst = null);
-
-    /**
      * Get dst
      *
-     * @return string
+     * @return string | null
      */
     public function getDst();
 
     /**
-     * Set type
-     *
-     * @param string $type
-     *
-     * @return self
-     */
-    public function setType($type = null);
-
-    /**
      * Get type
      *
-     * @return string
+     * @return string | null
      */
     public function getType();
 
     /**
-     * Set pages
-     *
-     * @param string $pages
-     *
-     * @return self
-     */
-    public function setPages($pages = null);
-
-    /**
      * Get pages
      *
-     * @return string
+     * @return string | null
      */
     public function getPages();
 
     /**
-     * Set status
-     *
-     * @param string $status
-     *
-     * @return self
-     */
-    public function setStatus($status = null);
-
-    /**
      * Get status
      *
-     * @return string
+     * @return string | null
      */
     public function getStatus();
-
-    /**
-     * Set fax
-     *
-     * @param \Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax
-     *
-     * @return self
-     */
-    public function setFax(\Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax);
 
     /**
      * Get fax
@@ -137,29 +88,11 @@ interface FaxesInOutInterface extends LoggableEntityInterface
     public function getFax();
 
     /**
-     * Set dstCountry
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $dstCountry
-     *
-     * @return self
-     */
-    public function setDstCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $dstCountry = null);
-
-    /**
      * Get dstCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getDstCountry();
-
-    /**
-     * Set file
-     *
-     * @param \Ivoz\Provider\Domain\Model\FaxesInOut\File $file
-     *
-     * @return self
-     */
-    public function setFile(\Ivoz\Provider\Domain\Model\FaxesInOut\File $file);
 
     /**
      * Get file
@@ -168,18 +101,31 @@ interface FaxesInOutInterface extends LoggableEntityInterface
      */
     public function getFile();
 
+    /**
+     * @param string $fldName
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @return void
+     */
     public function addTmpFile($fldName, \Ivoz\Core\Domain\Service\TempFile $file);
 
     /**
-     * @return TempFile[]
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function removeTmpFile(\Ivoz\Core\Domain\Service\TempFile $file);
+
+    /**
+     * @return \Ivoz\Core\Domain\Service\TempFile[]
      */
     public function getTempFiles();
 
     /**
      * @var string $fldName
-     * @return null | TempFile
+     * @return null | \Ivoz\Core\Domain\Service\TempFile
      */
     public function getTempFileByFieldName($fldName);
-
 }
-

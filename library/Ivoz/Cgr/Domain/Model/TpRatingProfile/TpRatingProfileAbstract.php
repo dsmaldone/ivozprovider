@@ -29,7 +29,7 @@ abstract class TpRatingProfileAbstract
     protected $direction = '*out';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $tenant;
 
@@ -39,31 +39,31 @@ abstract class TpRatingProfileAbstract
     protected $category = 'call';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $subject;
 
     /**
      * column: activation_time
-     * @var \DateTime
+     * @var string
      */
-    protected $activationTime;
+    protected $activationTime = '1970-01-01 00:00:00';
 
     /**
      * column: rating_plan_tag
-     * @var string
+     * @var string | null
      */
     protected $ratingPlanTag;
 
     /**
      * column: fallback_subjects
-     * @var string
+     * @var string | null
      */
     protected $fallbackSubjects;
 
     /**
      * column: cdr_stat_queue_ids
-     * @var string
+     * @var string | null
      */
     protected $cdrStatQueueIds;
 
@@ -74,14 +74,14 @@ abstract class TpRatingProfileAbstract
     protected $createdAt;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface | null
      */
-    protected $company;
+    protected $ratingProfile;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface
+     * @var \Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierInterface | null
      */
-    protected $ratingPlan;
+    protected $outgoingRoutingRelCarrier;
 
 
     use ChangelogTrait;
@@ -109,7 +109,8 @@ abstract class TpRatingProfileAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TpRatingProfile",
             $this->getId()
         );
@@ -133,7 +134,8 @@ abstract class TpRatingProfileAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TpRatingProfileInterface|null $entity
      * @param int $depth
      * @return TpRatingProfileDto|null
      */
@@ -153,19 +155,22 @@ abstract class TpRatingProfileAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TpRatingProfileDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpRatingProfileDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpRatingProfileDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpRatingProfileDto::class);
 
         $self = new static(
@@ -174,7 +179,8 @@ abstract class TpRatingProfileAbstract
             $dto->getDirection(),
             $dto->getCategory(),
             $dto->getActivationTime(),
-            $dto->getCreatedAt());
+            $dto->getCreatedAt()
+        );
 
         $self
             ->setTenant($dto->getTenant())
@@ -182,25 +188,24 @@ abstract class TpRatingProfileAbstract
             ->setRatingPlanTag($dto->getRatingPlanTag())
             ->setFallbackSubjects($dto->getFallbackSubjects())
             ->setCdrStatQueueIds($dto->getCdrStatQueueIds())
-            ->setCompany($dto->getCompany())
-            ->setRatingPlan($dto->getRatingPlan())
+            ->setRatingProfile($fkTransformer->transform($dto->getRatingProfile()))
+            ->setOutgoingRoutingRelCarrier($fkTransformer->transform($dto->getOutgoingRoutingRelCarrier()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpRatingProfileDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpRatingProfileDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpRatingProfileDto::class);
 
         $this
@@ -215,16 +220,16 @@ abstract class TpRatingProfileAbstract
             ->setFallbackSubjects($dto->getFallbackSubjects())
             ->setCdrStatQueueIds($dto->getCdrStatQueueIds())
             ->setCreatedAt($dto->getCreatedAt())
-            ->setCompany($dto->getCompany())
-            ->setRatingPlan($dto->getRatingPlan());
+            ->setRatingProfile($fkTransformer->transform($dto->getRatingProfile()))
+            ->setOutgoingRoutingRelCarrier($fkTransformer->transform($dto->getOutgoingRoutingRelCarrier()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TpRatingProfileDto
      */
@@ -242,8 +247,8 @@ abstract class TpRatingProfileAbstract
             ->setFallbackSubjects(self::getFallbackSubjects())
             ->setCdrStatQueueIds(self::getCdrStatQueueIds())
             ->setCreatedAt(self::getCreatedAt())
-            ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
-            ->setRatingPlan(\Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlan::entityToDto(self::getRatingPlan(), $depth));
+            ->setRatingProfile(\Ivoz\Provider\Domain\Model\RatingProfile\RatingProfile::entityToDto(self::getRatingProfile(), $depth))
+            ->setOutgoingRoutingRelCarrier(\Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrier::entityToDto(self::getOutgoingRoutingRelCarrier(), $depth));
     }
 
     /**
@@ -263,12 +268,10 @@ abstract class TpRatingProfileAbstract
             'fallback_subjects' => self::getFallbackSubjects(),
             'cdr_stat_queue_ids' => self::getCdrStatQueueIds(),
             'created_at' => self::getCreatedAt(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
-            'ratingPlanId' => self::getRatingPlan() ? self::getRatingPlan()->getId() : null
+            'ratingProfileId' => self::getRatingProfile() ? self::getRatingProfile()->getId() : null,
+            'outgoingRoutingRelCarrierId' => self::getOutgoingRoutingRelCarrier() ? self::getOutgoingRoutingRelCarrier()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -276,9 +279,9 @@ abstract class TpRatingProfileAbstract
      *
      * @param string $tpid
      *
-     * @return self
+     * @return static
      */
-    public function setTpid($tpid)
+    protected function setTpid($tpid)
     {
         Assertion::notNull($tpid, 'tpid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($tpid, 64, 'tpid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -303,9 +306,9 @@ abstract class TpRatingProfileAbstract
      *
      * @param string $loadid
      *
-     * @return self
+     * @return static
      */
-    public function setLoadid($loadid)
+    protected function setLoadid($loadid)
     {
         Assertion::notNull($loadid, 'loadid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($loadid, 64, 'loadid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -330,9 +333,9 @@ abstract class TpRatingProfileAbstract
      *
      * @param string $direction
      *
-     * @return self
+     * @return static
      */
-    public function setDirection($direction)
+    protected function setDirection($direction)
     {
         Assertion::notNull($direction, 'direction value "%s" is null, but non null value was expected.');
         Assertion::maxLength($direction, 8, 'direction value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -355,11 +358,11 @@ abstract class TpRatingProfileAbstract
     /**
      * Set tenant
      *
-     * @param string $tenant
+     * @param string $tenant | null
      *
-     * @return self
+     * @return static
      */
-    public function setTenant($tenant = null)
+    protected function setTenant($tenant = null)
     {
         if (!is_null($tenant)) {
             Assertion::maxLength($tenant, 64, 'tenant value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -373,7 +376,7 @@ abstract class TpRatingProfileAbstract
     /**
      * Get tenant
      *
-     * @return string
+     * @return string | null
      */
     public function getTenant()
     {
@@ -385,9 +388,9 @@ abstract class TpRatingProfileAbstract
      *
      * @param string $category
      *
-     * @return self
+     * @return static
      */
-    public function setCategory($category)
+    protected function setCategory($category)
     {
         Assertion::notNull($category, 'category value "%s" is null, but non null value was expected.');
         Assertion::maxLength($category, 32, 'category value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -410,11 +413,11 @@ abstract class TpRatingProfileAbstract
     /**
      * Set subject
      *
-     * @param string $subject
+     * @param string $subject | null
      *
-     * @return self
+     * @return static
      */
-    public function setSubject($subject = null)
+    protected function setSubject($subject = null)
     {
         if (!is_null($subject)) {
             Assertion::maxLength($subject, 64, 'subject value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -428,7 +431,7 @@ abstract class TpRatingProfileAbstract
     /**
      * Get subject
      *
-     * @return string
+     * @return string | null
      */
     public function getSubject()
     {
@@ -438,17 +441,14 @@ abstract class TpRatingProfileAbstract
     /**
      * Set activationTime
      *
-     * @param \DateTime $activationTime
+     * @param string $activationTime
      *
-     * @return self
+     * @return static
      */
-    public function setActivationTime($activationTime)
+    protected function setActivationTime($activationTime)
     {
         Assertion::notNull($activationTime, 'activationTime value "%s" is null, but non null value was expected.');
-        $activationTime = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
-            $activationTime,
-            'CURRENT_TIMESTAMP'
-        );
+        Assertion::maxLength($activationTime, 32, 'activationTime value "%s" is too long, it should have no more than %d characters, but has %d characters.');
 
         $this->activationTime = $activationTime;
 
@@ -458,7 +458,7 @@ abstract class TpRatingProfileAbstract
     /**
      * Get activationTime
      *
-     * @return \DateTime
+     * @return string
      */
     public function getActivationTime()
     {
@@ -468,11 +468,11 @@ abstract class TpRatingProfileAbstract
     /**
      * Set ratingPlanTag
      *
-     * @param string $ratingPlanTag
+     * @param string $ratingPlanTag | null
      *
-     * @return self
+     * @return static
      */
-    public function setRatingPlanTag($ratingPlanTag = null)
+    protected function setRatingPlanTag($ratingPlanTag = null)
     {
         if (!is_null($ratingPlanTag)) {
             Assertion::maxLength($ratingPlanTag, 64, 'ratingPlanTag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -486,7 +486,7 @@ abstract class TpRatingProfileAbstract
     /**
      * Get ratingPlanTag
      *
-     * @return string
+     * @return string | null
      */
     public function getRatingPlanTag()
     {
@@ -496,11 +496,11 @@ abstract class TpRatingProfileAbstract
     /**
      * Set fallbackSubjects
      *
-     * @param string $fallbackSubjects
+     * @param string $fallbackSubjects | null
      *
-     * @return self
+     * @return static
      */
-    public function setFallbackSubjects($fallbackSubjects = null)
+    protected function setFallbackSubjects($fallbackSubjects = null)
     {
         if (!is_null($fallbackSubjects)) {
             Assertion::maxLength($fallbackSubjects, 64, 'fallbackSubjects value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -514,7 +514,7 @@ abstract class TpRatingProfileAbstract
     /**
      * Get fallbackSubjects
      *
-     * @return string
+     * @return string | null
      */
     public function getFallbackSubjects()
     {
@@ -524,11 +524,11 @@ abstract class TpRatingProfileAbstract
     /**
      * Set cdrStatQueueIds
      *
-     * @param string $cdrStatQueueIds
+     * @param string $cdrStatQueueIds | null
      *
-     * @return self
+     * @return static
      */
-    public function setCdrStatQueueIds($cdrStatQueueIds = null)
+    protected function setCdrStatQueueIds($cdrStatQueueIds = null)
     {
         if (!is_null($cdrStatQueueIds)) {
             Assertion::maxLength($cdrStatQueueIds, 64, 'cdrStatQueueIds value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -542,7 +542,7 @@ abstract class TpRatingProfileAbstract
     /**
      * Get cdrStatQueueIds
      *
-     * @return string
+     * @return string | null
      */
     public function getCdrStatQueueIds()
     {
@@ -554,15 +554,19 @@ abstract class TpRatingProfileAbstract
      *
      * @param \DateTime $createdAt
      *
-     * @return self
+     * @return static
      */
-    public function setCreatedAt($createdAt)
+    protected function setCreatedAt($createdAt)
     {
         Assertion::notNull($createdAt, 'createdAt value "%s" is null, but non null value was expected.');
         $createdAt = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $createdAt,
             'CURRENT_TIMESTAMP'
         );
+
+        if ($this->createdAt == $createdAt) {
+            return $this;
+        }
 
         $this->createdAt = $createdAt;
 
@@ -576,59 +580,56 @@ abstract class TpRatingProfileAbstract
      */
     public function getCreatedAt()
     {
-        return $this->createdAt;
+        return clone $this->createdAt;
     }
 
     /**
-     * Set company
+     * Set ratingProfile
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface $ratingProfile | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
+    public function setRatingProfile(\Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface $ratingProfile = null)
     {
-        $this->company = $company;
+        $this->ratingProfile = $ratingProfile;
 
         return $this;
     }
 
     /**
-     * Get company
+     * Get ratingProfile
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface | null
      */
-    public function getCompany()
+    public function getRatingProfile()
     {
-        return $this->company;
+        return $this->ratingProfile;
     }
 
     /**
-     * Set ratingPlan
+     * Set outgoingRoutingRelCarrier
      *
-     * @param \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface $ratingPlan
+     * @param \Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierInterface $outgoingRoutingRelCarrier | null
      *
-     * @return self
+     * @return static
      */
-    public function setRatingPlan(\Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface $ratingPlan)
+    public function setOutgoingRoutingRelCarrier(\Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierInterface $outgoingRoutingRelCarrier = null)
     {
-        $this->ratingPlan = $ratingPlan;
+        $this->outgoingRoutingRelCarrier = $outgoingRoutingRelCarrier;
 
         return $this;
     }
 
     /**
-     * Get ratingPlan
+     * Get outgoingRoutingRelCarrier
      *
-     * @return \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface
+     * @return \Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierInterface | null
      */
-    public function getRatingPlan()
+    public function getOutgoingRoutingRelCarrier()
     {
-        return $this->ratingPlan;
+        return $this->outgoingRoutingRelCarrier;
     }
-
-
 
     // @codeCoverageIgnoreEnd
 }
-

@@ -6,13 +6,14 @@ class TimezoneDto extends TimezoneDtoAbstract
 {
       /**
        * @inheritdoc
+       * @codeCoverageIgnore
        */
-      public static function getPropertyMap(string $context = '')
-      {
-          if ($context === self::CONTEXT_COLLECTION) {
-              return ['id' => 'id', 'tz' => 'tz'];
-          }
+    public static function getPropertyMap(string $context = '', string $role = null)
+    {
+        if ($context === self::CONTEXT_COLLECTION) {
+            return ['id' => 'id', 'tz' => 'tz'];
+        }
 
-          return parent::getPropertyMap(...func_get_args());
-      }
+        return parent::getPropertyMap(...func_get_args());
+    }
 }

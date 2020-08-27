@@ -35,9 +35,14 @@ function setup_apache_config()
     [ ! -L /etc/apache2/mods-enabled/php7.0.load ] && /usr/sbin/a2enmod php7.0
     [ ! -L /etc/apache2/mods-enabled/headers.load ] && /usr/sbin/a2enmod headers
     [ ! -L /etc/apache2/mods-enabled/rewrite.load ] && /usr/sbin/a2enmod rewrite
+    [   -L /etc/apache2/mods-enabled/http2.load ] && /usr/sbin/a2dismod http2 #requires mpm_event or mpm_worker
     [ ! -L /etc/apache2/mods-enabled/ssl.load ] && /usr/sbin/a2enmod ssl
+    [ ! -L /etc/apache2/mods-enabled/proxy.load ] && /usr/sbin/a2enmod proxy
+    [ ! -L /etc/apache2/mods-enabled/proxy_http.load ] && /usr/sbin/a2enmod proxy_http
+    [ ! -L /etc/apache2/mods-enabled/proxy_wstunnel.load ] && /usr/sbin/a2enmod proxy_wstunnel
     [ ! -L /etc/apache2/mods-enabled/mpm_prefork.load ] && /usr/sbin/a2enmod mpm_prefork
     [   -L /etc/apache2/mods-enabled/mpm_event.load ] && /usr/sbin/a2dismod mpm_event
+    [ ! -L /etc/apache2/conf-enabled/realtime.conf ] && /usr/sbin/a2enconf realtime
     [   -L /etc/apache2/sites-enabled/000-default.conf ] && /usr/sbin/a2dissite 000-default
     [ ! -L /etc/apache2/sites-enabled/020-ivozprovider-portals.conf ] && /usr/sbin/a2ensite 020-ivozprovider-portals.conf
     [ ! -L /etc/apache2/sites-enabled/030-ivozprovider-prov.conf ] && /usr/sbin/a2ensite 030-ivozprovider-prov.conf
@@ -50,7 +55,19 @@ function setup_apache_config()
 
 function setup_gearman_job_server()
 {
-    sed -i -r 's/"(--listen=).*"/"\10.0.0.0"/' /etc/default/gearman-job-server
+    sed -i -r 's/"(--listen=).*"/"\10.0.0.0 --log-file=stderr"/' /etc/default/gearman-job-server
+}
+
+function setup_php()
+{
+    # Enable php environment variables
+    /bin/sed -i 's/variables_order = "GPCS"/variables_order = "EGPCS"/g' 		/etc/php/7.0/cli/php.ini
+    /bin/sed -i 's/;*date.timezone =.*/date.timezone = UTC/g'                   /etc/php/7.0/cli/php.ini
+    /bin/sed -i 's/variables_order = "GPCS"/variables_order = "EGPCS"/g' 		/etc/php/7.0/apache2/php.ini
+    /bin/sed -i 's/upload_max_filesize = [0-9]\+M/upload_max_filesize = 30M/g' 	/etc/php/7.0/apache2/php.ini
+    /bin/sed -i 's/post_max_size = [0-9]\+M/post_max_size = 30M/g' 				/etc/php/7.0/apache2/php.ini
+    /bin/sed -i 's/; max_input_vars = 1000/max_input_vars = 10000/g' 			/etc/php/7.0/apache2/php.ini
+    /bin/sed -i 's/;*date.timezone =.*/date.timezone = UTC/g'                   /etc/php/7.0/apache2/php.ini
 }
 
 function setup_klear()
@@ -70,6 +87,7 @@ remove_diverted_files
 setup_apache_certificates
 setup_apache_config
 setup_gearman_job_server
+setup_php
 setup_klear
 
 :

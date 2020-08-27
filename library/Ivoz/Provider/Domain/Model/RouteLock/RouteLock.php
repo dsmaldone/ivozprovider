@@ -2,11 +2,6 @@
 
 namespace Ivoz\Provider\Domain\Model\RouteLock;
 
-use Assert\Assertion;
-
-use Doctrine\Common\Collections\Criteria;
-use Ivoz\Provider\Domain\Model\Ddi\DdiInterface;
-
 /**
  * RouteLock
  */
@@ -20,12 +15,7 @@ class RouteLock extends RouteLockAbstract implements RouteLockInterface
      */
     public function getChangeSet()
     {
-        $changeSet = parent::getChangeSet();
-        if (isset($changeSet['password'])) {
-            $changeSet['password'] = '****';
-        }
-
-        return $changeSet;
+        return parent::getChangeSet();
     }
 
     /**
@@ -47,7 +37,4 @@ class RouteLock extends RouteLockAbstract implements RouteLockInterface
     {
         return $this->getOpen() == '1';
     }
-
-
 }
-

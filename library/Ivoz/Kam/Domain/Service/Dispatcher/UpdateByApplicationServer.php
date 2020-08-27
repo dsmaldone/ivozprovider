@@ -3,10 +3,10 @@
 namespace Ivoz\Kam\Domain\Service\Dispatcher;
 
 use Ivoz\Core\Domain\Service\EntityPersisterInterface;
-use Ivoz\Provider\Domain\Service\ApplicationServer\ApplicationServerLifecycleEventHandlerInterface;
 use Ivoz\Kam\Domain\Model\Dispatcher\Dispatcher as KamDispatcher;
 use Ivoz\Kam\Domain\Model\Dispatcher\DispatcherRepository as KamDispatcherRepository;
 use Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface;
+use Ivoz\Provider\Domain\Service\ApplicationServer\ApplicationServerLifecycleEventHandlerInterface;
 
 /**
  * Class UpdateByApplicationServer
@@ -40,17 +40,20 @@ class UpdateByApplicationServer implements ApplicationServerLifecycleEventHandle
         ];
     }
 
-    public function execute(ApplicationServerInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(ApplicationServerInterface $entity)
     {
         /**
          * Replicate ApplicationServer IP into kam_dispatcher
          * @var KamDispatcher $kamDispatcher
          */
-        $kamDispatcher = $this->dispatcherRepository->findOneBy([
-            'applicationServer' => $entity->getId()
-        ]);
+        $kamDispatcher = $this->dispatcherRepository->findOneByApplicationServerId(
+            $entity->getId()
+        );
 
-        $kamDispatcherDto = $isNew
+        $kamDispatcherDto = $entity->isNew()
             ? KamDispatcher::createDto()
             : $kamDispatcher->toDto();
 

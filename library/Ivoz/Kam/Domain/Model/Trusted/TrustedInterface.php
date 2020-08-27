@@ -2,120 +2,53 @@
 
 namespace Ivoz\Kam\Domain\Model\Trusted;
 
-use Ivoz\Core\Domain\Model\LoggableEntityInterface;
+use Ivoz\Core\Domain\Model\EntityInterface;
 
-interface TrustedInterface extends LoggableEntityInterface
+interface TrustedInterface extends EntityInterface
 {
-    /**
-     * @codeCoverageIgnore
-     * @return array
-     */
-    public function getChangeSet();
-
-    /**
-     * Set srcIp
-     *
-     * @param string $srcIp
-     *
-     * @return self
-     */
     public function setSrcIp($srcIp = null);
 
     /**
      * Get srcIp
      *
-     * @return string
+     * @return string | null
      */
     public function getSrcIp();
 
     /**
-     * Set proto
-     *
-     * @param string $proto
-     *
-     * @return self
-     */
-    public function setProto($proto = null);
-
-    /**
      * Get proto
      *
-     * @return string
+     * @return string | null
      */
     public function getProto();
 
     /**
-     * Set fromPattern
-     *
-     * @param string $fromPattern
-     *
-     * @return self
-     */
-    public function setFromPattern($fromPattern = null);
-
-    /**
      * Get fromPattern
      *
-     * @return string
+     * @return string | null
      */
     public function getFromPattern();
 
     /**
-     * Set ruriPattern
-     *
-     * @param string $ruriPattern
-     *
-     * @return self
-     */
-    public function setRuriPattern($ruriPattern = null);
-
-    /**
      * Get ruriPattern
      *
-     * @return string
+     * @return string | null
      */
     public function getRuriPattern();
 
     /**
-     * Set tag
-     *
-     * @param string $tag
-     *
-     * @return self
-     */
-    public function setTag($tag = null);
-
-    /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
-
-    /**
-     * Set priority
-     *
-     * @param integer $priority
-     *
-     * @return self
-     */
-    public function setPriority($priority);
 
     /**
      * Get priority
@@ -125,20 +58,9 @@ interface TrustedInterface extends LoggableEntityInterface
     public function getPriority();
 
     /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
-
-    /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany();
-
 }
-

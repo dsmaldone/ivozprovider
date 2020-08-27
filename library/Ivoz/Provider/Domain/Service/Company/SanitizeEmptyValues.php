@@ -2,26 +2,18 @@
 
 namespace Ivoz\Provider\Domain\Service\Company;
 
-use Ivoz\Core\Application\Service\UpdateEntityFromDTO;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Provider\Domain\Model\Company\CompanyDto;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
 
-/**
- * Class SanitizeEmptyValues
- * @package Ivoz\Provider\Domain\Service\Company
- * @lifecycle pre_persist
- */
 class SanitizeEmptyValues implements CompanyLifecycleEventHandlerInterface
 {
-    /**
-     * @var UpdateEntityFromDTO
-     */
-    protected $entityUpdater;
+    protected $entityTools;
 
     public function __construct(
-        UpdateEntityFromDTO $entityUpdater
+        EntityTools $entityTools
     ) {
-        $this->entityUpdater = $entityUpdater;
+        $this->entityTools = $entityTools;
     }
 
     public static function getSubscribedEvents()
@@ -31,20 +23,25 @@ class SanitizeEmptyValues implements CompanyLifecycleEventHandlerInterface
         ];
     }
 
-    public function execute(CompanyInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(CompanyInterface $company)
     {
+        $isNew = $company->isNew();
         if (!$isNew) {
             return;
         }
 
         /**
-         * @var $dto CompanyDTO
+         * @var CompanyDto $dto
          */
-        $dto = $entity->toDto();
+        $dto = $this->entityTools->entityToDto($company);
         if (!$dto->getMediaRelaySetsId()) {
             $dto->setMediaRelaySetsId(0);
+            $this
+                ->entityTools
+                ->updateEntityByDto($company, $dto);
         }
-
-        $this->entityUpdater->execute($entity, $dto);
     }
 }

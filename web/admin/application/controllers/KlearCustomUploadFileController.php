@@ -5,25 +5,25 @@ class KlearCustomUploadFileController extends Zend_Controller_Action
     
     public function init()
     {
-        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter)) ) {
-            throw New Zend_Exception('',Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
+        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter))) {
+            throw new Zend_Exception('', Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
         }
     
         $this->_helper->ContextSwitch()
              ->addActionContext('upload-file', 'json')
              ->initContext('json');
   
-      $this->_helper->layout->disableLayout();
+        $this->_helper->layout->disableLayout();
     }
     
     public function uploadFileAction()
     {
         
         $data = array(
-                'title' => _("Import file"),
-                'message'=>_("Select file to import") . "</br> <input type=\"file\">",
+                'title' => $this->_helper->translate("Import file"),
+                'message'=>$this->_helper->translate("Select file to import") . "</br> <input type=\"file\">",
                 'buttons'=>array(
-                        _('Cancel') => array(
+                        $this->_helper->translate('Cancel') => array(
                                 'reloadParent' => false,
                                 'recall' => false,
                         )

@@ -28,46 +28,35 @@ class Schedule extends ScheduleAbstract implements ScheduleInterface
         return $this->id;
     }
 
-    public function checkIsOnTimeRange($dayOfTheWeek, \DateTime $time, \DateTimeZone $timeZone)
-    {
-        if(!call_user_func(array($this, 'get' . $dayOfTheWeek))) {
-            return false;
-        }
-
-        $time = strtotime(
-            $time
-                ->setTimezone($timeZone)
-                ->format('H:i:s')
-        );
-
-        $isInTimeRange =
-            ($time > strtotime($this->getTimeIn()))
-            && ($time < strtotime($this->getTimeout()));
-
-        return $isInTimeRange;
-    }
-
+    /**
+     * Check if current time is inside Schedule
+     *
+     * @param \DateTime $time Current time in Client's Timezone
+     * @return bool
+     */
     public function isOnSchedule(\DateTime $time)
     {
         // Check if Day of The Week is enabled in the schedule
         $dayOfTheWeek = $time->format("l");
-        if(!call_user_func(array($this, "get" . $dayOfTheWeek))) {
+        if (!call_user_func(array($this, "get" . $dayOfTheWeek))) {
             return false;
         }
 
         // Check if time is between begining and end
         $timezone = $time->getTimezone();
+
+        // Create new TimeIn/TimeOut with db times and client's timezone
         $timeIn = new \DateTime(
-            $this->getTimeIn(),
+            $this->getTimeIn()->format('H:i:s'),
             $timezone
         );
         $timeOut = new \DateTime(
-            $this->getTimeOut(),
+            $this->getTimeOut()->format('H:i:s'),
             $timezone
         );
+
         $isOnSchedule = ($time >= $timeIn && $time < $timeOut);
 
         return $isOnSchedule;
     }
 }
-

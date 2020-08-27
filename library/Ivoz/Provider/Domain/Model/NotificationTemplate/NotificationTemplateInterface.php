@@ -3,10 +3,19 @@
 namespace Ivoz\Provider\Domain\Model\NotificationTemplate;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface NotificationTemplateInterface extends LoggableEntityInterface
 {
+    const TYPE_VOICEMAIL = 'voicemail';
+    const TYPE_FAX = 'fax';
+    const TYPE_LIMIT = 'limit';
+    const TYPE_LOWBALANCE = 'lowbalance';
+    const TYPE_INVOICE = 'invoice';
+    const TYPE_CALLCSV = 'callCsv';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -16,19 +25,10 @@ interface NotificationTemplateInterface extends LoggableEntityInterface
     /**
      * Get contents by language
      *
-     * @param LanguageInterface $language
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface
+     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface | null
      */
     public function getContentsByLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language);
-
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
 
     /**
      * Get name
@@ -38,15 +38,6 @@ interface NotificationTemplateInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set type
-     *
-     * @param string $type
-     *
-     * @return self
-     */
-    public function setType($type);
-
-    /**
      * Get type
      *
      * @return string
@@ -54,18 +45,9 @@ interface NotificationTemplateInterface extends LoggableEntityInterface
     public function getType();
 
     /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null);
-
-    /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand();
 
@@ -74,7 +56,7 @@ interface NotificationTemplateInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface $content
      *
-     * @return NotificationTemplateTrait
+     * @return static
      */
     public function addContent(\Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface $content);
 
@@ -88,17 +70,15 @@ interface NotificationTemplateInterface extends LoggableEntityInterface
     /**
      * Replace contents
      *
-     * @param \Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface[] $contents
-     * @return self
+     * @param ArrayCollection $contents of Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface
+     * @return static
      */
-    public function replaceContents(Collection $contents);
+    public function replaceContents(ArrayCollection $contents);
 
     /**
      * Get contents
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface[]
      */
     public function getContents(\Doctrine\Common\Collections\Criteria $criteria = null);
-
 }
-

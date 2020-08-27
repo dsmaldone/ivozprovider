@@ -10,15 +10,6 @@ class UsersWatcher extends UsersWatcherAbstract implements UsersWatcherInterface
     use UsersWatcherTrait;
 
     /**
-     * @codeCoverageIgnore
-     * @return array
-     */
-    public function getChangeSet()
-    {
-        return parent::getChangeSet();
-    }
-
-    /**
      * Get id
      * @codeCoverageIgnore
      * @return integer
@@ -28,4 +19,3 @@ class UsersWatcher extends UsersWatcherAbstract implements UsersWatcherInterface
         return $this->id;
     }
 }
-

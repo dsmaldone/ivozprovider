@@ -20,42 +20,42 @@ abstract class BrandAbstract
 
     /**
      * column: domain_users
-     * @var string
+     * @var string | null
      */
     protected $domainUsers;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $recordingsLimitMB;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $recordingsLimitEmail;
 
     /**
      * @var integer
      */
-    protected $maxCalls = '0';
+    protected $maxCalls = 0;
 
     /**
-     * @var Logo
+     * @var Logo | null
      */
     protected $logo;
 
     /**
-     * @var Invoice
+     * @var Invoice | null
      */
     protected $invoice;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @var \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     protected $domain;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     protected $language;
 
@@ -63,6 +63,31 @@ abstract class BrandAbstract
      * @var \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface
      */
     protected $defaultTimezone;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface | null
+     */
+    protected $currency;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    protected $voicemailNotificationTemplate;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    protected $faxNotificationTemplate;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    protected $invoiceNotificationTemplate;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    protected $callCsvNotificationTemplate;
 
 
     use ChangelogTrait;
@@ -86,7 +111,8 @@ abstract class BrandAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Brand",
             $this->getId()
         );
@@ -110,7 +136,8 @@ abstract class BrandAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param BrandInterface|null $entity
      * @param int $depth
      * @return BrandDto|null
      */
@@ -130,19 +157,22 @@ abstract class BrandAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var BrandDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param BrandDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto BrandDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, BrandDto::class);
 
         $logo = new Logo(
@@ -172,26 +202,30 @@ abstract class BrandAbstract
             ->setDomainUsers($dto->getDomainUsers())
             ->setRecordingsLimitMB($dto->getRecordingsLimitMB())
             ->setRecordingsLimitEmail($dto->getRecordingsLimitEmail())
-            ->setDomain($dto->getDomain())
-            ->setLanguage($dto->getLanguage())
-            ->setDefaultTimezone($dto->getDefaultTimezone())
+            ->setDomain($fkTransformer->transform($dto->getDomain()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setDefaultTimezone($fkTransformer->transform($dto->getDefaultTimezone()))
+            ->setCurrency($fkTransformer->transform($dto->getCurrency()))
+            ->setVoicemailNotificationTemplate($fkTransformer->transform($dto->getVoicemailNotificationTemplate()))
+            ->setFaxNotificationTemplate($fkTransformer->transform($dto->getFaxNotificationTemplate()))
+            ->setInvoiceNotificationTemplate($fkTransformer->transform($dto->getInvoiceNotificationTemplate()))
+            ->setCallCsvNotificationTemplate($fkTransformer->transform($dto->getCallCsvNotificationTemplate()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param BrandDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto BrandDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, BrandDto::class);
 
         $logo = new Logo(
@@ -218,17 +252,22 @@ abstract class BrandAbstract
             ->setMaxCalls($dto->getMaxCalls())
             ->setLogo($logo)
             ->setInvoice($invoice)
-            ->setDomain($dto->getDomain())
-            ->setLanguage($dto->getLanguage())
-            ->setDefaultTimezone($dto->getDefaultTimezone());
+            ->setDomain($fkTransformer->transform($dto->getDomain()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setDefaultTimezone($fkTransformer->transform($dto->getDefaultTimezone()))
+            ->setCurrency($fkTransformer->transform($dto->getCurrency()))
+            ->setVoicemailNotificationTemplate($fkTransformer->transform($dto->getVoicemailNotificationTemplate()))
+            ->setFaxNotificationTemplate($fkTransformer->transform($dto->getFaxNotificationTemplate()))
+            ->setInvoiceNotificationTemplate($fkTransformer->transform($dto->getInvoiceNotificationTemplate()))
+            ->setCallCsvNotificationTemplate($fkTransformer->transform($dto->getCallCsvNotificationTemplate()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return BrandDto
      */
@@ -252,7 +291,12 @@ abstract class BrandAbstract
             ->setInvoiceRegistryData(self::getInvoice()->getRegistryData())
             ->setDomain(\Ivoz\Provider\Domain\Model\Domain\Domain::entityToDto(self::getDomain(), $depth))
             ->setLanguage(\Ivoz\Provider\Domain\Model\Language\Language::entityToDto(self::getLanguage(), $depth))
-            ->setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\Timezone::entityToDto(self::getDefaultTimezone(), $depth));
+            ->setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\Timezone::entityToDto(self::getDefaultTimezone(), $depth))
+            ->setCurrency(\Ivoz\Provider\Domain\Model\Currency\Currency::entityToDto(self::getCurrency(), $depth))
+            ->setVoicemailNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getVoicemailNotificationTemplate(), $depth))
+            ->setFaxNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getFaxNotificationTemplate(), $depth))
+            ->setInvoiceNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getInvoiceNotificationTemplate(), $depth))
+            ->setCallCsvNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getCallCsvNotificationTemplate(), $depth));
     }
 
     /**
@@ -278,11 +322,14 @@ abstract class BrandAbstract
             'invoiceRegistryData' => self::getInvoice()->getRegistryData(),
             'domainId' => self::getDomain() ? self::getDomain()->getId() : null,
             'languageId' => self::getLanguage() ? self::getLanguage()->getId() : null,
-            'defaultTimezoneId' => self::getDefaultTimezone() ? self::getDefaultTimezone()->getId() : null
+            'defaultTimezoneId' => self::getDefaultTimezone()->getId(),
+            'currencyId' => self::getCurrency() ? self::getCurrency()->getId() : null,
+            'voicemailNotificationTemplateId' => self::getVoicemailNotificationTemplate() ? self::getVoicemailNotificationTemplate()->getId() : null,
+            'faxNotificationTemplateId' => self::getFaxNotificationTemplate() ? self::getFaxNotificationTemplate()->getId() : null,
+            'invoiceNotificationTemplateId' => self::getInvoiceNotificationTemplate() ? self::getInvoiceNotificationTemplate()->getId() : null,
+            'callCsvNotificationTemplateId' => self::getCallCsvNotificationTemplate() ? self::getCallCsvNotificationTemplate()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -290,9 +337,9 @@ abstract class BrandAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 75, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -315,11 +362,11 @@ abstract class BrandAbstract
     /**
      * Set domainUsers
      *
-     * @param string $domainUsers
+     * @param string $domainUsers | null
      *
-     * @return self
+     * @return static
      */
-    public function setDomainUsers($domainUsers = null)
+    protected function setDomainUsers($domainUsers = null)
     {
         if (!is_null($domainUsers)) {
             Assertion::maxLength($domainUsers, 190, 'domainUsers value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -333,7 +380,7 @@ abstract class BrandAbstract
     /**
      * Get domainUsers
      *
-     * @return string
+     * @return string | null
      */
     public function getDomainUsers()
     {
@@ -343,16 +390,15 @@ abstract class BrandAbstract
     /**
      * Set recordingsLimitMB
      *
-     * @param integer $recordingsLimitMB
+     * @param integer $recordingsLimitMB | null
      *
-     * @return self
+     * @return static
      */
-    public function setRecordingsLimitMB($recordingsLimitMB = null)
+    protected function setRecordingsLimitMB($recordingsLimitMB = null)
     {
         if (!is_null($recordingsLimitMB)) {
-            if (!is_null($recordingsLimitMB)) {
-                Assertion::integerish($recordingsLimitMB, 'recordingsLimitMB value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($recordingsLimitMB, 'recordingsLimitMB value "%s" is not an integer or a number castable to integer.');
+            $recordingsLimitMB = (int) $recordingsLimitMB;
         }
 
         $this->recordingsLimitMB = $recordingsLimitMB;
@@ -363,7 +409,7 @@ abstract class BrandAbstract
     /**
      * Get recordingsLimitMB
      *
-     * @return integer
+     * @return integer | null
      */
     public function getRecordingsLimitMB()
     {
@@ -373,11 +419,11 @@ abstract class BrandAbstract
     /**
      * Set recordingsLimitEmail
      *
-     * @param string $recordingsLimitEmail
+     * @param string $recordingsLimitEmail | null
      *
-     * @return self
+     * @return static
      */
-    public function setRecordingsLimitEmail($recordingsLimitEmail = null)
+    protected function setRecordingsLimitEmail($recordingsLimitEmail = null)
     {
         if (!is_null($recordingsLimitEmail)) {
             Assertion::maxLength($recordingsLimitEmail, 250, 'recordingsLimitEmail value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -391,7 +437,7 @@ abstract class BrandAbstract
     /**
      * Get recordingsLimitEmail
      *
-     * @return string
+     * @return string | null
      */
     public function getRecordingsLimitEmail()
     {
@@ -403,15 +449,15 @@ abstract class BrandAbstract
      *
      * @param integer $maxCalls
      *
-     * @return self
+     * @return static
      */
-    public function setMaxCalls($maxCalls)
+    protected function setMaxCalls($maxCalls)
     {
         Assertion::notNull($maxCalls, 'maxCalls value "%s" is null, but non null value was expected.');
         Assertion::integerish($maxCalls, 'maxCalls value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($maxCalls, 0, 'maxCalls provided "%s" is not greater or equal than "%s".');
 
-        $this->maxCalls = $maxCalls;
+        $this->maxCalls = (int) $maxCalls;
 
         return $this;
     }
@@ -429,11 +475,11 @@ abstract class BrandAbstract
     /**
      * Set domain
      *
-     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain
+     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain | null
      *
-     * @return self
+     * @return static
      */
-    public function setDomain(\Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain = null)
+    protected function setDomain(\Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain = null)
     {
         $this->domain = $domain;
 
@@ -443,7 +489,7 @@ abstract class BrandAbstract
     /**
      * Get domain
      *
-     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     public function getDomain()
     {
@@ -453,11 +499,11 @@ abstract class BrandAbstract
     /**
      * Set language
      *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
+     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language | null
      *
-     * @return self
+     * @return static
      */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
+    protected function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
     {
         $this->language = $language;
 
@@ -467,7 +513,7 @@ abstract class BrandAbstract
     /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage()
     {
@@ -479,9 +525,9 @@ abstract class BrandAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone
      *
-     * @return self
+     * @return static
      */
-    public function setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone)
+    protected function setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone)
     {
         $this->defaultTimezone = $defaultTimezone;
 
@@ -499,16 +545,140 @@ abstract class BrandAbstract
     }
 
     /**
+     * Set currency
+     *
+     * @param \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface $currency | null
+     *
+     * @return static
+     */
+    protected function setCurrency(\Ivoz\Provider\Domain\Model\Currency\CurrencyInterface $currency = null)
+    {
+        $this->currency = $currency;
+
+        return $this;
+    }
+
+    /**
+     * Get currency
+     *
+     * @return \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface | null
+     */
+    public function getCurrency()
+    {
+        return $this->currency;
+    }
+
+    /**
+     * Set voicemailNotificationTemplate
+     *
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $voicemailNotificationTemplate | null
+     *
+     * @return static
+     */
+    protected function setVoicemailNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $voicemailNotificationTemplate = null)
+    {
+        $this->voicemailNotificationTemplate = $voicemailNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * Get voicemailNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getVoicemailNotificationTemplate()
+    {
+        return $this->voicemailNotificationTemplate;
+    }
+
+    /**
+     * Set faxNotificationTemplate
+     *
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $faxNotificationTemplate | null
+     *
+     * @return static
+     */
+    protected function setFaxNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $faxNotificationTemplate = null)
+    {
+        $this->faxNotificationTemplate = $faxNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * Get faxNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getFaxNotificationTemplate()
+    {
+        return $this->faxNotificationTemplate;
+    }
+
+    /**
+     * Set invoiceNotificationTemplate
+     *
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $invoiceNotificationTemplate | null
+     *
+     * @return static
+     */
+    protected function setInvoiceNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $invoiceNotificationTemplate = null)
+    {
+        $this->invoiceNotificationTemplate = $invoiceNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * Get invoiceNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getInvoiceNotificationTemplate()
+    {
+        return $this->invoiceNotificationTemplate;
+    }
+
+    /**
+     * Set callCsvNotificationTemplate
+     *
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $callCsvNotificationTemplate | null
+     *
+     * @return static
+     */
+    protected function setCallCsvNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $callCsvNotificationTemplate = null)
+    {
+        $this->callCsvNotificationTemplate = $callCsvNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * Get callCsvNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getCallCsvNotificationTemplate()
+    {
+        return $this->callCsvNotificationTemplate;
+    }
+
+    /**
      * Set logo
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\Logo $logo
      *
-     * @return self
+     * @return static
      */
-    public function setLogo(Logo $logo)
+    protected function setLogo(Logo $logo)
     {
-        $this->logo = $logo;
+        $isEqual = $this->logo && $this->logo->equals($logo);
+        if ($isEqual) {
+            return $this;
+        }
 
+        $this->logo = $logo;
         return $this;
     }
 
@@ -527,12 +697,16 @@ abstract class BrandAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\Invoice $invoice
      *
-     * @return self
+     * @return static
      */
-    public function setInvoice(Invoice $invoice)
+    protected function setInvoice(Invoice $invoice)
     {
-        $this->invoice = $invoice;
+        $isEqual = $this->invoice && $this->invoice->equals($invoice);
+        if ($isEqual) {
+            return $this;
+        }
 
+        $this->invoice = $invoice;
         return $this;
     }
 
@@ -545,7 +719,5 @@ abstract class BrandAbstract
     {
         return $this->invoice;
     }
-
     // @codeCoverageIgnoreEnd
 }
-

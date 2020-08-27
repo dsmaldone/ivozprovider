@@ -21,27 +21,27 @@ abstract class UsersAddressAbstract
 
     /**
      * column: ip_addr
-     * @var string
+     * @var string | null
      */
     protected $ipAddr;
 
     /**
      * @var integer
      */
-    protected $mask = '32';
+    protected $mask = 32;
 
     /**
      * @var integer
      */
-    protected $port = '0';
+    protected $port = 0;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $tag;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $description;
 
@@ -67,7 +67,8 @@ abstract class UsersAddressAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "UsersAddress",
             $this->getId()
         );
@@ -91,7 +92,8 @@ abstract class UsersAddressAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param UsersAddressInterface|null $entity
      * @param int $depth
      * @return UsersAddressDto|null
      */
@@ -111,48 +113,51 @@ abstract class UsersAddressAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var UsersAddressDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersAddressDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersAddressDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersAddressDto::class);
 
         $self = new static(
             $dto->getSourceAddress(),
             $dto->getMask(),
-            $dto->getPort());
+            $dto->getPort()
+        );
 
         $self
             ->setIpAddr($dto->getIpAddr())
             ->setTag($dto->getTag())
             ->setDescription($dto->getDescription())
-            ->setCompany($dto->getCompany())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersAddressDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersAddressDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersAddressDto::class);
 
         $this
@@ -162,15 +167,15 @@ abstract class UsersAddressAbstract
             ->setPort($dto->getPort())
             ->setTag($dto->getTag())
             ->setDescription($dto->getDescription())
-            ->setCompany($dto->getCompany());
+            ->setCompany($fkTransformer->transform($dto->getCompany()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return UsersAddressDto
      */
@@ -198,11 +203,9 @@ abstract class UsersAddressAbstract
             'port' => self::getPort(),
             'tag' => self::getTag(),
             'description' => self::getDescription(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null
+            'companyId' => self::getCompany()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -210,9 +213,9 @@ abstract class UsersAddressAbstract
      *
      * @param string $sourceAddress
      *
-     * @return self
+     * @return static
      */
-    public function setSourceAddress($sourceAddress)
+    protected function setSourceAddress($sourceAddress)
     {
         Assertion::notNull($sourceAddress, 'sourceAddress value "%s" is null, but non null value was expected.');
         Assertion::maxLength($sourceAddress, 100, 'sourceAddress value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -235,11 +238,11 @@ abstract class UsersAddressAbstract
     /**
      * Set ipAddr
      *
-     * @param string $ipAddr
+     * @param string $ipAddr | null
      *
-     * @return self
+     * @return static
      */
-    public function setIpAddr($ipAddr = null)
+    protected function setIpAddr($ipAddr = null)
     {
         if (!is_null($ipAddr)) {
             Assertion::maxLength($ipAddr, 50, 'ipAddr value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -253,7 +256,7 @@ abstract class UsersAddressAbstract
     /**
      * Get ipAddr
      *
-     * @return string
+     * @return string | null
      */
     public function getIpAddr()
     {
@@ -265,14 +268,14 @@ abstract class UsersAddressAbstract
      *
      * @param integer $mask
      *
-     * @return self
+     * @return static
      */
-    public function setMask($mask)
+    protected function setMask($mask)
     {
         Assertion::notNull($mask, 'mask value "%s" is null, but non null value was expected.');
         Assertion::integerish($mask, 'mask value "%s" is not an integer or a number castable to integer.');
 
-        $this->mask = $mask;
+        $this->mask = (int) $mask;
 
         return $this;
     }
@@ -292,14 +295,14 @@ abstract class UsersAddressAbstract
      *
      * @param integer $port
      *
-     * @return self
+     * @return static
      */
-    public function setPort($port)
+    protected function setPort($port)
     {
         Assertion::notNull($port, 'port value "%s" is null, but non null value was expected.');
         Assertion::integerish($port, 'port value "%s" is not an integer or a number castable to integer.');
 
-        $this->port = $port;
+        $this->port = (int) $port;
 
         return $this;
     }
@@ -317,11 +320,11 @@ abstract class UsersAddressAbstract
     /**
      * Set tag
      *
-     * @param string $tag
+     * @param string $tag | null
      *
-     * @return self
+     * @return static
      */
-    public function setTag($tag = null)
+    protected function setTag($tag = null)
     {
         if (!is_null($tag)) {
             Assertion::maxLength($tag, 64, 'tag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -335,7 +338,7 @@ abstract class UsersAddressAbstract
     /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -345,11 +348,11 @@ abstract class UsersAddressAbstract
     /**
      * Set description
      *
-     * @param string $description
+     * @param string $description | null
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description = null)
+    protected function setDescription($description = null)
     {
         if (!is_null($description)) {
             Assertion::maxLength($description, 200, 'description value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -363,7 +366,7 @@ abstract class UsersAddressAbstract
     /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -375,9 +378,9 @@ abstract class UsersAddressAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -394,8 +397,5 @@ abstract class UsersAddressAbstract
         return $this->company;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

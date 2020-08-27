@@ -18,7 +18,7 @@ class ExtensionAction
     protected $routerAction;
 
     /**
-     * @var ExtensionInterface
+     * @var ExtensionInterface|null
      */
     protected $extension;
 
@@ -30,8 +30,7 @@ class ExtensionAction
     public function __construct(
         Wrapper $agi,
         RouterAction $routerAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->routerAction = $routerAction;
     }
@@ -67,7 +66,5 @@ class ExtensionAction
             ->setRouteQueue($extension->getQueue())
             ->setRouteConditional($extension->getConditionalRoute())
             ->route();
-
     }
-
 }

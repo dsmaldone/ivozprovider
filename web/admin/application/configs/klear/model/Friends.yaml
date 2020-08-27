@@ -5,7 +5,7 @@ production:
   entity: Ivoz\Provider\Domain\Model\Friend\Friend
   fields:
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       required: true
       source:
@@ -138,8 +138,8 @@ production:
             template: '%name${lang}%'
           order:
             TransformationRuleSet.name.${lang}: asc
-        'null': _("Company's default")
-    outgoingDDI:
+        'null': _("Client's default")
+    outgoingDdi:
       title: _('Fallback Outgoing DDI')
       type: select
       source:
@@ -153,12 +153,12 @@ production:
             template: '%ddie164%'
           order:
             Ddi.ddie164: asc
-        'null': _("Company's default")
+        'null': _("Client's default")
       info:
         type: box
         position: left
         icon: help
-        text: _("This DDI will be used if friend presented DDI doesn't match any of the company DDIs")
+        text: _("This DDI will be used if presented DDI doesn't match any of the company DDIs")
         label: _("Need help?")
     priority:
       title: _('Priority')
@@ -232,7 +232,86 @@ production:
       type: text
       maxLength: 190
     directConnectivity:
-      title: _('Direct connectivity')
+      title: _('Connectivity mode')
+      type: select
+      defaultValue: "no"
+      source:
+        data: inline
+        values:
+          'yes':
+            title: _('Direct')
+            visualFilter:
+              hide:
+                - interCompany
+              show:
+                - name
+                - domain
+                - password
+                - ip
+                - port
+                - transport
+                - authNeeded
+                - ddiIn
+                - allow
+                - fromDomain
+                - language
+                - transformationRuleSet
+                - callACL
+          'no':
+            title: _('Register')
+            visualFilter:
+              hide:
+                - ip
+                - port
+                - transport
+                - authNeeded
+                - interCompany
+              show:
+                - name
+                - password
+                - ddiIn
+                - allow
+                - fromDomain
+                - language
+                - transformationRuleSet
+                - callACL
+          'intervpbx':
+            title: _('Inter vPBX')
+            visualFilter:
+              hide:
+                - name
+                - ip
+                - port
+                - transport
+                - authNeeded
+                - password
+                - ddiIn
+                - allow
+                - fromDomain
+                - language
+                - transformationRuleSet
+                - callACL
+                - t38Passthrough
+              show:
+                - interCompany
+    interCompany:
+      title: ngettext('Target client', 'Target clients', 1)
+      type: select
+      required: true
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\Company\Company
+          filterClass: IvozProvider_Klear_Filter_FriendInterCompany
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+          order:
+            Company.name: asc
+
+    ddiIn:
+      title: _('DDI In')
       type: select
       defaultValue: yes
       source:
@@ -240,14 +319,14 @@ production:
         values:
           'yes':
             title: _('Yes')
-            visualFilter:
-              show: ["ip", "port", "transport", "auth_needed"]
-              hide: []
           'no':
             title: _('No')
-            visualFilter:
-              hide: ["ip", "port", "transport", "auth_needed"]
-              show: ["password"]
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("If set to 'Yes', set destination (R-URI and To) to called DDI/number when calling to this friend.")
+        label: _("Need help?")
     language:
       title: _('Language')
       type: select
@@ -261,7 +340,7 @@ production:
             template: '%name${lang}%'
           order:
             Language.name.${lang}: asc
-        'null': _("Company's default")
+        'null': _("Client's default")
     statusIcon:
       title: _('Status')
       type: ghost
@@ -276,6 +355,15 @@ production:
       source:
         class: IvozProvider_Klear_Ghost_RegisterStatus
         method: getFriendStatus
+    t38Passthrough:
+      title: _('Enable T.38 passthrough')
+      type: select
+      defaultValue: no
+      source:
+        data: inline
+        values:
+          'yes': _('Yes')
+          'no': _('No')
 staging:
   _extends: production
 testing:

@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+###############################################################################
+# cgrates-reload
+#
+# Author: IvozProvider <vozip+ivozprovider@irontec.com>
+# Date: 2019/04/04
+#
+###############################################################################
+#
+# Reload Cgrates helper script
+#
+###############################################################################
+
+ALLBRANDS=-1
+FLUSHALL=0
+RELOADDESTINATIONS=0
+
+while getopts ":Fdb:" opt; do
+  case $opt in
+    F)
+      FLUSHALL=1
+      ;;
+    d)
+      RELOADDESTINATIONS=1
+      ;;
+    b)
+      if [ ${OPTARG} == "all" ]; then
+          ALLBRANDS=1
+      elif [ ${OPTARG} == "ask" ]; then
+          ALLBRANDS=2
+      else
+          ALLBRANDS=0
+          BRANDS=(${OPTARG})
+      fi
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit -1
+      ;;
+  esac
+done
+
+# Make sure -b flag is used
+if [ $ALLBRANDS -eq -1 ]; then
+    echo -e "-b is a mandatory argument (e.g. all|ask|1)"
+    exit -1
+fi
+
+# Remove every redis key except accounts info
+if [ $FLUSHALL -eq 1 ]; then
+    RELOADDESTINATIONS=1 # -F forces -D
+    SENTINEL_MASTER=`redis-cli -h data.ivozprovider.local -p 26379 sentinel get-master-addr-by-name mymaster | head -n 1`
+    echo -e "\e[1;32m* \e[1;97mDetected Redis Sentinel Master: $SENTINEL_MASTER\n\e[0m"
+    echo -e "\e[1;31mThis operation cannot be undone, proceed?\n\e[0m"
+    read -p "Press enter to continue"
+
+    echo -e "\e[1;32m* \e[1;31mFlushing every key except 'acc_*' ...\e[0m"
+    redis-cli -h $SENTINEL_MASTER -n 10 keys \* | egrep -v "^acc_" | xargs redis-cli -h $SENTINEL_MASTER -n 10 del
+fi
+
+if [ $ALLBRANDS -gt 0 ]; then
+    BRANDS=`mysql -h data.ivozprovider.local -ukamailio -pironsecret -BN ivozprovider -e "SELECT id FROM Brands"`
+fi
+
+if [ $ALLBRANDS -eq 2 ]; then
+    echo -e "Existing brands:"
+    for BRAND in $BRANDS; do
+        echo -e $BRAND
+    done
+
+    echo -en "\nChoose brand: "
+    read answer
+    BRANDS=($answer)
+fi
+
+# Reload all brands
+for BRAND in $BRANDS; do
+    # Reload billing information for this brand
+    if [ $RELOADDESTINATIONS -eq 1 ]; then
+        echo -e "\e[1;32m* \e[1;31mReloading billing (including destinations) information for brand ${BRAND}...\e[0m"
+        /usr/bin/cgr-console "load_tp_from_stordb Tpid=\"b${BRAND}\" Cleanup=true Validate=true DisableDestinations=false"
+    else
+        echo -e "\e[1;32m* \e[1;31mReloading billing (excluding destinations) information for brand ${BRAND}...\e[0m"
+        /usr/bin/cgr-console "load_tp_from_stordb Tpid=\"b${BRAND}\" Cleanup=true Validate=true DisableDestinations=true"
+    fi
+done

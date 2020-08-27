@@ -5,7 +5,6 @@ namespace Agi\Action;
 use Agi\Wrapper;
 use Ivoz\Provider\Domain\Model\QueueMember\QueueMemberInterface;
 
-
 class QueueCallAction
 {
     /**
@@ -14,7 +13,7 @@ class QueueCallAction
     protected $agi;
 
     /**
-     * @var QueueMemberInterface
+     * @var QueueMemberInterface|null
      */
     protected $queueMember;
 
@@ -25,8 +24,7 @@ class QueueCallAction
      */
     public function __construct(
         Wrapper $agi
-    )
-    {
+    ) {
         $this->agi = $agi;
     }
 
@@ -44,26 +42,36 @@ class QueueCallAction
     {
         // Local variables to improve readability
         $queueMember = $this->queueMember;
-
         if (is_null($queueMember)) {
             $this->agi->error("Queue is not properly defined. Check configuration.");
             return;
         }
 
+        $queue = $queueMember->getQueue();
         $user = $queueMember->getUser();
-        if (is_null($user)) {
-            $this->agi->error("No user found for queue member %s", $queueMember);
-            return;
-        }
 
         $endpoint = $user->getEndpoint();
         if (is_null($endpoint)) {
             $this->agi->error("User %s has no endpoint associated", $user);
             return;
         }
+        
+        $dnd = $user->getDoNotDisturb();
+        if ($dnd) {
+            $this->agi->verbose("User %s has DND enabled.", $user);
+            return;
+        }
 
-        $this->agi->setVariable("DIAL_OPTS", "ic");
+        // Configure Dial options
+        $options = "i";
+
+        // Cancelled calls may be marked as 'answered elsewhere'
+        $queuePreventMissedCalls = $queue->getPreventMissedCalls();
+        if ($queuePreventMissedCalls) {
+            $options .= "c";
+        }
+
+        $this->agi->setVariable("DIAL_OPTS", $options);
         $this->agi->setVariable("DIAL_DST", "PJSIP/" . $endpoint->getSorceryId());
     }
-
 }

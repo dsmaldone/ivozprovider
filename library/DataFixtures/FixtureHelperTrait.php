@@ -13,20 +13,16 @@ trait FixtureHelperTrait
      * @param string $className
      * @return EntityInterface
      */
-    protected function createEntityInstanceWithPublicMethods(string $className)
+    protected function createEntityInstance(string $className)
     {
         $reflectionClass = new \ReflectionClass($className);
-        $methods = $reflectionClass->getMethods();
-        foreach ($methods as $methods) {
-            $methods->setAccessible(true);
-        }
-
         return $reflectionClass->newInstanceWithoutConstructor();
     }
 
     protected function sanitizeEntityValues(EntityInterface $entity)
     {
         $sanitizer = function () {
+            $this->initChangelog();
             $this->sanitizeValues();
         };
 

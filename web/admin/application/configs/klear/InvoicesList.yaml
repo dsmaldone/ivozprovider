@@ -1,7 +1,7 @@
 #include conf.d/mapperList.yaml
 #include conf.d/actions.yaml
 #include conf.d/documentationLink.yaml
-#include KamTrunksCdrsList.yaml
+#include BillableCallsList.yaml
 #include FixedCostsRelInvoicesList.yaml
 
 production:
@@ -11,6 +11,10 @@ production:
   screens: &invoices_screensLink
     invoicesList_screen: &invoicesList_screenLink
       controller: list
+      order:
+        field:
+          - Invoice.inDate
+        type: desc
       pagination:
         items: 25
       <<: *Invoices
@@ -18,23 +22,24 @@ production:
       title: _("List of %s %2s", ngettext('Invoice', 'Invoices', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/brand/invoices/invoices.html"
+        href: "/doc/en/administration_portal/brand/invoicing/invoices.html"
       forcedValues:
         <<: *forcedBrand
       fields: &invoices_fieldsLink
         options:
           title: _("Options")
           screens:
-            invoicesEdit_screen: true
+            invoicesEdit_screen: ${auth.acls.Invoices.update}
             fixedCostsRelInvoicesList_screen: true
-            kamTrunksCdrsList_screen: true
+            billableCallsList_screen: ${auth.acls.BillableCalls.read}
           dialogs:
             generateInvoice_dialog: true
-            invoicesDel_dialog: true
+            invoicesDel_dialog: ${auth.acls.Invoices.delete}
           default: invoicesEdit_screen
         order: &invoicesOrder_Link
           company: true
           number: true
+          numberSequence: true
           inDate: true
           outDate: true
           total: true
@@ -45,13 +50,12 @@ production:
           pdf: true
         blacklist:
           FixedCostsRelInvoices: true
+          numberSequence: true
+          scheduler: true
       options:
         title: _("Options")
         screens:
-          invoicesNew_screen: true
-        dialogs:
-          invoicesDel_dialog: true
-          generateInvoice_dialog: true
+          invoicesNew_screen: ${auth.acls.Invoices.create}
 
     invoicesNew_screen: &invoicesNew_screenLink
       <<: *Invoices
@@ -63,7 +67,6 @@ production:
       shortcutOption: N
       forcedValues:
         <<: *forcedBrand
-        status: waiting
       fields:
         order:
           <<: *invoicesOrder_Link
@@ -73,12 +76,15 @@ production:
           status: true
           pdf: true
           FixedCostsRelInvoices: true
+          scheduler: true
       fixedPositions: &invoicesFixedPositions_Link
         group0:
           colsPerRow: 2
           fields:
+            numberSequence: 1
             number: 1
             company: 1
+            invoiceTemplate: 1
         group1:
           colsPerRow: 2
           fields:
@@ -107,10 +113,15 @@ production:
       fields:
         order:
           <<: *invoicesOrder_Link
+        blacklist:
+          FixedCostsRelInvoices: true
+          numberSequence: true
+          scheduler: true
         readOnly:
           total: true
           totalWithTax: true
           status: true
+          FixedCostsRelInvoices: true
       fixedPositions:
         <<: *invoicesFixedPositions_Link
 
@@ -120,14 +131,25 @@ production:
       filterField: Invoice
       parentOptionCustomizer:
         - recordCount
-    <<: *kamTrunksCdrs_screensLink
-    kamTrunksCdrsList_screen:
-      <<: *kamTrunksCdrsList_screenLink
+    billableCallsList_screen:
+      <<: *billableCallsList_screenLink
       class: ui-silk-application-view-list
       filterField: Invoice
-      parentOptionCustomizer: 
+      parentOptionCustomizer:
         - recordCount
-
+      fields:
+        <<: *billableCalls_fieldsLink
+        blacklist:
+          <<: *billableCalls_blacklistLink
+          company: true
+          brand: true
+    billableCallsView_screen:
+      <<: *billableCallsView_screenLink
+      fields:
+        <<: *billableCallsView_fieldsLink
+        blacklist:
+          company: true
+          brand: true
 
   dialogs: &invoices_dialogsLink
     invoicesDel_dialog: &invoicesDel_dialogLink
@@ -154,8 +176,6 @@ production:
       class:  ui-silk-report-add
       multiItem: true
 
-
-
     <<: *fixedCostsRelInvoices_dialogsLink
   commands: &invoices_commandsLink
     invoicesPdfFileDownload_command: &invoicesPdfFileDownload_commandLink
@@ -177,6 +197,7 @@ production:
       arguments:
         cache:
           enabled: true
+    <<: *exportBillableCallsToCsv_commandsLink
 
 staging:
   _extends: production

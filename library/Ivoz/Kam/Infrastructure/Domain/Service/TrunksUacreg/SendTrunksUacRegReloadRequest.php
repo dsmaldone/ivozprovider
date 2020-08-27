@@ -2,29 +2,34 @@
 
 namespace Ivoz\Kam\Infrastructure\Domain\Service\TrunksUacreg;
 
-use Ivoz\Core\Infrastructure\Domain\Service\XmlRpc\XmlRpcTrunksRequest;
 use Ivoz\Kam\Domain\Model\TrunksUacreg\TrunksUacregInterface;
+use Ivoz\Kam\Domain\Service\TrunksClientInterface;
 use Ivoz\Kam\Domain\Service\TrunksUacreg\TrunksUacregLifecycleEventHandlerInterface;
 
 class SendTrunksUacRegReloadRequest implements TrunksUacregLifecycleEventHandlerInterface
 {
-    protected $trunksUacRegReload;
+    const ON_COMMIT_PRIORITY = self::PRIORITY_NORMAL;
+
+    protected $trunksClient;
 
     public function __construct(
-        XmlRpcTrunksRequest $trunksUacRegReload
+        TrunksClientInterface $trunksClient
     ) {
-        $this->trunksUacRegReload = $trunksUacRegReload;
+        $this->trunksClient = $trunksClient;
     }
 
     public static function getSubscribedEvents()
     {
         return [
-            self::EVENT_ON_COMMIT => 10
+            self::EVENT_ON_COMMIT => self::ON_COMMIT_PRIORITY
         ];
     }
 
-    public function execute(TrunksUacregInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(TrunksUacregInterface $entity)
     {
-        $this->trunksUacRegReload->send();
+        $this->trunksClient->reloadUacReg();
     }
 }

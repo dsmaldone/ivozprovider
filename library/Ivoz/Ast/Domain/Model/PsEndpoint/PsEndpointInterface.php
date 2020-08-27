@@ -6,25 +6,29 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface PsEndpointInterface extends LoggableEntityInterface
 {
+    const DIRECTMEDIAMETHOD_UPDATE = 'update';
+    const DIRECTMEDIAMETHOD_INVITE = 'invite';
+    const DIRECTMEDIAMETHOD_REINVITE = 'reinvite';
+
+
+    const T38UDPTL_YES = 'yes';
+    const T38UDPTL_NO = 'no';
+
+
+    const T38UDPTLEC_NONE = 'none';
+    const T38UDPTLEC_FEC = 'fec';
+    const T38UDPTLEC_REDUNDANCY = 'redundancy';
+
+
+    const T38UDPTLNAT_YES = 'yes';
+    const T38UDPTLNAT_NO = 'no';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
      */
     public function getChangeSet();
-
-    /**
-     * Update this user endpoint with current model data
-     */
-    public function updateByUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user);
-
-    /**
-     * Set sorceryId
-     *
-     * @param string $sorceryId
-     *
-     * @return self
-     */
-    public function setSorceryId($sorceryId);
 
     /**
      * Get sorceryId
@@ -34,61 +38,25 @@ interface PsEndpointInterface extends LoggableEntityInterface
     public function getSorceryId();
 
     /**
-     * Set fromDomain
-     *
-     * @param string $fromDomain
-     *
-     * @return self
-     */
-    public function setFromDomain($fromDomain = null);
-
-    /**
      * Get fromDomain
      *
-     * @return string
+     * @return string | null
      */
     public function getFromDomain();
 
     /**
-     * Set aors
-     *
-     * @param string $aors
-     *
-     * @return self
-     */
-    public function setAors($aors = null);
-
-    /**
      * Get aors
      *
-     * @return string
+     * @return string | null
      */
     public function getAors();
 
     /**
-     * Set callerid
-     *
-     * @param string $callerid
-     *
-     * @return self
-     */
-    public function setCallerid($callerid = null);
-
-    /**
      * Get callerid
      *
-     * @return string
+     * @return string | null
      */
     public function getCallerid();
-
-    /**
-     * Set context
-     *
-     * @param string $context
-     *
-     * @return self
-     */
-    public function setContext($context);
 
     /**
      * Get context
@@ -98,29 +66,11 @@ interface PsEndpointInterface extends LoggableEntityInterface
     public function getContext();
 
     /**
-     * Set disallow
-     *
-     * @param string $disallow
-     *
-     * @return self
-     */
-    public function setDisallow($disallow);
-
-    /**
      * Get disallow
      *
      * @return string
      */
     public function getDisallow();
-
-    /**
-     * Set allow
-     *
-     * @param string $allow
-     *
-     * @return self
-     */
-    public function setAllow($allow);
 
     /**
      * Get allow
@@ -130,109 +80,46 @@ interface PsEndpointInterface extends LoggableEntityInterface
     public function getAllow();
 
     /**
-     * Set directMedia
-     *
-     * @param string $directMedia
-     *
-     * @return self
-     */
-    public function setDirectMedia($directMedia = null);
-
-    /**
      * Get directMedia
      *
-     * @return string
+     * @return string | null
      */
     public function getDirectMedia();
 
     /**
-     * Set directMediaMethod
-     *
-     * @param string $directMediaMethod
-     *
-     * @return self
-     */
-    public function setDirectMediaMethod($directMediaMethod = null);
-
-    /**
      * Get directMediaMethod
      *
-     * @return string
+     * @return string | null
      */
     public function getDirectMediaMethod();
 
     /**
-     * Set mailboxes
-     *
-     * @param string $mailboxes
-     *
-     * @return self
-     */
-    public function setMailboxes($mailboxes = null);
-
-    /**
      * Get mailboxes
      *
-     * @return string
+     * @return string | null
      */
     public function getMailboxes();
 
     /**
-     * Set namedPickupGroup
-     *
-     * @param string $namedPickupGroup
-     *
-     * @return self
-     */
-    public function setNamedPickupGroup($namedPickupGroup = null);
-
-    /**
      * Get namedPickupGroup
      *
-     * @return string
+     * @return string | null
      */
     public function getNamedPickupGroup();
 
     /**
-     * Set sendDiversion
-     *
-     * @param string $sendDiversion
-     *
-     * @return self
-     */
-    public function setSendDiversion($sendDiversion = null);
-
-    /**
      * Get sendDiversion
      *
-     * @return string
+     * @return string | null
      */
     public function getSendDiversion();
 
     /**
-     * Set sendPai
-     *
-     * @param string $sendPai
-     *
-     * @return self
-     */
-    public function setSendPai($sendPai = null);
-
-    /**
      * Get sendPai
      *
-     * @return string
+     * @return string | null
      */
     public function getSendPai();
-
-    /**
-     * Set oneHundredRel
-     *
-     * @param string $oneHundredRel
-     *
-     * @return self
-     */
-    public function setOneHundredRel($oneHundredRel);
 
     /**
      * Get oneHundredRel
@@ -242,84 +129,108 @@ interface PsEndpointInterface extends LoggableEntityInterface
     public function getOneHundredRel();
 
     /**
-     * Set outboundProxy
-     *
-     * @param string $outboundProxy
-     *
-     * @return self
-     */
-    public function setOutboundProxy($outboundProxy = null);
-
-    /**
      * Get outboundProxy
      *
-     * @return string
+     * @return string | null
      */
     public function getOutboundProxy();
 
     /**
-     * Set trustIdInbound
-     *
-     * @param string $trustIdInbound
-     *
-     * @return self
-     */
-    public function setTrustIdInbound($trustIdInbound = null);
-
-    /**
      * Get trustIdInbound
      *
-     * @return string
+     * @return string | null
      */
     public function getTrustIdInbound();
 
     /**
+     * Get t38Udptl
+     *
+     * @return string
+     */
+    public function getT38Udptl();
+
+    /**
+     * Get t38UdptlEc
+     *
+     * @return string
+     */
+    public function getT38UdptlEc();
+
+    /**
+     * Get t38UdptlMaxdatagram
+     *
+     * @return integer
+     */
+    public function getT38UdptlMaxdatagram();
+
+    /**
+     * Get t38UdptlNat
+     *
+     * @return string
+     */
+    public function getT38UdptlNat();
+
+    /**
      * Set terminal
      *
-     * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal
+     * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal | null
      *
-     * @return self
+     * @return static
      */
     public function setTerminal(\Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal = null);
 
     /**
      * Get terminal
      *
-     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface
+     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface | null
      */
     public function getTerminal();
 
     /**
      * Set friend
      *
-     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend
+     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend | null
      *
-     * @return self
+     * @return static
      */
     public function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend = null);
 
     /**
      * Get friend
      *
-     * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface
+     * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface | null
      */
     public function getFriend();
 
     /**
+     * Set residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice | null
+     *
+     * @return static
+     */
+    public function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice = null);
+
+    /**
+     * Get residentialDevice
+     *
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
+     */
+    public function getResidentialDevice();
+
+    /**
      * Set retailAccount
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount | null
      *
-     * @return self
+     * @return static
      */
     public function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount = null);
 
     /**
      * Get retailAccount
      *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
     public function getRetailAccount();
-
 }
-

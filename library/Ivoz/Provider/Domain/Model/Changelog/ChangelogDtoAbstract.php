@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Changelog;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -28,7 +26,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     private $data;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $createdOn;
 
@@ -38,7 +36,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     private $microtime;
 
     /**
-     * @var guid
+     * @var string
      */
     private $id;
 
@@ -58,7 +56,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -80,7 +78,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'entity' => $this->getEntity(),
             'entityId' => $this->getEntityId(),
             'data' => $this->getData(),
@@ -89,22 +87,19 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
             'id' => $this->getId(),
             'command' => $this->getCommand()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->command = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Commandlog\\Commandlog', $this->getCommandId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -120,7 +115,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEntity()
     {
@@ -140,7 +135,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEntityId()
     {
@@ -160,7 +155,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getData()
     {
@@ -180,7 +175,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedOn()
     {
@@ -200,7 +195,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getMicrotime()
     {
@@ -208,7 +203,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param guid $id
+     * @param string $id
      *
      * @return static
      */
@@ -220,7 +215,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return guid
+     * @return string | null
      */
     public function getId()
     {
@@ -240,7 +235,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Commandlog\CommandlogDto
+     * @return \Ivoz\Provider\Domain\Model\Commandlog\CommandlogDto | null
      */
     public function getCommand()
     {
@@ -248,7 +243,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -262,7 +257,7 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCommandId()
     {
@@ -273,5 +268,3 @@ abstract class ChangelogDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

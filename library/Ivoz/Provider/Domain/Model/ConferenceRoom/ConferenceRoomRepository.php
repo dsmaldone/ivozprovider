@@ -2,8 +2,10 @@
 
 namespace Ivoz\Provider\Domain\Model\ConferenceRoom;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
-interface ConferenceRoomRepository extends ObjectRepository, Selectable {}
+interface ConferenceRoomRepository extends ObjectRepository, Selectable
+{
 
+}

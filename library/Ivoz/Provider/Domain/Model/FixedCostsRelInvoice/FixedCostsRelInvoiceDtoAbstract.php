@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\FixedCostsRelInvoice;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -21,11 +19,6 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
      * @var integer
      */
     private $id;
-
-    /**
-     * @var \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
-     */
-    private $brand;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\FixedCost\FixedCostDto | null
@@ -48,7 +41,7 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -57,7 +50,6 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
         return [
             'quantity' => 'quantity',
             'id' => 'id',
-            'brandId' => 'brand',
             'fixedCostId' => 'fixedCost',
             'invoiceId' => 'invoice'
         ];
@@ -68,31 +60,25 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'quantity' => $this->getQuantity(),
             'id' => $this->getId(),
-            'brand' => $this->getBrand(),
             'fixedCost' => $this->getFixedCost(),
             'invoice' => $this->getInvoice()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        $this->fixedCost = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\FixedCost\\FixedCost', $this->getFixedCostId());
-        $this->invoice = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Invoice\\Invoice', $this->getInvoiceId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -108,7 +94,7 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getQuantity()
     {
@@ -128,57 +114,11 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandDto $brand
-     *
-     * @return static
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandDto $brand = null)
-    {
-        $this->brand = $brand;
-
-        return $this;
-    }
-
-    /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
-     */
-    public function getBrand()
-    {
-        return $this->brand;
-    }
-
-    /**
-     * @param integer $id | null
-     *
-     * @return static
-     */
-    public function setBrandId($id)
-    {
-        $value = !is_null($id)
-            ? new \Ivoz\Provider\Domain\Model\Brand\BrandDto($id)
-            : null;
-
-        return $this->setBrand($value);
-    }
-
-    /**
-     * @return integer | null
-     */
-    public function getBrandId()
-    {
-        if ($dto = $this->getBrand()) {
-            return $dto->getId();
-        }
-
-        return null;
     }
 
     /**
@@ -194,7 +134,7 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\FixedCost\FixedCostDto
+     * @return \Ivoz\Provider\Domain\Model\FixedCost\FixedCostDto | null
      */
     public function getFixedCost()
     {
@@ -202,7 +142,7 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -216,7 +156,7 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getFixedCostId()
     {
@@ -240,7 +180,7 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Invoice\InvoiceDto
+     * @return \Ivoz\Provider\Domain\Model\Invoice\InvoiceDto | null
      */
     public function getInvoice()
     {
@@ -248,7 +188,7 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -262,7 +202,7 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getInvoiceId()
     {
@@ -273,5 +213,3 @@ abstract class FixedCostsRelInvoiceDtoAbstract implements DataTransferObjectInte
         return null;
     }
 }
-
-

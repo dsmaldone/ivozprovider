@@ -5,7 +5,7 @@ namespace Ivoz\Provider\Domain\Service\Company;
 class DecrementBalance extends AbstractBalanceOperation
 {
     /**
-     * @param $companyId
+     * @param int $companyId
      * @param float $amount
      * @return boolean
      */
@@ -20,10 +20,5 @@ class DecrementBalance extends AbstractBalanceOperation
             $response,
             $company
         );
-    }
-
-    public function getLastError()
-    {
-        return $this->lastError;
     }
 }

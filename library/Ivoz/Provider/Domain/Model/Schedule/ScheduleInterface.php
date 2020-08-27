@@ -12,18 +12,13 @@ interface ScheduleInterface extends LoggableEntityInterface
      */
     public function getChangeSet();
 
-    public function checkIsOnTimeRange($dayOfTheWeek, \DateTime $time, \DateTimeZone $timeZone);
-
-    public function isOnSchedule(\DateTime $time);
-
     /**
-     * Set name
+     * Check if current time is inside Schedule
      *
-     * @param string $name
-     *
-     * @return self
+     * @param \DateTime $time Current time in Client's Timezone
+     * @return bool
      */
-    public function setName($name);
+    public function isOnSchedule(\DateTime $time);
 
     /**
      * Get name
@@ -33,29 +28,11 @@ interface ScheduleInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set timeIn
-     *
-     * @param \DateTime $timeIn
-     *
-     * @return self
-     */
-    public function setTimeIn($timeIn);
-
-    /**
      * Get timeIn
      *
      * @return \DateTime
      */
     public function getTimeIn();
-
-    /**
-     * Set timeout
-     *
-     * @param \DateTime $timeout
-     *
-     * @return self
-     */
-    public function setTimeout($timeout);
 
     /**
      * Get timeout
@@ -65,125 +42,53 @@ interface ScheduleInterface extends LoggableEntityInterface
     public function getTimeout();
 
     /**
-     * Set monday
-     *
-     * @param boolean $monday
-     *
-     * @return self
-     */
-    public function setMonday($monday = null);
-
-    /**
      * Get monday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getMonday();
 
     /**
-     * Set tuesday
-     *
-     * @param boolean $tuesday
-     *
-     * @return self
-     */
-    public function setTuesday($tuesday = null);
-
-    /**
      * Get tuesday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getTuesday();
 
     /**
-     * Set wednesday
-     *
-     * @param boolean $wednesday
-     *
-     * @return self
-     */
-    public function setWednesday($wednesday = null);
-
-    /**
      * Get wednesday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getWednesday();
 
     /**
-     * Set thursday
-     *
-     * @param boolean $thursday
-     *
-     * @return self
-     */
-    public function setThursday($thursday = null);
-
-    /**
      * Get thursday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getThursday();
 
     /**
-     * Set friday
-     *
-     * @param boolean $friday
-     *
-     * @return self
-     */
-    public function setFriday($friday = null);
-
-    /**
      * Get friday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getFriday();
 
     /**
-     * Set saturday
-     *
-     * @param boolean $saturday
-     *
-     * @return self
-     */
-    public function setSaturday($saturday = null);
-
-    /**
      * Get saturday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getSaturday();
 
     /**
-     * Set sunday
-     *
-     * @param boolean $sunday
-     *
-     * @return self
-     */
-    public function setSunday($sunday = null);
-
-    /**
      * Get sunday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getSunday();
-
-    /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -191,6 +96,4 @@ interface ScheduleInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
      */
     public function getCompany();
-
 }
-

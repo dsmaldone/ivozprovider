@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\TrunksCdr;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -13,19 +11,19 @@ use Ivoz\Core\Application\Model\DtoNormalizer;
 abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
 {
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $startTime = '2000-01-01 00:00:00';
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $endTime = '2000-01-01 00:00:00';
 
     /**
      * @var float
      */
-    private $duration = '0.000';
+    private $duration = 0.0;
 
     /**
      * @var string
@@ -36,16 +34,6 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
      * @var string
      */
     private $callee;
-
-    /**
-     * @var string
-     */
-    private $referee;
-
-    /**
-     * @var string
-     */
-    private $referrer;
 
     /**
      * @var string
@@ -73,14 +61,14 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     private $bounced;
 
     /**
-     * @var string
+     * @var boolean
      */
-    private $price;
+    private $parsed = false;
 
     /**
-     * @var string
+     * @var \DateTime | string
      */
-    private $priceDetails;
+    private $parserScheduledAt = 'CURRENT_TIMESTAMP';
 
     /**
      * @var string
@@ -98,11 +86,6 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     private $id;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Invoice\InvoiceDto | null
-     */
-    private $invoice;
-
-    /**
      * @var \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     private $brand;
@@ -113,19 +96,44 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     private $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto | null
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierDto | null
      */
-    private $peeringContract;
+    private $carrier;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationDto | null
+     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto | null
      */
-    private $tpDestination;
+    private $retailAccount;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto | null
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto | null
      */
-    private $destinationRate;
+    private $residentialDevice;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\User\UserDto | null
+     */
+    private $user;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Friend\FriendDto | null
+     */
+    private $friend;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Fax\FaxDto | null
+     */
+    private $fax;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Ddi\DdiDto | null
+     */
+    private $ddi;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderDto | null
+     */
+    private $ddiProvider;
 
 
     use DtoNormalizer;
@@ -138,7 +146,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -150,24 +158,26 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
             'duration' => 'duration',
             'caller' => 'caller',
             'callee' => 'callee',
-            'referee' => 'referee',
-            'referrer' => 'referrer',
             'callid' => 'callid',
             'callidHash' => 'callidHash',
             'xcallid' => 'xcallid',
             'diversion' => 'diversion',
             'bounced' => 'bounced',
-            'price' => 'price',
-            'priceDetails' => 'priceDetails',
+            'parsed' => 'parsed',
+            'parserScheduledAt' => 'parserScheduledAt',
             'direction' => 'direction',
             'cgrid' => 'cgrid',
             'id' => 'id',
-            'invoiceId' => 'invoice',
             'brandId' => 'brand',
             'companyId' => 'company',
-            'peeringContractId' => 'peeringContract',
-            'tpDestinationId' => 'tpDestination',
-            'destinationRateId' => 'destinationRate'
+            'carrierId' => 'carrier',
+            'retailAccountId' => 'retailAccount',
+            'residentialDeviceId' => 'residentialDevice',
+            'userId' => 'user',
+            'friendId' => 'friend',
+            'faxId' => 'fax',
+            'ddiId' => 'ddi',
+            'ddiProviderId' => 'ddiProvider'
         ];
     }
 
@@ -176,52 +186,46 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'startTime' => $this->getStartTime(),
             'endTime' => $this->getEndTime(),
             'duration' => $this->getDuration(),
             'caller' => $this->getCaller(),
             'callee' => $this->getCallee(),
-            'referee' => $this->getReferee(),
-            'referrer' => $this->getReferrer(),
             'callid' => $this->getCallid(),
             'callidHash' => $this->getCallidHash(),
             'xcallid' => $this->getXcallid(),
             'diversion' => $this->getDiversion(),
             'bounced' => $this->getBounced(),
-            'price' => $this->getPrice(),
-            'priceDetails' => $this->getPriceDetails(),
+            'parsed' => $this->getParsed(),
+            'parserScheduledAt' => $this->getParserScheduledAt(),
             'direction' => $this->getDirection(),
             'cgrid' => $this->getCgrid(),
             'id' => $this->getId(),
-            'invoice' => $this->getInvoice(),
             'brand' => $this->getBrand(),
             'company' => $this->getCompany(),
-            'peeringContract' => $this->getPeeringContract(),
-            'tpDestination' => $this->getTpDestination(),
-            'destinationRate' => $this->getDestinationRate()
+            'carrier' => $this->getCarrier(),
+            'retailAccount' => $this->getRetailAccount(),
+            'residentialDevice' => $this->getResidentialDevice(),
+            'user' => $this->getUser(),
+            'friend' => $this->getFriend(),
+            'fax' => $this->getFax(),
+            'ddi' => $this->getDdi(),
+            'ddiProvider' => $this->getDdiProvider()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->invoice = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Invoice\\Invoice', $this->getInvoiceId());
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->peeringContract = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\PeeringContract\\PeeringContract', $this->getPeeringContractId());
-        $this->tpDestination = $transformer->transform('Ivoz\\Cgr\\Domain\\Model\\TpDestination\\TpDestination', $this->getTpDestinationId());
-        $this->destinationRate = $transformer->transform('Ivoz\\Cgr\\Domain\\Model\\DestinationRate\\DestinationRate', $this->getDestinationRateId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -237,7 +241,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getStartTime()
     {
@@ -257,7 +261,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getEndTime()
     {
@@ -277,7 +281,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return float
+     * @return float | null
      */
     public function getDuration()
     {
@@ -297,7 +301,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCaller()
     {
@@ -317,51 +321,11 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallee()
     {
         return $this->callee;
-    }
-
-    /**
-     * @param string $referee
-     *
-     * @return static
-     */
-    public function setReferee($referee = null)
-    {
-        $this->referee = $referee;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getReferee()
-    {
-        return $this->referee;
-    }
-
-    /**
-     * @param string $referrer
-     *
-     * @return static
-     */
-    public function setReferrer($referrer = null)
-    {
-        $this->referrer = $referrer;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getReferrer()
-    {
-        return $this->referrer;
     }
 
     /**
@@ -377,7 +341,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallid()
     {
@@ -397,7 +361,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallidHash()
     {
@@ -417,7 +381,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getXcallid()
     {
@@ -437,7 +401,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDiversion()
     {
@@ -457,7 +421,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getBounced()
     {
@@ -465,43 +429,43 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param string $price
+     * @param boolean $parsed
      *
      * @return static
      */
-    public function setPrice($price = null)
+    public function setParsed($parsed = null)
     {
-        $this->price = $price;
+        $this->parsed = $parsed;
 
         return $this;
     }
 
     /**
-     * @return string
+     * @return boolean | null
      */
-    public function getPrice()
+    public function getParsed()
     {
-        return $this->price;
+        return $this->parsed;
     }
 
     /**
-     * @param string $priceDetails
+     * @param \DateTime $parserScheduledAt
      *
      * @return static
      */
-    public function setPriceDetails($priceDetails = null)
+    public function setParserScheduledAt($parserScheduledAt = null)
     {
-        $this->priceDetails = $priceDetails;
+        $this->parserScheduledAt = $parserScheduledAt;
 
         return $this;
     }
 
     /**
-     * @return string
+     * @return \DateTime | null
      */
-    public function getPriceDetails()
+    public function getParserScheduledAt()
     {
-        return $this->priceDetails;
+        return $this->parserScheduledAt;
     }
 
     /**
@@ -517,7 +481,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDirection()
     {
@@ -537,7 +501,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCgrid()
     {
@@ -557,57 +521,11 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * @param \Ivoz\Provider\Domain\Model\Invoice\InvoiceDto $invoice
-     *
-     * @return static
-     */
-    public function setInvoice(\Ivoz\Provider\Domain\Model\Invoice\InvoiceDto $invoice = null)
-    {
-        $this->invoice = $invoice;
-
-        return $this;
-    }
-
-    /**
-     * @return \Ivoz\Provider\Domain\Model\Invoice\InvoiceDto
-     */
-    public function getInvoice()
-    {
-        return $this->invoice;
-    }
-
-    /**
-     * @param integer $id | null
-     *
-     * @return static
-     */
-    public function setInvoiceId($id)
-    {
-        $value = !is_null($id)
-            ? new \Ivoz\Provider\Domain\Model\Invoice\InvoiceDto($id)
-            : null;
-
-        return $this->setInvoice($value);
-    }
-
-    /**
-     * @return integer | null
-     */
-    public function getInvoiceId()
-    {
-        if ($dto = $this->getInvoice()) {
-            return $dto->getId();
-        }
-
-        return null;
     }
 
     /**
@@ -623,7 +541,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -631,7 +549,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -645,7 +563,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -669,7 +587,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -677,7 +595,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -691,7 +609,7 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -703,45 +621,45 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto $peeringContract
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierDto $carrier
      *
      * @return static
      */
-    public function setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto $peeringContract = null)
+    public function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierDto $carrier = null)
     {
-        $this->peeringContract = $peeringContract;
+        $this->carrier = $carrier;
 
         return $this;
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierDto | null
      */
-    public function getPeeringContract()
+    public function getCarrier()
     {
-        return $this->peeringContract;
+        return $this->carrier;
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
-    public function setPeeringContractId($id)
+    public function setCarrierId($id)
     {
         $value = !is_null($id)
-            ? new \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto($id)
+            ? new \Ivoz\Provider\Domain\Model\Carrier\CarrierDto($id)
             : null;
 
-        return $this->setPeeringContract($value);
+        return $this->setCarrier($value);
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
-    public function getPeeringContractId()
+    public function getCarrierId()
     {
-        if ($dto = $this->getPeeringContract()) {
+        if ($dto = $this->getCarrier()) {
             return $dto->getId();
         }
 
@@ -749,45 +667,45 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationDto $tpDestination
+     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto $retailAccount
      *
      * @return static
      */
-    public function setTpDestination(\Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationDto $tpDestination = null)
+    public function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto $retailAccount = null)
     {
-        $this->tpDestination = $tpDestination;
+        $this->retailAccount = $retailAccount;
 
         return $this;
     }
 
     /**
-     * @return \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationDto
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto | null
      */
-    public function getTpDestination()
+    public function getRetailAccount()
     {
-        return $this->tpDestination;
+        return $this->retailAccount;
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
-    public function setTpDestinationId($id)
+    public function setRetailAccountId($id)
     {
         $value = !is_null($id)
-            ? new \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationDto($id)
+            ? new \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto($id)
             : null;
 
-        return $this->setTpDestination($value);
+        return $this->setRetailAccount($value);
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
-    public function getTpDestinationId()
+    public function getRetailAccountId()
     {
-        if ($dto = $this->getTpDestination()) {
+        if ($dto = $this->getRetailAccount()) {
             return $dto->getId();
         }
 
@@ -795,50 +713,278 @@ abstract class TrunksCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto $destinationRate
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto $residentialDevice
      *
      * @return static
      */
-    public function setDestinationRate(\Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto $destinationRate = null)
+    public function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto $residentialDevice = null)
     {
-        $this->destinationRate = $destinationRate;
+        $this->residentialDevice = $residentialDevice;
 
         return $this;
     }
 
     /**
-     * @return \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto | null
      */
-    public function getDestinationRate()
+    public function getResidentialDevice()
     {
-        return $this->destinationRate;
+        return $this->residentialDevice;
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
-    public function setDestinationRateId($id)
+    public function setResidentialDeviceId($id)
     {
         $value = !is_null($id)
-            ? new \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto($id)
+            ? new \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto($id)
             : null;
 
-        return $this->setDestinationRate($value);
+        return $this->setResidentialDevice($value);
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
-    public function getDestinationRateId()
+    public function getResidentialDeviceId()
     {
-        if ($dto = $this->getDestinationRate()) {
+        if ($dto = $this->getResidentialDevice()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\User\UserDto $user
+     *
+     * @return static
+     */
+    public function setUser(\Ivoz\Provider\Domain\Model\User\UserDto $user = null)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\User\UserDto | null
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setUserId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\User\UserDto($id)
+            : null;
+
+        return $this->setUser($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getUserId()
+    {
+        if ($dto = $this->getUser()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Friend\FriendDto $friend
+     *
+     * @return static
+     */
+    public function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendDto $friend = null)
+    {
+        $this->friend = $friend;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Friend\FriendDto | null
+     */
+    public function getFriend()
+    {
+        return $this->friend;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setFriendId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Friend\FriendDto($id)
+            : null;
+
+        return $this->setFriend($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getFriendId()
+    {
+        if ($dto = $this->getFriend()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Fax\FaxDto $fax
+     *
+     * @return static
+     */
+    public function setFax(\Ivoz\Provider\Domain\Model\Fax\FaxDto $fax = null)
+    {
+        $this->fax = $fax;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Fax\FaxDto | null
+     */
+    public function getFax()
+    {
+        return $this->fax;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setFaxId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Fax\FaxDto($id)
+            : null;
+
+        return $this->setFax($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getFaxId()
+    {
+        if ($dto = $this->getFax()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiDto $ddi
+     *
+     * @return static
+     */
+    public function setDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiDto $ddi = null)
+    {
+        $this->ddi = $ddi;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto | null
+     */
+    public function getDdi()
+    {
+        return $this->ddi;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setDdiId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Ddi\DdiDto($id)
+            : null;
+
+        return $this->setDdi($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getDdiId()
+    {
+        if ($dto = $this->getDdi()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderDto $ddiProvider
+     *
+     * @return static
+     */
+    public function setDdiProvider(\Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderDto $ddiProvider = null)
+    {
+        $this->ddiProvider = $ddiProvider;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderDto | null
+     */
+    public function getDdiProvider()
+    {
+        return $this->ddiProvider;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setDdiProviderId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderDto($id)
+            : null;
+
+        return $this->setDdiProvider($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getDdiProviderId()
+    {
+        if ($dto = $this->getDdiProvider()) {
             return $dto->getId();
         }
 
         return null;
     }
 }
-
-

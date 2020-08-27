@@ -2,10 +2,12 @@
 
 namespace Ivoz\Cgr\Domain\Model\TpRate;
 
-use Ivoz\Core\Domain\Model\EntityInterface;
+use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
-interface TpRateInterface extends EntityInterface
+interface TpRateInterface extends LoggableEntityInterface
 {
+    public function getChangeSet();
+
     /**
      * Validate RateIncrement has valid unit
      *
@@ -23,15 +25,6 @@ interface TpRateInterface extends EntityInterface
     public function setGroupIntervalStart($groupIntervalStart);
 
     /**
-     * Set tpid
-     *
-     * @param string $tpid
-     *
-     * @return self
-     */
-    public function setTpid($tpid);
-
-    /**
      * Get tpid
      *
      * @return string
@@ -39,61 +32,25 @@ interface TpRateInterface extends EntityInterface
     public function getTpid();
 
     /**
-     * Set tag
-     *
-     * @param string $tag
-     *
-     * @return self
-     */
-    public function setTag($tag = null);
-
-    /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag();
 
     /**
-     * Set connectFee
-     *
-     * @param string $connectFee
-     *
-     * @return self
-     */
-    public function setConnectFee($connectFee);
-
-    /**
      * Get connectFee
      *
-     * @return string
+     * @return float
      */
     public function getConnectFee();
 
     /**
-     * Set rateCost
-     *
-     * @param string $rateCost
-     *
-     * @return self
-     */
-    public function setRateCost($rateCost);
-
-    /**
      * Get rateCost
      *
-     * @return string
+     * @return float
      */
     public function getRateCost();
-
-    /**
-     * Set rateUnit
-     *
-     * @param string $rateUnit
-     *
-     * @return self
-     */
-    public function setRateUnit($rateUnit);
 
     /**
      * Get rateUnit
@@ -117,15 +74,6 @@ interface TpRateInterface extends EntityInterface
     public function getGroupIntervalStart();
 
     /**
-     * Set createdAt
-     *
-     * @param \DateTime $createdAt
-     *
-     * @return self
-     */
-    public function setCreatedAt($createdAt);
-
-    /**
      * Get createdAt
      *
      * @return \DateTime
@@ -133,20 +81,18 @@ interface TpRateInterface extends EntityInterface
     public function getCreatedAt();
 
     /**
-     * Set tpDestinationRate
+     * Set destinationRate
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface $tpDestinationRate
+     * @param \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateInterface $destinationRate
      *
-     * @return self
+     * @return static
      */
-    public function setTpDestinationRate(\Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface $tpDestinationRate);
+    public function setDestinationRate(\Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateInterface $destinationRate);
 
     /**
-     * Get tpDestinationRate
+     * Get destinationRate
      *
-     * @return \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface
+     * @return \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateInterface
      */
-    public function getTpDestinationRate();
-
+    public function getDestinationRate();
 }
-

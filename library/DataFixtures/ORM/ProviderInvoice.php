@@ -7,6 +7,7 @@ use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Ivoz\Provider\Domain\Model\Invoice\Invoice;
+use Ivoz\Provider\Domain\Model\Invoice\Pdf;
 
 class ProviderInvoice extends Fixture implements DependentFixtureInterface
 {
@@ -17,27 +18,31 @@ class ProviderInvoice extends Fixture implements DependentFixtureInterface
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(Invoice::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
 
         /** @var Invoice $item1 */
-        $item1 = $this->createEntityInstanceWithPublicMethods(Invoice::class);
-        $item1->setBrand(
-            $this->getReference('_reference_ProviderBrand1')
-        );
-        $item1->setCompany(
-            $this->getReference('_reference_ProviderCompany1')
-        );
-        $item1->setInvoiceTemplate(
-            $this->getReference('_reference_ProviderInvoiceTemplate1')
-        );
-        $item1->setNumber('1');
-        $item1->setInDate(new \DateTime('2018-01-01', new \DateTimeZone('UTC')));
-        $item1->setOutDate(new \DateTime('2018-01-31', new \DateTimeZone('UTC')));
-        $item1->setTotal(0.272);
-        $item1->setTaxRate(21.0);
-        $item1->setTotalWithTax(0.330);
-        $item1->setStatus('processing');
+        $item1 = $this->createEntityInstance(Invoice::class);
+        (function () use ($fixture) {
+            $this->setNumber('1');
+            $this->setInDate(new \DateTime('2018-01-01', new \DateTimeZone('UTC')));
+            $this->setOutDate(new \DateTime('2018-01-31', new \DateTimeZone('UTC')));
+            $this->setTotal(0.272);
+            $this->setTaxRate(21.0);
+            $this->setTotalWithTax(0.330);
+            $this->setStatus('processing');
+            $this->setPdf(new Pdf(null, null, null));
+            $this->setBrand(
+                $fixture->getReference('_reference_ProviderBrand1')
+            );
+            $this->setCompany(
+                $fixture->getReference('_reference_ProviderCompany1')
+            );
+            $this->setInvoiceTemplate(
+                $fixture->getReference('_reference_ProviderInvoiceTemplate1')
+            );
+        })->call($item1);
 
         $this->addReference('_reference_ProviderInvoice1', $item1);
         $this->sanitizeEntityValues($item1);

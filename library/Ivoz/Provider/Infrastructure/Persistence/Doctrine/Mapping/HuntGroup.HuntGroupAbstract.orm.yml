@@ -32,7 +32,7 @@ Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupAbstract:
         comment: '[enum:ringAll|linear|roundRobin|random]'
     ringAllTimeout:
       type: smallint
-      nullable: false
+      nullable: true
       options:
         unsigned: false
       column: ringAllTimeout
@@ -55,9 +55,16 @@ Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupAbstract:
       type: integer
       nullable: false
       options:
-        default: '1'
+        default: 1
         unsigned: true
       column: preventMissedCalls
+    allowCallForwards:
+      type: integer
+      nullable: false
+      options:
+        default: 0
+        unsigned: true
+      column: allowCallForwards
   manyToOne:
     company:
       targetEntity: \Ivoz\Provider\Domain\Model\Company\CompanyInterface

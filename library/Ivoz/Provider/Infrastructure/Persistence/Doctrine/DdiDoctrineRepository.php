@@ -3,8 +3,9 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\Ddi\DdiRepository;
 use Ivoz\Provider\Domain\Model\Ddi\Ddi;
+use Ivoz\Provider\Domain\Model\Ddi\DdiInterface;
+use Ivoz\Provider\Domain\Model\Ddi\DdiRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -18,5 +19,19 @@ class DdiDoctrineRepository extends ServiceEntityRepository implements DdiReposi
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Ddi::class);
+    }
+
+    /**
+     * @param string $ddiE164
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
+     */
+    public function findOneByDdiE164($ddiE164)
+    {
+        /** @var DdiInterface $response */
+        $response = $this->findOneBy([
+            "ddie164" => $ddiE164
+        ]);
+
+        return $response;
     }
 }

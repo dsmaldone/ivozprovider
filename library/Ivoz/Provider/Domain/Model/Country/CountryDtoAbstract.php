@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Country;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -40,12 +38,32 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     /**
      * @var string
      */
+    private $nameCa;
+
+    /**
+     * @var string
+     */
+    private $nameIt;
+
+    /**
+     * @var string
+     */
     private $zoneEn = '';
 
     /**
      * @var string
      */
     private $zoneEs = '';
+
+    /**
+     * @var string
+     */
+    private $zoneCa = '';
+
+    /**
+     * @var string
+     */
+    private $zoneIt = '';
 
 
     use DtoNormalizer;
@@ -58,7 +76,7 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -68,8 +86,8 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
             'code' => 'code',
             'countryCode' => 'countryCode',
             'id' => 'id',
-            'name' => ['en','es'],
-            'zone' => ['en','es']
+            'name' => ['en','es','ca','it'],
+            'zone' => ['en','es','ca','it']
         ];
     }
 
@@ -78,35 +96,36 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'code' => $this->getCode(),
             'countryCode' => $this->getCountryCode(),
             'id' => $this->getId(),
             'name' => [
                 'en' => $this->getNameEn(),
-                'es' => $this->getNameEs()
+                'es' => $this->getNameEs(),
+                'ca' => $this->getNameCa(),
+                'it' => $this->getNameIt()
             ],
             'zone' => [
                 'en' => $this->getZoneEn(),
-                'es' => $this->getZoneEs()
+                'es' => $this->getZoneEs(),
+                'ca' => $this->getZoneCa(),
+                'it' => $this->getZoneIt()
             ]
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -122,7 +141,7 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCode()
     {
@@ -142,7 +161,7 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCountryCode()
     {
@@ -162,7 +181,7 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -182,7 +201,7 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNameEn()
     {
@@ -202,11 +221,51 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNameEs()
     {
         return $this->nameEs;
+    }
+
+    /**
+     * @param string $nameCa
+     *
+     * @return static
+     */
+    public function setNameCa($nameCa = null)
+    {
+        $this->nameCa = $nameCa;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNameCa()
+    {
+        return $this->nameCa;
+    }
+
+    /**
+     * @param string $nameIt
+     *
+     * @return static
+     */
+    public function setNameIt($nameIt = null)
+    {
+        $this->nameIt = $nameIt;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNameIt()
+    {
+        return $this->nameIt;
     }
 
     /**
@@ -222,7 +281,7 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getZoneEn()
     {
@@ -242,12 +301,50 @@ abstract class CountryDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getZoneEs()
     {
         return $this->zoneEs;
     }
+
+    /**
+     * @param string $zoneCa
+     *
+     * @return static
+     */
+    public function setZoneCa($zoneCa = null)
+    {
+        $this->zoneCa = $zoneCa;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getZoneCa()
+    {
+        return $this->zoneCa;
+    }
+
+    /**
+     * @param string $zoneIt
+     *
+     * @return static
+     */
+    public function setZoneIt($zoneIt = null)
+    {
+        $this->zoneIt = $zoneIt;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getZoneIt()
+    {
+        return $this->zoneIt;
+    }
 }
-
-

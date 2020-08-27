@@ -22,18 +22,18 @@ production:
       title: _("List of %s %2s", ngettext('User', 'Users', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/company/users.html"
+        href: "/doc/en/administration_portal/client/vpbx/users.html"
       forcedValues:
         <<: *forcedCompany
       fields:
         options:
           title: _("Options")
           screens:
-            usersEdit_screen: true
-            callForwardSettingsList_screen: true
-            huntGroupsRelUsersList_screen: true
+            usersEdit_screen: ${auth.acls.Users.update}
+            callForwardSettingsList_screen: ${auth.acls.CallForwardSettings.read}
+            huntGroupsRelUsersList_screen: ${auth.acls.HuntGroupsRelUsers.read}
           dialogs:
-            usersDel_dialog: true
+            usersDel_dialog: ${auth.acls.Users.delete}
           default: usersEdit_screen
         order: &Users_orderLink
           company: true
@@ -48,6 +48,7 @@ production:
           timezone: true
           extension: true
           terminal: true
+          statusIcon: true
           outgoingDDI: true
           callACL: true
           voicemailEnabled: true
@@ -82,9 +83,9 @@ production:
       options:
         title: _("Options")
         screens:
-          usersNew_screen: true
+          usersNew_screen: ${auth.acls.Users.create}
         dialogs:
-          usersDel_dialog: true
+          usersDel_dialog: ${auth.acls.Users.delete}
           importUsers_dialog: false
     usersNew_screen: &usersNew_screenLink
       <<: *Users
@@ -96,6 +97,7 @@ production:
       shortcutOption: N
       forcedValues:
         <<: *forcedCompany
+        pass: 1234
       fields:
         order:
           <<: *Users_orderLink
@@ -122,6 +124,7 @@ production:
           language: true
           transformationRuleSet: true
           externalIpCalls: true
+          statusIcon: true
       fixedPositions: &UsersFixedPositions_link
         group0:
           label: _("Personal data")
@@ -149,6 +152,7 @@ production:
       fields:
         blacklist:
           tokenKey: true
+          statusIcon: true
         order:
           <<: *Users_orderLink
       fixedPositions: &UsersFixedPositions_link
@@ -215,14 +219,16 @@ production:
       filterField: User
       parentOptionCustomizer:
         - recordCount
-    huntGroupsRelUsersNew_screen:
-      <<: *huntGroupsRelUsersNew_screenLink
-      title: _("Join to %s %2s", ngettext("Hunt Group", "Hunt Groups", 1), "[format| (%parent%)]")
-      filterField: User
-    huntGroupsRelUsersEdit_screen:
-      <<: *huntGroupsRelUsersEdit_screenLink
-      filterField: User
-      title: _("Edit Join of %s", ngettext('Hunt Group', 'Hunt Groups', 1))
+      fields:
+        options:
+          title: _("Options")
+          dialogs:
+            huntGroupsRelUsersDel_dialog: ${auth.acls.HuntGroupsRelUsers.delete}
+          default: huntGroupsRelUsersEdit_screen
+      options:
+        title: _("Options")
+        dialogs:
+          huntGroupsRelUsersDel_dialog: ${auth.acls.HuntGroupsRelUsers.delete}
 
     #CallForwardSettings
     <<: *callForwardSettings_screensLink
@@ -268,8 +274,6 @@ production:
       escape: "\\"
       forcedValues:
         company: *forcedCompany
-
-
 
     #HuntGroupsRelUsers
     <<: *huntGroupsRelUsers_dialogsLink

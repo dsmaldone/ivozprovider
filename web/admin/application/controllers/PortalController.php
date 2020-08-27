@@ -1,8 +1,5 @@
 <?php
 
-use IvozProvider\Model as Models;
-use IvozProvider\Mapper\Sql as Mappers;
-
 class PortalController extends Zend_Controller_Action
 {
 
@@ -13,9 +10,9 @@ class PortalController extends Zend_Controller_Action
         /** @var \Ivoz\Core\Application\Service\DataGateway $dataGateway */
         $dataGateway = Zend_Registry::get('data_gateway');
         $brand = $dataGateway->findOneBy(
-            \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrl::class,
+            \Ivoz\Provider\Domain\Model\WebPortal\WebPortal::class,
             [
-                'BrandUrl.url = :url',
+                'WebPortal.url = :url',
                 [':url' => $serverUrl]
             ]
         );
@@ -23,8 +20,6 @@ class PortalController extends Zend_Controller_Action
         if (!$this->_isBrandValid($brand)) {
             throw new Exception('Page not found', 404);
         }
-
-
     }
 
     public function indexAction()
@@ -44,7 +39,5 @@ class PortalController extends Zend_Controller_Action
         }
 
         return true;
-
     }
-
 }

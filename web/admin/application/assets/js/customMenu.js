@@ -143,10 +143,24 @@
                             external:false
                             }
                         , function(resp) {
-                            $("#tabsList li").klearModule('reDispatch');
+
+                            $("#tabsList li")
+                                .filter(function () {
+                                    var controller = $(this).data('controller');
+                                    return (controller == 'edit' || controller == 'new');
+                                })
+                                .klearModule("close", {forced: true});
+
+                            $("#tabsList li")
+                                .filter(function () {
+                                    var controller = $(this).data('controller');
+                                    return !controller || controller == 'list';
+                                })
+                                .klearModule('reDispatch');
+
                             $.klear.restart({}, false);
                             $_dialog.dialog("destroy").remove();
-                            
+
                         }, function(error) {
                             $_dialog.dialog("destroy").remove();
                             console.log("ERROR", error);
@@ -231,6 +245,8 @@
                     icon = 'basket';
                 } else if (config.getSubType() == 'wholesale') {
                     icon = 'cart';
+                } else if (config.getSubType() == 'residential') {
+                    icon = 'house';
                 }
             } else if (config.getType() == 'brand') {
                icon = 'world';

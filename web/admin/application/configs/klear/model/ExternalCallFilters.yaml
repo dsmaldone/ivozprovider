@@ -2,7 +2,7 @@ production:
   entity: Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilter
   fields:
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       required: true
       source:
@@ -255,11 +255,11 @@ production:
         data: mapper
         config:
           relation: \Ivoz\Provider\Domain\Model\ExternalCallFilterRelSchedule\ExternalCallFilterRelSchedule
-          relationProperty: schedule
+          relationProperty: filter
           relatedProperty: schedule
           related: \Ivoz\Provider\Domain\Model\Schedule\Schedule
-          filterClass: IvozProvider_Klear_Filter_Company
           relatedFieldName: name
+          filterClass: IvozProvider_Klear_Filter_Company
     calendars:
       title: ngettext('Calendar', 'Calendars', 0)
       type: multiselect
@@ -291,7 +291,7 @@ production:
         data: mapper
         config:
           relation: \Ivoz\Provider\Domain\Model\ExternalCallFilterWhiteList\ExternalCallFilterWhiteList
-          relationProperty: matchlist
+          relationProperty: filter
           relatedProperty: matchlist
           related: \Ivoz\Provider\Domain\Model\MatchList\MatchList
           relatedFieldName: name
@@ -307,7 +307,7 @@ production:
         data: mapper
         config:
           relation: \Ivoz\Provider\Domain\Model\ExternalCallFilterBlackList\ExternalCallFilterBlackList
-          relationProperty: matchlist
+          relationProperty: filter
           relatedProperty: matchlist
           related: \Ivoz\Provider\Domain\Model\MatchList\MatchList
           relatedFieldName: name

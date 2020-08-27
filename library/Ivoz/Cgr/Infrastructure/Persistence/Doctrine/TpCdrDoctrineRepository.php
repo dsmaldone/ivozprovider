@@ -3,8 +3,10 @@
 namespace Ivoz\Cgr\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Cgr\Domain\Model\TpCdr\TpCdrRepository;
+use Doctrine\ORM\NoResultException;
 use Ivoz\Cgr\Domain\Model\TpCdr\TpCdr;
+use Ivoz\Cgr\Domain\Model\TpCdr\TpCdrInterface;
+use Ivoz\Cgr\Domain\Model\TpCdr\TpCdrRepository;
 use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
@@ -22,10 +24,21 @@ class TpCdrDoctrineRepository extends ServiceEntityRepository implements TpCdrRe
     }
 
     /**
-     * @param string $cgrid
-     * @return int
+     * @inheritdoc
+     * @see TpCdrRepository::getByOriginId
      */
-    public function getOneByCgrid(string $cgrid)
+    public function getByOriginId(string $originId)
+    {
+        return $this->findOneBy([
+            'originId' => $originId
+        ]);
+    }
+
+    /**
+     * @param string $cgrid
+     * @return TpCdrInterface | null
+     */
+    public function getDefaultRunByCgrid(string $cgrid)
     {
         $conditions = [
             ['cgrid', 'eq', $cgrid],
@@ -36,8 +49,39 @@ class TpCdrDoctrineRepository extends ServiceEntityRepository implements TpCdrRe
             ->createQueryBuilder('self')
             ->addCriteria(CriteriaHelper::fromArray($conditions));
 
-        return $qb
-            ->getQuery()
-            ->getSingleResult();
+        try {
+            return $qb
+                ->getQuery()
+                ->getSingleResult();
+        } catch (NoResultException $error) {
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string $cgrid
+     * @return TpCdrInterface | null
+     */
+    public function getCarrierRunByCgrid(string $cgrid)
+    {
+        $conditions = [
+            ['cgrid', 'eq', $cgrid],
+            ['runId', 'eq', 'carrier'],
+            ['requestType', 'eq', '*postpaid']
+        ];
+
+        $qb = $this
+            ->createQueryBuilder('self')
+            ->addCriteria(CriteriaHelper::fromArray($conditions));
+
+        try {
+            return $qb
+                ->getQuery()
+                ->getSingleResult();
+        } catch (NoResultException $error) {
+        }
+
+        return null;
     }
 }

@@ -1,5 +1,6 @@
 <?php
 namespace Ivoz\Provider\Domain\Model\Locution;
+
 use Ivoz\Core\Domain\Model\TempFileContainnerTrait;
 use Ivoz\Core\Domain\Service\FileContainerInterface;
 use Ivoz\Core\Domain\Service\TempFile;
@@ -7,10 +8,11 @@ use Ivoz\Core\Domain\Service\TempFile;
 /**
  * Locution
  */
-class Locution extends LocutionAbstract implements LocutionInterface, FileContainerInterface
+class Locution extends LocutionAbstract implements FileContainerInterface, LocutionInterface
 {
     use LocutionTrait;
-    use TempFileContainnerTrait { addTmpFile as protected _addTmpFile; }
+    use TempFileContainnerTrait { addTmpFile as protected _addTmpFile;
+    }
 
     /**
      * @codeCoverageIgnore
@@ -24,12 +26,22 @@ class Locution extends LocutionAbstract implements LocutionInterface, FileContai
     /**
      * @return array
      */
-    public function getFileObjects()
+    public function getFileObjects(int $filter = null)
     {
-        return [
-            'OriginalFile',
-            'EncodedFile'
+        $fileObjects = [
+            'OriginalFile' => [
+                FileContainerInterface::DOWNLOADABLE_FILE,
+                FileContainerInterface::UPDALOADABLE_FILE,
+            ],
+            'EncodedFile' => [
+                FileContainerInterface::DOWNLOADABLE_FILE,
+            ]
         ];
+
+        return $this->filterFileObjects(
+            $fileObjects,
+            $filter
+        );
     }
 
     /**
@@ -44,16 +56,14 @@ class Locution extends LocutionAbstract implements LocutionInterface, FileContai
     /**
      * Add TempFile and set status to pending
      *
-     * @param $fldName
-     * @param TempFile $file
+     * @param string $fldName
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
      */
     public function addTmpFile($fldName, TempFile $file)
     {
-        if ($fldName == 'OriginalFile') {
+        if ($fldName === 'OriginalFile') {
             $this->setStatus('pending');
         }
         $this->_addTmpFile($fldName, $file);
     }
-
 }
-

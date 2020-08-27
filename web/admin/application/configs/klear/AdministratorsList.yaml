@@ -1,5 +1,7 @@
 #include conf.d/mapperList.yaml
 #include conf.d/actions.yaml
+#include conf.d/documentationLink.yaml
+#include AdministratorRelPublicEntitiesList.yaml
 
 production:
   main:
@@ -11,13 +13,18 @@ production:
       pagination:
         items: 25
       <<: *Administrators
-      class: fa fa-users red
+      class: ui-silk-tux
       title: _("List of %s %2s", ngettext('Main operator', 'Main operators', 0), "[format| (%parent%)]")
+      rawCondition: "Administrator.id != 0"
+      info:
+        <<: *documentationLink
+        href: "/doc/en/administration_portal/platform/main_operators.html"
       fields:
         options:
           title: _("Options")
           screens:
             administratorsEdit_screen: true
+            administratorRelPublicEntitiesList_screen: true
           dialogs:
             administratorsDel_dialog: true
           default: administratorsEdit_screen
@@ -29,6 +36,7 @@ production:
           name: true
           lastname: true
           active: true
+          restricted: true
         blacklist:
           email: true
           pass: true
@@ -58,8 +66,8 @@ production:
       multiInstance: true
       title: _("Add %s", ngettext('Main operator', 'Main operators', 1))
       shortcutOption: N
-      fields:
-        blacklist:
+      fields: &administratorsFields
+        blacklist: &administratorsBlacklist
           active: true
           brand: true
           company: true
@@ -74,6 +82,7 @@ production:
             pass: 1
             active: 1
             timezone: 1
+            restricted: true
         group1:
           label: _("Personal data")
           colsPerRow: 3
@@ -98,6 +107,14 @@ production:
       fixedPositions:
         <<: *AdministratorsFixedPositions_link
 
+    # AdministratorRelPublicEntities screens
+    administratorRelPublicEntitiesList_screen:
+      <<: *administratorRelPublicEntitiesList_screenLink
+      filterField: Administrator
+    administratorRelPublicEntitiesEdit_screen:
+      <<: *administratorRelPublicEntitiesEdit_screenLink
+      filterField: Administrator
+
   dialogs: &administrators_dialogsLink
     administratorsDel_dialog: &administratorsDel_dialogLink
       <<: *Administrators
@@ -109,6 +126,8 @@ production:
       message: _("%s successfully deleted.", ngettext('Main operator', 'Main operators', 1))
       multiItem: 1
       labelOnList: 1
+    # administratorRelPublicEntitiesReadOnly_dialogs
+    <<: *administratorRelPublicEntities_dialogsLink
 
 staging:
   _extends: production

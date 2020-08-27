@@ -3,7 +3,6 @@
 #include conf.d/documentationLink.yaml
 #include BalanceNotificationsList.yaml
 #include BalanceMovementsList.yaml
-#include KamTrunksCdrsList.yaml
 
 production:
   main:
@@ -12,6 +11,10 @@ production:
   screens: &companyBalances_screensLink
     companyBalancesList_screen: &companyBalancesList_screenLink
       controller: list
+      order:
+        field:
+        - Company.name
+        type: asc
       rawCondition: "Company.billingMethod in ('prepaid', 'pseudoprepaid')"
       pagination:
         items: 25
@@ -20,7 +23,7 @@ production:
       title: _("List of %s %2s", ngettext('Prepaid Balance', 'Prepaid Balances', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/brand/balances.html"
+        href: "/doc/en/administration_portal/brand/billing/prepaid_balances.html"
       forcedValues:
         <<: *forcedBrand
       fields:
@@ -28,7 +31,6 @@ production:
           title: _("Options")
           screens:
             balanceMovementsList_screen: true
-            kamTrunksCdrsList_screen: true
             balanceNotificationList_screen: true
           dialogs:
             addToBalance_dialog: true
@@ -40,11 +42,13 @@ production:
           town: true
           province: true
           countryName: true
-          outgoingDDI: true
+          outgoingDdi: true
+          outgoingDdiE164: true
           outgoingDdiRule: true
           registryData: true
           maxCalls: true
           defaultTimezone: true
+          currency: true
           distributeMethod: true
           applicationServer: true
           mediaRelaySets: true
@@ -55,14 +59,22 @@ production:
           recordingsLimitMB: true
           recordingsLimitEmail: true
           recordingsDiskUsage: true
-          externallyExtraOpts: true
           voicemailNotificationTemplate: true
           faxNotificationTemplate: true
+          invoiceNotificationTemplate: true
+          callCsvNotificationTemplate: true
           language: true
           nif: true
           country: true
           domainUsers: true
           relFeatures: true
+          showInvoices: true
+          currentDayUsage: true
+          currentDayMaxUsage: true
+          accountStatus: true
+          maxDailyUsage: true
+          allowRecordingRemoval: true
+          externallyExtraOpts: true
         order:
           typeIcon: true
           name: true
@@ -74,35 +86,35 @@ production:
     balanceNotificationList_screen:
       <<: *balanceNotificationList_screenLink
       filterField: Company
+      fields:
+        <<: *balanceNotificationList_fieldsLink
+        blacklist:
+          carrier: true
       parentOptionCustomizer:
         - recordCount
     balanceNotificationNew_screen:
       <<: *balanceNotificationNew_screenLink
       filterField: Company
+      fields:
+        <<: *balanceNotificationNew_fieldsLink
+        blacklist:
+          carrier: true
     balanceNotificationEdit_screen:
       <<: *balanceNotificationEdit_screenLink
       filterField: Company
+      fields:
+        blacklist:
+          carrier: true
 
     # balanceMovements
     <<: *balanceMovements_screensLink
     balanceMovementsList_screen:
       <<: *balanceMovementsList_screenLink
       filterField: Company
-      parentOptionCustomizer:
-        - recordCount
-
-    # kamTrunksCdrs
-    <<: *kamTrunksCdrs_screensLink
-    kamTrunksCdrsList_screen:
-      <<: *kamTrunksCdrsList_screenLink
-      rawCondition: "TrunksCdr.invoice IS NULL"
-      class: ui-silk-application-view-list
-      filterField: Company
       fields:
-        <<: *kamTrunksCdrs_fieldsLink
+        <<: *balanceMovementsList_fieldsLink
         blacklist:
-          brand: true
-          invoice: true
+          carrier: true
       parentOptionCustomizer:
         - recordCount
 

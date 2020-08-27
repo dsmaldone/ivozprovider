@@ -2,13 +2,20 @@
 
 namespace Ivoz\Provider\Domain\Model\User;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 use Ivoz\Provider\Domain\Model\Administrator\AdministratorInterface;
 
 interface UserRepository extends ObjectRepository, Selectable
 {
     /**
+     * @param int $id
+     * @return UserInterface[]
+     */
+    public function findByBossAssistantId($id);
+
+    /**
+     * Used by client API access controls
      * @param AdministratorInterface $admin
      * @return array
      */
@@ -26,4 +33,3 @@ interface UserRepository extends ObjectRepository, Selectable
      */
     public function getAvailableVoicemails(UserInterface $user) :array;
 }
-

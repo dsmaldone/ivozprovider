@@ -15,27 +15,18 @@ interface FeaturesRelBrandInterface extends LoggableEntityInterface
     /**
      * Set brand
      *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
+     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand | null
      *
-     * @return self
+     * @return static
      */
     public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null);
 
     /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand();
-
-    /**
-     * Set feature
-     *
-     * @param \Ivoz\Provider\Domain\Model\Feature\FeatureInterface $feature
-     *
-     * @return self
-     */
-    public function setFeature(\Ivoz\Provider\Domain\Model\Feature\FeatureInterface $feature);
 
     /**
      * Get feature
@@ -43,6 +34,4 @@ interface FeaturesRelBrandInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\Feature\FeatureInterface
      */
     public function getFeature();
-
 }
-

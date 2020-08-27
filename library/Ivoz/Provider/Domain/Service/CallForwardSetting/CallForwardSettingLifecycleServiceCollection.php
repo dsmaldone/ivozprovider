@@ -12,8 +12,18 @@ class CallForwardSettingLifecycleServiceCollection implements LifecycleServiceCo
 {
     use LifecycleServiceCollectionTrait;
 
-    protected function addService(CallForwardSettingLifecycleEventHandlerInterface $service)
+    public static $bindedBaseServices = [
+        "pre_persist" =>
+        [
+            \Ivoz\Provider\Domain\Service\CallForwardSetting\CheckUniqueness::class => 10,
+        ],
+    ];
+
+    /**
+     * @return void
+     */
+    protected function addService(string $event, CallForwardSettingLifecycleEventHandlerInterface $service)
     {
-        $this->services[] = $service;
+        $this->services[$event][] = $service;
     }
 }

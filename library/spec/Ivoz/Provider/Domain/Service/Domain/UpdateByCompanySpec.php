@@ -2,7 +2,8 @@
 
 namespace spec\Ivoz\Provider\Domain\Service\Domain;
 
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Provider\Domain\Model\Company\CompanyDto;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
 use Ivoz\Provider\Domain\Model\Domain\DomainDto;
 use Ivoz\Provider\Domain\Model\Domain\DomainInterface;
@@ -10,13 +11,16 @@ use Ivoz\Provider\Domain\Model\Domain\DomainRepository;
 use Ivoz\Provider\Domain\Service\Domain\UpdateByCompany;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
+use spec\HelperTrait;
 
 class UpdateByCompanySpec extends ObjectBehavior
 {
+    use HelperTrait;
+
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
      * @var DomainRepository
@@ -29,16 +33,16 @@ class UpdateByCompanySpec extends ObjectBehavior
     protected $entity;
 
     public function let(
-        EntityPersisterInterface $entityPersister,
+        EntityTools $entityTools,
         DomainRepository $domainRepository,
         CompanyInterface $entity
     ) {
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
         $this->domainRepository = $domainRepository;
         $this->entity = $entity;
 
         $this->beConstructedWith(
-            $entityPersister,
+            $entityTools,
             $domainRepository
         );
     }
@@ -48,8 +52,32 @@ class UpdateByCompanySpec extends ObjectBehavior
         $this->shouldHaveType(UpdateByCompany::class);
     }
 
+    function it_returns_if_company_is_not_vpbx()
+    {
+        $this
+            ->entity
+            ->getType()
+            ->willReturn(null);
+
+        $this
+            ->entity
+            ->getDomainUsers()
+            ->shouldNotBeCalled();
+
+        $this->execute(
+            $this->entity
+        );
+    }
+
     function it_returns_when_domain_user_is_empty()
     {
+        $this
+            ->entity
+            ->getType()
+            ->willReturn(
+                CompanyInterface::TYPE_VPBX
+            );
+
         $this->entity
             ->getDomainUsers()
             ->willReturn('');
@@ -60,15 +88,15 @@ class UpdateByCompanySpec extends ObjectBehavior
             ->shouldNotBeCalled();
 
         $this->execute(
-            $this->entity,
-            true
+            $this->entity
         );
     }
 
     function it_creates_new_domain_if_none(
         DomainInterface $domain
     ) {
-        $this->prepareEntityResponses();
+        $this
+            ->prepareEntityResponses();
 
         $this
             ->entity
@@ -77,21 +105,28 @@ class UpdateByCompanySpec extends ObjectBehavior
             ->shouldBeCalled();
 
         $this
-            ->entityPersister
+            ->entityTools
             ->persistDto(
                 Argument::that($this->getDomainDtoAssertion()),
-                null
+                null,
+                true
             )
             ->willReturn($domain)
             ->shouldBeCalled();
 
-        $this->entity
-             ->setDomain($domain)
-             ->shouldBeCalled();
+        $this
+            ->entityTools
+            ->updateEntityByDto(
+                $this->entity,
+                Argument::that(function (CompanyDto $dto) {
+                    $domainDto = $dto->getDomain();
+                    return $domainDto instanceof DomainDto;
+                })
+            )
+            ->shouldBeCalled();
 
         $this->execute(
-            $this->entity,
-            true
+            $this->entity
         );
     }
 
@@ -109,27 +144,33 @@ class UpdateByCompanySpec extends ObjectBehavior
 
 
         $domainDto = new DomainDto();
-        $domain
-            ->toDto()
-            ->willReturn($domainDto)
-            ->shouldBeCalled();
+        $this->entityTools
+            ->entityToDto($domain)
+            ->willReturn($domainDto);
 
         $this
-            ->entityPersister
+            ->entityTools
             ->persistDto(
                 Argument::that($this->getDomainDtoAssertion()),
-                $domain
+                $domain,
+                true
             )
             ->willReturn($domain)
             ->shouldBeCalled();
 
-        $this->entity
-            ->setDomain($domain)
+        $this
+            ->entityTools
+            ->updateEntityByDto(
+                $this->entity,
+                Argument::that(function (CompanyDto $dto) {
+                    $domainDto = $dto->getDomain();
+                    return $domainDto instanceof DomainDto;
+                })
+            )
             ->shouldBeCalled();
 
         $this->execute(
-            $this->entity,
-            true
+            $this->entity
         );
     }
 
@@ -155,12 +196,26 @@ class UpdateByCompanySpec extends ObjectBehavior
 
     private function prepareEntityResponses()
     {
-        $this->entity
+        $this
+            ->entity
+            ->getType()
+            ->willReturn(CompanyInterface::TYPE_VPBX);
+
+        $this
+            ->entity
             ->getDomainUsers()
             ->willReturn('DomainUserValue');
 
-        $this->entity
+        $this
+            ->entity
             ->getName()
             ->willReturn('NameValue');
+
+        $companyDto = new CompanyDto();
+        $this
+            ->entityTools
+            ->entityToDto($this->entity)
+            ->willReturn($companyDto)
+            ->shouldBeCalled();
     }
 }

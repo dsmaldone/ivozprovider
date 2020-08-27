@@ -10,10 +10,6 @@ Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointAbstract:
     psEndpoint_sorcery_idx:
       columns:
         - sorcery_id
-  uniqueConstraints:
-    psEndpoint_id:
-      columns:
-        - id
   fields:
     sorceryId:
       type: string
@@ -130,6 +126,40 @@ Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointAbstract:
       options:
         fixed: false
       column: trust_id_inbound
+    t38Udptl:
+      type: string
+      nullable: false
+      length: null
+      options:
+        fixed: false
+        comment: '[enum:yes|no]'
+        default: no
+      column: t38_udptl
+    t38UdptlEc:
+      type: string
+      nullable: false
+      length: null
+      options:
+        fixed: false
+        comment: '[enum:none|fec|redundancy]'
+        default: redundancy
+      column: t38_udptl_ec
+    t38UdptlMaxdatagram:
+      type: integer
+      nullable: false
+      options:
+        default: 1440
+        unsigned: true
+      column: t38_udptl_maxdatagram
+    t38UdptlNat:
+      type: string
+      nullable: false
+      length: null
+      options:
+        fixed: false
+        comment: '[enum:yes|no]'
+        default: no
+      column: t38_udptl_nat
   manyToOne:
     terminal:
       targetEntity: \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface
@@ -150,6 +180,17 @@ Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointAbstract:
       inversedBy: psEndpoints
       joinColumns:
         friendId:
+          referencedColumnName: id
+          onDelete: cascade
+      orphanRemoval: false
+    residentialDevice:
+      targetEntity: \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: psEndpoints
+      joinColumns:
+        residentialDeviceId:
           referencedColumnName: id
           onDelete: cascade
       orphanRemoval: false

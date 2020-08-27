@@ -3,15 +3,16 @@
 namespace Ivoz\Provider\Domain\Model\Commandlog;
 
 use Ivoz\Core\Application\Event\CommandEventInterface;
+use Ivoz\Core\Domain\Model\LoggerEntityInterface;
 
-class Commandlog extends CommandlogAbstract implements CommandlogInterface
+class Commandlog extends CommandlogAbstract implements LoggerEntityInterface, CommandlogInterface
 {
     use CommandlogTrait;
 
     /**
      * Get id
      * @codeCoverageIgnore
-     * @return integer
+     * @return string
      */
     public function getId()
     {
@@ -19,8 +20,8 @@ class Commandlog extends CommandlogAbstract implements CommandlogInterface
     }
 
     /**
-     * @param CommandEventInterface $event
-     * @return Commandlog
+     * @param \Ivoz\Core\Application\Event\CommandEventInterface $event
+     * @return self
      */
     public static function fromEvent(CommandEventInterface $event)
     {
@@ -32,10 +33,18 @@ class Commandlog extends CommandlogAbstract implements CommandlogInterface
         );
 
         $entity->id = $event->getId();
+        $entity->setAgent(
+            $event->getAgent()
+        );
         $entity->setMethod(
             $event->getMethod()
         );
-        $entity->setArguments($event->getArguments());
+        $entity->setArguments(
+            $event->getArguments()
+        );
+
+        $entity->sanitizeValues();
+        $entity->initChangelog();
 
         return $entity;
     }

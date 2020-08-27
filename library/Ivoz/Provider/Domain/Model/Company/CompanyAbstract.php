@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class CompanyAbstract
 {
     /**
-     * comment: enum:vpbx|retail|wholesale
+     * comment: enum:vpbx|retail|wholesale|residential
      * @var string
      */
     protected $type = 'vpbx';
@@ -26,7 +26,7 @@ abstract class CompanyAbstract
 
     /**
      * column: domain_users
-     * @var string
+     * @var string | null
      */
     protected $domainUsers;
 
@@ -44,7 +44,12 @@ abstract class CompanyAbstract
     /**
      * @var integer
      */
-    protected $maxCalls = '0';
+    protected $maxCalls = 0;
+
+    /**
+     * @var integer
+     */
+    protected $maxDailyUsage = 1000000;
 
     /**
      * @var string
@@ -73,32 +78,37 @@ abstract class CompanyAbstract
     protected $countryName;
 
     /**
+     * @var boolean | null
+     */
+    protected $ipfilter = true;
+
+    /**
+     * @var integer | null
+     */
+    protected $onDemandRecord = 0;
+
+    /**
      * @var boolean
      */
-    protected $ipfilter = '1';
+    protected $allowRecordingRemoval = true;
 
     /**
-     * @var integer
-     */
-    protected $onDemandRecord = '0';
-
-    /**
-     * @var string
+     * @var string | null
      */
     protected $onDemandRecordCode;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $externallyextraopts;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $recordingsLimitMB;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $recordingsLimitEmail;
 
@@ -109,22 +119,27 @@ abstract class CompanyAbstract
     protected $billingMethod = 'postpaid';
 
     /**
-     * @var string
+     * @var float | null
      */
     protected $balance = 0;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @var boolean | null
+     */
+    protected $showInvoices = false;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     protected $language;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface
+     * @var \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface | null
      */
     protected $mediaRelaySets;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface
+     * @var \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface | null
      */
     protected $defaultTimezone;
 
@@ -134,44 +149,59 @@ abstract class CompanyAbstract
     protected $brand;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @var \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     protected $domain;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface
+     * @var \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface | null
      */
     protected $applicationServer;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     protected $country;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @var \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface | null
+     */
+    protected $currency;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     protected $transformationRuleSet;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @var \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     protected $outgoingDdi;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface
+     * @var \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface | null
      */
     protected $outgoingDdiRule;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     protected $voicemailNotificationTemplate;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     protected $faxNotificationTemplate;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    protected $invoiceNotificationTemplate;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    protected $callCsvNotificationTemplate;
 
 
     use ChangelogTrait;
@@ -185,11 +215,13 @@ abstract class CompanyAbstract
         $nif,
         $distributeMethod,
         $maxCalls,
+        $maxDailyUsage,
         $postalAddress,
         $postalCode,
         $town,
         $province,
         $countryName,
+        $allowRecordingRemoval,
         $billingMethod
     ) {
         $this->setType($type);
@@ -197,11 +229,13 @@ abstract class CompanyAbstract
         $this->setNif($nif);
         $this->setDistributeMethod($distributeMethod);
         $this->setMaxCalls($maxCalls);
+        $this->setMaxDailyUsage($maxDailyUsage);
         $this->setPostalAddress($postalAddress);
         $this->setPostalCode($postalCode);
         $this->setTown($town);
         $this->setProvince($province);
         $this->setCountryName($countryName);
+        $this->setAllowRecordingRemoval($allowRecordingRemoval);
         $this->setBillingMethod($billingMethod);
     }
 
@@ -209,7 +243,8 @@ abstract class CompanyAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Company",
             $this->getId()
         );
@@ -233,7 +268,8 @@ abstract class CompanyAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param CompanyInterface|null $entity
      * @param int $depth
      * @return CompanyDto|null
      */
@@ -253,19 +289,22 @@ abstract class CompanyAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var CompanyDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CompanyDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CompanyDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CompanyDto::class);
 
         $self = new static(
@@ -274,12 +313,15 @@ abstract class CompanyAbstract
             $dto->getNif(),
             $dto->getDistributeMethod(),
             $dto->getMaxCalls(),
+            $dto->getMaxDailyUsage(),
             $dto->getPostalAddress(),
             $dto->getPostalCode(),
             $dto->getTown(),
             $dto->getProvince(),
             $dto->getCountryName(),
-            $dto->getBillingMethod());
+            $dto->getAllowRecordingRemoval(),
+            $dto->getBillingMethod()
+        );
 
         $self
             ->setDomainUsers($dto->getDomainUsers())
@@ -290,35 +332,38 @@ abstract class CompanyAbstract
             ->setRecordingsLimitMB($dto->getRecordingsLimitMB())
             ->setRecordingsLimitEmail($dto->getRecordingsLimitEmail())
             ->setBalance($dto->getBalance())
-            ->setLanguage($dto->getLanguage())
-            ->setMediaRelaySets($dto->getMediaRelaySets())
-            ->setDefaultTimezone($dto->getDefaultTimezone())
-            ->setBrand($dto->getBrand())
-            ->setDomain($dto->getDomain())
-            ->setApplicationServer($dto->getApplicationServer())
-            ->setCountry($dto->getCountry())
-            ->setTransformationRuleSet($dto->getTransformationRuleSet())
-            ->setOutgoingDdi($dto->getOutgoingDdi())
-            ->setOutgoingDdiRule($dto->getOutgoingDdiRule())
-            ->setVoicemailNotificationTemplate($dto->getVoicemailNotificationTemplate())
-            ->setFaxNotificationTemplate($dto->getFaxNotificationTemplate())
+            ->setShowInvoices($dto->getShowInvoices())
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setMediaRelaySets($fkTransformer->transform($dto->getMediaRelaySets()))
+            ->setDefaultTimezone($fkTransformer->transform($dto->getDefaultTimezone()))
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setDomain($fkTransformer->transform($dto->getDomain()))
+            ->setApplicationServer($fkTransformer->transform($dto->getApplicationServer()))
+            ->setCountry($fkTransformer->transform($dto->getCountry()))
+            ->setCurrency($fkTransformer->transform($dto->getCurrency()))
+            ->setTransformationRuleSet($fkTransformer->transform($dto->getTransformationRuleSet()))
+            ->setOutgoingDdi($fkTransformer->transform($dto->getOutgoingDdi()))
+            ->setOutgoingDdiRule($fkTransformer->transform($dto->getOutgoingDdiRule()))
+            ->setVoicemailNotificationTemplate($fkTransformer->transform($dto->getVoicemailNotificationTemplate()))
+            ->setFaxNotificationTemplate($fkTransformer->transform($dto->getFaxNotificationTemplate()))
+            ->setInvoiceNotificationTemplate($fkTransformer->transform($dto->getInvoiceNotificationTemplate()))
+            ->setCallCsvNotificationTemplate($fkTransformer->transform($dto->getCallCsvNotificationTemplate()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CompanyDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CompanyDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CompanyDto::class);
 
         $this
@@ -328,6 +373,7 @@ abstract class CompanyAbstract
             ->setNif($dto->getNif())
             ->setDistributeMethod($dto->getDistributeMethod())
             ->setMaxCalls($dto->getMaxCalls())
+            ->setMaxDailyUsage($dto->getMaxDailyUsage())
             ->setPostalAddress($dto->getPostalAddress())
             ->setPostalCode($dto->getPostalCode())
             ->setTown($dto->getTown())
@@ -335,32 +381,37 @@ abstract class CompanyAbstract
             ->setCountryName($dto->getCountryName())
             ->setIpfilter($dto->getIpfilter())
             ->setOnDemandRecord($dto->getOnDemandRecord())
+            ->setAllowRecordingRemoval($dto->getAllowRecordingRemoval())
             ->setOnDemandRecordCode($dto->getOnDemandRecordCode())
             ->setExternallyextraopts($dto->getExternallyextraopts())
             ->setRecordingsLimitMB($dto->getRecordingsLimitMB())
             ->setRecordingsLimitEmail($dto->getRecordingsLimitEmail())
             ->setBillingMethod($dto->getBillingMethod())
             ->setBalance($dto->getBalance())
-            ->setLanguage($dto->getLanguage())
-            ->setMediaRelaySets($dto->getMediaRelaySets())
-            ->setDefaultTimezone($dto->getDefaultTimezone())
-            ->setBrand($dto->getBrand())
-            ->setDomain($dto->getDomain())
-            ->setApplicationServer($dto->getApplicationServer())
-            ->setCountry($dto->getCountry())
-            ->setTransformationRuleSet($dto->getTransformationRuleSet())
-            ->setOutgoingDdi($dto->getOutgoingDdi())
-            ->setOutgoingDdiRule($dto->getOutgoingDdiRule())
-            ->setVoicemailNotificationTemplate($dto->getVoicemailNotificationTemplate())
-            ->setFaxNotificationTemplate($dto->getFaxNotificationTemplate());
+            ->setShowInvoices($dto->getShowInvoices())
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setMediaRelaySets($fkTransformer->transform($dto->getMediaRelaySets()))
+            ->setDefaultTimezone($fkTransformer->transform($dto->getDefaultTimezone()))
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setDomain($fkTransformer->transform($dto->getDomain()))
+            ->setApplicationServer($fkTransformer->transform($dto->getApplicationServer()))
+            ->setCountry($fkTransformer->transform($dto->getCountry()))
+            ->setCurrency($fkTransformer->transform($dto->getCurrency()))
+            ->setTransformationRuleSet($fkTransformer->transform($dto->getTransformationRuleSet()))
+            ->setOutgoingDdi($fkTransformer->transform($dto->getOutgoingDdi()))
+            ->setOutgoingDdiRule($fkTransformer->transform($dto->getOutgoingDdiRule()))
+            ->setVoicemailNotificationTemplate($fkTransformer->transform($dto->getVoicemailNotificationTemplate()))
+            ->setFaxNotificationTemplate($fkTransformer->transform($dto->getFaxNotificationTemplate()))
+            ->setInvoiceNotificationTemplate($fkTransformer->transform($dto->getInvoiceNotificationTemplate()))
+            ->setCallCsvNotificationTemplate($fkTransformer->transform($dto->getCallCsvNotificationTemplate()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return CompanyDto
      */
@@ -373,6 +424,7 @@ abstract class CompanyAbstract
             ->setNif(self::getNif())
             ->setDistributeMethod(self::getDistributeMethod())
             ->setMaxCalls(self::getMaxCalls())
+            ->setMaxDailyUsage(self::getMaxDailyUsage())
             ->setPostalAddress(self::getPostalAddress())
             ->setPostalCode(self::getPostalCode())
             ->setTown(self::getTown())
@@ -380,12 +432,14 @@ abstract class CompanyAbstract
             ->setCountryName(self::getCountryName())
             ->setIpfilter(self::getIpfilter())
             ->setOnDemandRecord(self::getOnDemandRecord())
+            ->setAllowRecordingRemoval(self::getAllowRecordingRemoval())
             ->setOnDemandRecordCode(self::getOnDemandRecordCode())
             ->setExternallyextraopts(self::getExternallyextraopts())
             ->setRecordingsLimitMB(self::getRecordingsLimitMB())
             ->setRecordingsLimitEmail(self::getRecordingsLimitEmail())
             ->setBillingMethod(self::getBillingMethod())
             ->setBalance(self::getBalance())
+            ->setShowInvoices(self::getShowInvoices())
             ->setLanguage(\Ivoz\Provider\Domain\Model\Language\Language::entityToDto(self::getLanguage(), $depth))
             ->setMediaRelaySets(\Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySet::entityToDto(self::getMediaRelaySets(), $depth))
             ->setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\Timezone::entityToDto(self::getDefaultTimezone(), $depth))
@@ -393,11 +447,14 @@ abstract class CompanyAbstract
             ->setDomain(\Ivoz\Provider\Domain\Model\Domain\Domain::entityToDto(self::getDomain(), $depth))
             ->setApplicationServer(\Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServer::entityToDto(self::getApplicationServer(), $depth))
             ->setCountry(\Ivoz\Provider\Domain\Model\Country\Country::entityToDto(self::getCountry(), $depth))
+            ->setCurrency(\Ivoz\Provider\Domain\Model\Currency\Currency::entityToDto(self::getCurrency(), $depth))
             ->setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSet::entityToDto(self::getTransformationRuleSet(), $depth))
             ->setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\Ddi::entityToDto(self::getOutgoingDdi(), $depth))
             ->setOutgoingDdiRule(\Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRule::entityToDto(self::getOutgoingDdiRule(), $depth))
             ->setVoicemailNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getVoicemailNotificationTemplate(), $depth))
-            ->setFaxNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getFaxNotificationTemplate(), $depth));
+            ->setFaxNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getFaxNotificationTemplate(), $depth))
+            ->setInvoiceNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getInvoiceNotificationTemplate(), $depth))
+            ->setCallCsvNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getCallCsvNotificationTemplate(), $depth));
     }
 
     /**
@@ -412,6 +469,7 @@ abstract class CompanyAbstract
             'nif' => self::getNif(),
             'distributeMethod' => self::getDistributeMethod(),
             'maxCalls' => self::getMaxCalls(),
+            'maxDailyUsage' => self::getMaxDailyUsage(),
             'postalAddress' => self::getPostalAddress(),
             'postalCode' => self::getPostalCode(),
             'town' => self::getTown(),
@@ -419,28 +477,31 @@ abstract class CompanyAbstract
             'country' => self::getCountryName(),
             'ipFilter' => self::getIpfilter(),
             'onDemandRecord' => self::getOnDemandRecord(),
+            'allowRecordingRemoval' => self::getAllowRecordingRemoval(),
             'onDemandRecordCode' => self::getOnDemandRecordCode(),
             'externallyExtraOpts' => self::getExternallyextraopts(),
             'recordingsLimitMB' => self::getRecordingsLimitMB(),
             'recordingsLimitEmail' => self::getRecordingsLimitEmail(),
             'billingMethod' => self::getBillingMethod(),
             'balance' => self::getBalance(),
+            'showInvoices' => self::getShowInvoices(),
             'languageId' => self::getLanguage() ? self::getLanguage()->getId() : null,
             'mediaRelaySetsId' => self::getMediaRelaySets() ? self::getMediaRelaySets()->getId() : null,
             'defaultTimezoneId' => self::getDefaultTimezone() ? self::getDefaultTimezone()->getId() : null,
-            'brandId' => self::getBrand() ? self::getBrand()->getId() : null,
+            'brandId' => self::getBrand()->getId(),
             'domainId' => self::getDomain() ? self::getDomain()->getId() : null,
             'applicationServerId' => self::getApplicationServer() ? self::getApplicationServer()->getId() : null,
             'countryId' => self::getCountry() ? self::getCountry()->getId() : null,
+            'currencyId' => self::getCurrency() ? self::getCurrency()->getId() : null,
             'transformationRuleSetId' => self::getTransformationRuleSet() ? self::getTransformationRuleSet()->getId() : null,
             'outgoingDdiId' => self::getOutgoingDdi() ? self::getOutgoingDdi()->getId() : null,
             'outgoingDdiRuleId' => self::getOutgoingDdiRule() ? self::getOutgoingDdiRule()->getId() : null,
             'voicemailNotificationTemplateId' => self::getVoicemailNotificationTemplate() ? self::getVoicemailNotificationTemplate()->getId() : null,
-            'faxNotificationTemplateId' => self::getFaxNotificationTemplate() ? self::getFaxNotificationTemplate()->getId() : null
+            'faxNotificationTemplateId' => self::getFaxNotificationTemplate() ? self::getFaxNotificationTemplate()->getId() : null,
+            'invoiceNotificationTemplateId' => self::getInvoiceNotificationTemplate() ? self::getInvoiceNotificationTemplate()->getId() : null,
+            'callCsvNotificationTemplateId' => self::getCallCsvNotificationTemplate() ? self::getCallCsvNotificationTemplate()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -448,17 +509,18 @@ abstract class CompanyAbstract
      *
      * @param string $type
      *
-     * @return self
+     * @return static
      */
-    public function setType($type)
+    protected function setType($type)
     {
         Assertion::notNull($type, 'type value "%s" is null, but non null value was expected.');
         Assertion::maxLength($type, 25, 'type value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($type, array (
-          0 => 'vpbx',
-          1 => 'retail',
-          2 => 'wholesale',
-        ), 'typevalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($type, [
+            CompanyInterface::TYPE_VPBX,
+            CompanyInterface::TYPE_RETAIL,
+            CompanyInterface::TYPE_WHOLESALE,
+            CompanyInterface::TYPE_RESIDENTIAL
+        ], 'typevalue "%s" is not an element of the valid values: %s');
 
         $this->type = $type;
 
@@ -480,9 +542,9 @@ abstract class CompanyAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 80, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -505,11 +567,11 @@ abstract class CompanyAbstract
     /**
      * Set domainUsers
      *
-     * @param string $domainUsers
+     * @param string $domainUsers | null
      *
-     * @return self
+     * @return static
      */
-    public function setDomainUsers($domainUsers = null)
+    protected function setDomainUsers($domainUsers = null)
     {
         if (!is_null($domainUsers)) {
             Assertion::maxLength($domainUsers, 190, 'domainUsers value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -523,7 +585,7 @@ abstract class CompanyAbstract
     /**
      * Get domainUsers
      *
-     * @return string
+     * @return string | null
      */
     public function getDomainUsers()
     {
@@ -535,9 +597,9 @@ abstract class CompanyAbstract
      *
      * @param string $nif
      *
-     * @return self
+     * @return static
      */
-    public function setNif($nif)
+    protected function setNif($nif)
     {
         Assertion::notNull($nif, 'nif value "%s" is null, but non null value was expected.');
         Assertion::maxLength($nif, 25, 'nif value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -562,17 +624,17 @@ abstract class CompanyAbstract
      *
      * @param string $distributeMethod
      *
-     * @return self
+     * @return static
      */
-    public function setDistributeMethod($distributeMethod)
+    protected function setDistributeMethod($distributeMethod)
     {
         Assertion::notNull($distributeMethod, 'distributeMethod value "%s" is null, but non null value was expected.');
         Assertion::maxLength($distributeMethod, 25, 'distributeMethod value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($distributeMethod, array (
-          0 => 'static',
-          1 => 'rr',
-          2 => 'hash',
-        ), 'distributeMethodvalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($distributeMethod, [
+            CompanyInterface::DISTRIBUTEMETHOD_STATIC,
+            CompanyInterface::DISTRIBUTEMETHOD_RR,
+            CompanyInterface::DISTRIBUTEMETHOD_HASH
+        ], 'distributeMethodvalue "%s" is not an element of the valid values: %s');
 
         $this->distributeMethod = $distributeMethod;
 
@@ -594,15 +656,15 @@ abstract class CompanyAbstract
      *
      * @param integer $maxCalls
      *
-     * @return self
+     * @return static
      */
-    public function setMaxCalls($maxCalls)
+    protected function setMaxCalls($maxCalls)
     {
         Assertion::notNull($maxCalls, 'maxCalls value "%s" is null, but non null value was expected.');
         Assertion::integerish($maxCalls, 'maxCalls value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($maxCalls, 0, 'maxCalls provided "%s" is not greater or equal than "%s".');
 
-        $this->maxCalls = $maxCalls;
+        $this->maxCalls = (int) $maxCalls;
 
         return $this;
     }
@@ -618,13 +680,41 @@ abstract class CompanyAbstract
     }
 
     /**
+     * Set maxDailyUsage
+     *
+     * @param integer $maxDailyUsage
+     *
+     * @return static
+     */
+    protected function setMaxDailyUsage($maxDailyUsage)
+    {
+        Assertion::notNull($maxDailyUsage, 'maxDailyUsage value "%s" is null, but non null value was expected.');
+        Assertion::integerish($maxDailyUsage, 'maxDailyUsage value "%s" is not an integer or a number castable to integer.');
+        Assertion::greaterOrEqualThan($maxDailyUsage, 0, 'maxDailyUsage provided "%s" is not greater or equal than "%s".');
+
+        $this->maxDailyUsage = (int) $maxDailyUsage;
+
+        return $this;
+    }
+
+    /**
+     * Get maxDailyUsage
+     *
+     * @return integer
+     */
+    public function getMaxDailyUsage()
+    {
+        return $this->maxDailyUsage;
+    }
+
+    /**
      * Set postalAddress
      *
      * @param string $postalAddress
      *
-     * @return self
+     * @return static
      */
-    public function setPostalAddress($postalAddress)
+    protected function setPostalAddress($postalAddress)
     {
         Assertion::notNull($postalAddress, 'postalAddress value "%s" is null, but non null value was expected.');
         Assertion::maxLength($postalAddress, 255, 'postalAddress value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -649,9 +739,9 @@ abstract class CompanyAbstract
      *
      * @param string $postalCode
      *
-     * @return self
+     * @return static
      */
-    public function setPostalCode($postalCode)
+    protected function setPostalCode($postalCode)
     {
         Assertion::notNull($postalCode, 'postalCode value "%s" is null, but non null value was expected.');
         Assertion::maxLength($postalCode, 10, 'postalCode value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -676,9 +766,9 @@ abstract class CompanyAbstract
      *
      * @param string $town
      *
-     * @return self
+     * @return static
      */
-    public function setTown($town)
+    protected function setTown($town)
     {
         Assertion::notNull($town, 'town value "%s" is null, but non null value was expected.');
         Assertion::maxLength($town, 255, 'town value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -703,9 +793,9 @@ abstract class CompanyAbstract
      *
      * @param string $province
      *
-     * @return self
+     * @return static
      */
-    public function setProvince($province)
+    protected function setProvince($province)
     {
         Assertion::notNull($province, 'province value "%s" is null, but non null value was expected.');
         Assertion::maxLength($province, 255, 'province value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -730,9 +820,9 @@ abstract class CompanyAbstract
      *
      * @param string $countryName
      *
-     * @return self
+     * @return static
      */
-    public function setCountryName($countryName)
+    protected function setCountryName($countryName)
     {
         Assertion::notNull($countryName, 'countryName value "%s" is null, but non null value was expected.');
         Assertion::maxLength($countryName, 255, 'countryName value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -755,14 +845,15 @@ abstract class CompanyAbstract
     /**
      * Set ipfilter
      *
-     * @param boolean $ipfilter
+     * @param boolean $ipfilter | null
      *
-     * @return self
+     * @return static
      */
-    public function setIpfilter($ipfilter = null)
+    protected function setIpfilter($ipfilter = null)
     {
         if (!is_null($ipfilter)) {
             Assertion::between(intval($ipfilter), 0, 1, 'ipfilter provided "%s" is not a valid boolean value.');
+            $ipfilter = (bool) $ipfilter;
         }
 
         $this->ipfilter = $ipfilter;
@@ -773,7 +864,7 @@ abstract class CompanyAbstract
     /**
      * Get ipfilter
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getIpfilter()
     {
@@ -783,16 +874,15 @@ abstract class CompanyAbstract
     /**
      * Set onDemandRecord
      *
-     * @param integer $onDemandRecord
+     * @param integer $onDemandRecord | null
      *
-     * @return self
+     * @return static
      */
-    public function setOnDemandRecord($onDemandRecord = null)
+    protected function setOnDemandRecord($onDemandRecord = null)
     {
         if (!is_null($onDemandRecord)) {
-            if (!is_null($onDemandRecord)) {
-                Assertion::integerish($onDemandRecord, 'onDemandRecord value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($onDemandRecord, 'onDemandRecord value "%s" is not an integer or a number castable to integer.');
+            $onDemandRecord = (int) $onDemandRecord;
         }
 
         $this->onDemandRecord = $onDemandRecord;
@@ -803,7 +893,7 @@ abstract class CompanyAbstract
     /**
      * Get onDemandRecord
      *
-     * @return integer
+     * @return integer | null
      */
     public function getOnDemandRecord()
     {
@@ -811,13 +901,41 @@ abstract class CompanyAbstract
     }
 
     /**
+     * Set allowRecordingRemoval
+     *
+     * @param boolean $allowRecordingRemoval
+     *
+     * @return static
+     */
+    protected function setAllowRecordingRemoval($allowRecordingRemoval)
+    {
+        Assertion::notNull($allowRecordingRemoval, 'allowRecordingRemoval value "%s" is null, but non null value was expected.');
+        Assertion::between(intval($allowRecordingRemoval), 0, 1, 'allowRecordingRemoval provided "%s" is not a valid boolean value.');
+        $allowRecordingRemoval = (bool) $allowRecordingRemoval;
+
+        $this->allowRecordingRemoval = $allowRecordingRemoval;
+
+        return $this;
+    }
+
+    /**
+     * Get allowRecordingRemoval
+     *
+     * @return boolean
+     */
+    public function getAllowRecordingRemoval()
+    {
+        return $this->allowRecordingRemoval;
+    }
+
+    /**
      * Set onDemandRecordCode
      *
-     * @param string $onDemandRecordCode
+     * @param string $onDemandRecordCode | null
      *
-     * @return self
+     * @return static
      */
-    public function setOnDemandRecordCode($onDemandRecordCode = null)
+    protected function setOnDemandRecordCode($onDemandRecordCode = null)
     {
         if (!is_null($onDemandRecordCode)) {
             Assertion::maxLength($onDemandRecordCode, 3, 'onDemandRecordCode value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -831,7 +949,7 @@ abstract class CompanyAbstract
     /**
      * Get onDemandRecordCode
      *
-     * @return string
+     * @return string | null
      */
     public function getOnDemandRecordCode()
     {
@@ -841,11 +959,11 @@ abstract class CompanyAbstract
     /**
      * Set externallyextraopts
      *
-     * @param string $externallyextraopts
+     * @param string $externallyextraopts | null
      *
-     * @return self
+     * @return static
      */
-    public function setExternallyextraopts($externallyextraopts = null)
+    protected function setExternallyextraopts($externallyextraopts = null)
     {
         if (!is_null($externallyextraopts)) {
             Assertion::maxLength($externallyextraopts, 65535, 'externallyextraopts value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -859,7 +977,7 @@ abstract class CompanyAbstract
     /**
      * Get externallyextraopts
      *
-     * @return string
+     * @return string | null
      */
     public function getExternallyextraopts()
     {
@@ -869,16 +987,15 @@ abstract class CompanyAbstract
     /**
      * Set recordingsLimitMB
      *
-     * @param integer $recordingsLimitMB
+     * @param integer $recordingsLimitMB | null
      *
-     * @return self
+     * @return static
      */
-    public function setRecordingsLimitMB($recordingsLimitMB = null)
+    protected function setRecordingsLimitMB($recordingsLimitMB = null)
     {
         if (!is_null($recordingsLimitMB)) {
-            if (!is_null($recordingsLimitMB)) {
-                Assertion::integerish($recordingsLimitMB, 'recordingsLimitMB value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($recordingsLimitMB, 'recordingsLimitMB value "%s" is not an integer or a number castable to integer.');
+            $recordingsLimitMB = (int) $recordingsLimitMB;
         }
 
         $this->recordingsLimitMB = $recordingsLimitMB;
@@ -889,7 +1006,7 @@ abstract class CompanyAbstract
     /**
      * Get recordingsLimitMB
      *
-     * @return integer
+     * @return integer | null
      */
     public function getRecordingsLimitMB()
     {
@@ -899,11 +1016,11 @@ abstract class CompanyAbstract
     /**
      * Set recordingsLimitEmail
      *
-     * @param string $recordingsLimitEmail
+     * @param string $recordingsLimitEmail | null
      *
-     * @return self
+     * @return static
      */
-    public function setRecordingsLimitEmail($recordingsLimitEmail = null)
+    protected function setRecordingsLimitEmail($recordingsLimitEmail = null)
     {
         if (!is_null($recordingsLimitEmail)) {
             Assertion::maxLength($recordingsLimitEmail, 250, 'recordingsLimitEmail value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -917,7 +1034,7 @@ abstract class CompanyAbstract
     /**
      * Get recordingsLimitEmail
      *
-     * @return string
+     * @return string | null
      */
     public function getRecordingsLimitEmail()
     {
@@ -929,17 +1046,17 @@ abstract class CompanyAbstract
      *
      * @param string $billingMethod
      *
-     * @return self
+     * @return static
      */
-    public function setBillingMethod($billingMethod)
+    protected function setBillingMethod($billingMethod)
     {
         Assertion::notNull($billingMethod, 'billingMethod value "%s" is null, but non null value was expected.');
         Assertion::maxLength($billingMethod, 25, 'billingMethod value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($billingMethod, array (
-          0 => 'postpaid',
-          1 => 'prepaid',
-          2 => 'pseudoprepaid',
-        ), 'billingMethodvalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($billingMethod, [
+            CompanyInterface::BILLINGMETHOD_POSTPAID,
+            CompanyInterface::BILLINGMETHOD_PREPAID,
+            CompanyInterface::BILLINGMETHOD_PSEUDOPREPAID
+        ], 'billingMethodvalue "%s" is not an element of the valid values: %s');
 
         $this->billingMethod = $billingMethod;
 
@@ -959,16 +1076,15 @@ abstract class CompanyAbstract
     /**
      * Set balance
      *
-     * @param string $balance
+     * @param float $balance | null
      *
-     * @return self
+     * @return static
      */
-    public function setBalance($balance = null)
+    protected function setBalance($balance = null)
     {
         if (!is_null($balance)) {
-            if (!is_null($balance)) {
-                Assertion::numeric($balance);
-            }
+            Assertion::numeric($balance);
+            $balance = (float) $balance;
         }
 
         $this->balance = $balance;
@@ -979,7 +1095,7 @@ abstract class CompanyAbstract
     /**
      * Get balance
      *
-     * @return string
+     * @return float | null
      */
     public function getBalance()
     {
@@ -987,13 +1103,42 @@ abstract class CompanyAbstract
     }
 
     /**
+     * Set showInvoices
+     *
+     * @param boolean $showInvoices | null
+     *
+     * @return static
+     */
+    protected function setShowInvoices($showInvoices = null)
+    {
+        if (!is_null($showInvoices)) {
+            Assertion::between(intval($showInvoices), 0, 1, 'showInvoices provided "%s" is not a valid boolean value.');
+            $showInvoices = (bool) $showInvoices;
+        }
+
+        $this->showInvoices = $showInvoices;
+
+        return $this;
+    }
+
+    /**
+     * Get showInvoices
+     *
+     * @return boolean | null
+     */
+    public function getShowInvoices()
+    {
+        return $this->showInvoices;
+    }
+
+    /**
      * Set language
      *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
+     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language | null
      *
-     * @return self
+     * @return static
      */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
+    protected function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
     {
         $this->language = $language;
 
@@ -1003,7 +1148,7 @@ abstract class CompanyAbstract
     /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage()
     {
@@ -1013,11 +1158,11 @@ abstract class CompanyAbstract
     /**
      * Set mediaRelaySets
      *
-     * @param \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface $mediaRelaySets
+     * @param \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface $mediaRelaySets | null
      *
-     * @return self
+     * @return static
      */
-    public function setMediaRelaySets(\Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface $mediaRelaySets = null)
+    protected function setMediaRelaySets(\Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface $mediaRelaySets = null)
     {
         $this->mediaRelaySets = $mediaRelaySets;
 
@@ -1027,7 +1172,7 @@ abstract class CompanyAbstract
     /**
      * Get mediaRelaySets
      *
-     * @return \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface
+     * @return \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetInterface | null
      */
     public function getMediaRelaySets()
     {
@@ -1037,11 +1182,11 @@ abstract class CompanyAbstract
     /**
      * Set defaultTimezone
      *
-     * @param \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone
+     * @param \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone | null
      *
-     * @return self
+     * @return static
      */
-    public function setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone = null)
+    protected function setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone = null)
     {
         $this->defaultTimezone = $defaultTimezone;
 
@@ -1051,7 +1196,7 @@ abstract class CompanyAbstract
     /**
      * Get defaultTimezone
      *
-     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface
+     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface | null
      */
     public function getDefaultTimezone()
     {
@@ -1063,9 +1208,9 @@ abstract class CompanyAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null)
+    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
     {
         $this->brand = $brand;
 
@@ -1085,11 +1230,11 @@ abstract class CompanyAbstract
     /**
      * Set domain
      *
-     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain
+     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain | null
      *
-     * @return self
+     * @return static
      */
-    public function setDomain(\Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain = null)
+    protected function setDomain(\Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain = null)
     {
         $this->domain = $domain;
 
@@ -1099,7 +1244,7 @@ abstract class CompanyAbstract
     /**
      * Get domain
      *
-     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     public function getDomain()
     {
@@ -1109,11 +1254,11 @@ abstract class CompanyAbstract
     /**
      * Set applicationServer
      *
-     * @param \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface $applicationServer
+     * @param \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface $applicationServer | null
      *
-     * @return self
+     * @return static
      */
-    public function setApplicationServer(\Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface $applicationServer = null)
+    protected function setApplicationServer(\Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface $applicationServer = null)
     {
         $this->applicationServer = $applicationServer;
 
@@ -1123,7 +1268,7 @@ abstract class CompanyAbstract
     /**
      * Get applicationServer
      *
-     * @return \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface
+     * @return \Ivoz\Provider\Domain\Model\ApplicationServer\ApplicationServerInterface | null
      */
     public function getApplicationServer()
     {
@@ -1133,11 +1278,11 @@ abstract class CompanyAbstract
     /**
      * Set country
      *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $country
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $country | null
      *
-     * @return self
+     * @return static
      */
-    public function setCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $country = null)
+    protected function setCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $country = null)
     {
         $this->country = $country;
 
@@ -1147,7 +1292,7 @@ abstract class CompanyAbstract
     /**
      * Get country
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getCountry()
     {
@@ -1155,13 +1300,37 @@ abstract class CompanyAbstract
     }
 
     /**
+     * Set currency
+     *
+     * @param \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface $currency | null
+     *
+     * @return static
+     */
+    protected function setCurrency(\Ivoz\Provider\Domain\Model\Currency\CurrencyInterface $currency = null)
+    {
+        $this->currency = $currency;
+
+        return $this;
+    }
+
+    /**
+     * Get currency
+     *
+     * @return \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface | null
+     */
+    public function getCurrency()
+    {
+        return $this->currency;
+    }
+
+    /**
      * Set transformationRuleSet
      *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet
+     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet | null
      *
-     * @return self
+     * @return static
      */
-    public function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null)
+    protected function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null)
     {
         $this->transformationRuleSet = $transformationRuleSet;
 
@@ -1171,7 +1340,7 @@ abstract class CompanyAbstract
     /**
      * Get transformationRuleSet
      *
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     public function getTransformationRuleSet()
     {
@@ -1181,11 +1350,11 @@ abstract class CompanyAbstract
     /**
      * Set outgoingDdi
      *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi
+     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi | null
      *
-     * @return self
+     * @return static
      */
-    public function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null)
+    protected function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null)
     {
         $this->outgoingDdi = $outgoingDdi;
 
@@ -1195,7 +1364,7 @@ abstract class CompanyAbstract
     /**
      * Get outgoingDdi
      *
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     public function getOutgoingDdi()
     {
@@ -1205,11 +1374,11 @@ abstract class CompanyAbstract
     /**
      * Set outgoingDdiRule
      *
-     * @param \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule
+     * @param \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule | null
      *
-     * @return self
+     * @return static
      */
-    public function setOutgoingDdiRule(\Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule = null)
+    protected function setOutgoingDdiRule(\Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule = null)
     {
         $this->outgoingDdiRule = $outgoingDdiRule;
 
@@ -1219,7 +1388,7 @@ abstract class CompanyAbstract
     /**
      * Get outgoingDdiRule
      *
-     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface
+     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface | null
      */
     public function getOutgoingDdiRule()
     {
@@ -1229,11 +1398,11 @@ abstract class CompanyAbstract
     /**
      * Set voicemailNotificationTemplate
      *
-     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $voicemailNotificationTemplate
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $voicemailNotificationTemplate | null
      *
-     * @return self
+     * @return static
      */
-    public function setVoicemailNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $voicemailNotificationTemplate = null)
+    protected function setVoicemailNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $voicemailNotificationTemplate = null)
     {
         $this->voicemailNotificationTemplate = $voicemailNotificationTemplate;
 
@@ -1243,7 +1412,7 @@ abstract class CompanyAbstract
     /**
      * Get voicemailNotificationTemplate
      *
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     public function getVoicemailNotificationTemplate()
     {
@@ -1253,11 +1422,11 @@ abstract class CompanyAbstract
     /**
      * Set faxNotificationTemplate
      *
-     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $faxNotificationTemplate
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $faxNotificationTemplate | null
      *
-     * @return self
+     * @return static
      */
-    public function setFaxNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $faxNotificationTemplate = null)
+    protected function setFaxNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $faxNotificationTemplate = null)
     {
         $this->faxNotificationTemplate = $faxNotificationTemplate;
 
@@ -1267,15 +1436,60 @@ abstract class CompanyAbstract
     /**
      * Get faxNotificationTemplate
      *
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     public function getFaxNotificationTemplate()
     {
         return $this->faxNotificationTemplate;
     }
 
+    /**
+     * Set invoiceNotificationTemplate
+     *
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $invoiceNotificationTemplate | null
+     *
+     * @return static
+     */
+    protected function setInvoiceNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $invoiceNotificationTemplate = null)
+    {
+        $this->invoiceNotificationTemplate = $invoiceNotificationTemplate;
 
+        return $this;
+    }
+
+    /**
+     * Get invoiceNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getInvoiceNotificationTemplate()
+    {
+        return $this->invoiceNotificationTemplate;
+    }
+
+    /**
+     * Set callCsvNotificationTemplate
+     *
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $callCsvNotificationTemplate | null
+     *
+     * @return static
+     */
+    protected function setCallCsvNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $callCsvNotificationTemplate = null)
+    {
+        $this->callCsvNotificationTemplate = $callCsvNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * Get callCsvNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getCallCsvNotificationTemplate()
+    {
+        return $this->callCsvNotificationTemplate;
+    }
 
     // @codeCoverageIgnoreEnd
 }
-

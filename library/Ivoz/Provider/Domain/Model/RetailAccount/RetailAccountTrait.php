@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\RetailAccount;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,14 +18,19 @@ trait RetailAccountTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $psEndpoints;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $ddis;
+
+    /**
+     * @var ArrayCollection
+     */
+    protected $callForwardSettings;
 
 
     /**
@@ -37,26 +41,48 @@ trait RetailAccountTrait
         parent::__construct(...func_get_args());
         $this->psEndpoints = new ArrayCollection();
         $this->ddis = new ArrayCollection();
+        $this->callForwardSettings = new ArrayCollection();
     }
+
+    abstract protected function sanitizeValues();
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param RetailAccountDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto RetailAccountDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getPsEndpoints()) {
-            $self->replacePsEndpoints($dto->getPsEndpoints());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getPsEndpoints())) {
+            $self->replacePsEndpoints(
+                $fkTransformer->transformCollection(
+                    $dto->getPsEndpoints()
+                )
+            );
         }
 
-        if ($dto->getDdis()) {
-            $self->replaceDdis($dto->getDdis());
+        if (!is_null($dto->getDdis())) {
+            $self->replaceDdis(
+                $fkTransformer->transformCollection(
+                    $dto->getDdis()
+                )
+            );
         }
+
+        if (!is_null($dto->getCallForwardSettings())) {
+            $self->replaceCallForwardSettings(
+                $fkTransformer->transformCollection(
+                    $dto->getCallForwardSettings()
+                )
+            );
+        }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -66,25 +92,44 @@ trait RetailAccountTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param RetailAccountDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto RetailAccountDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getPsEndpoints()) {
-            $this->replacePsEndpoints($dto->getPsEndpoints());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getPsEndpoints())) {
+            $this->replacePsEndpoints(
+                $fkTransformer->transformCollection(
+                    $dto->getPsEndpoints()
+                )
+            );
         }
-        if ($dto->getDdis()) {
-            $this->replaceDdis($dto->getDdis());
+        if (!is_null($dto->getDdis())) {
+            $this->replaceDdis(
+                $fkTransformer->transformCollection(
+                    $dto->getDdis()
+                )
+            );
         }
+        if (!is_null($dto->getCallForwardSettings())) {
+            $this->replaceCallForwardSettings(
+                $fkTransformer->transformCollection(
+                    $dto->getCallForwardSettings()
+                )
+            );
+        }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return RetailAccountDto
      */
@@ -104,14 +149,12 @@ trait RetailAccountTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add psEndpoint
      *
      * @param \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $psEndpoint
      *
-     * @return RetailAccountTrait
+     * @return static
      */
     public function addPsEndpoint(\Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $psEndpoint)
     {
@@ -133,10 +176,10 @@ trait RetailAccountTrait
     /**
      * Replace psEndpoints
      *
-     * @param \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface[] $psEndpoints
-     * @return self
+     * @param ArrayCollection $psEndpoints of Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface
+     * @return static
      */
-    public function replacePsEndpoints(Collection $psEndpoints)
+    public function replacePsEndpoints(ArrayCollection $psEndpoints)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -166,7 +209,7 @@ trait RetailAccountTrait
 
     /**
      * Get psEndpoints
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface[]
      */
     public function getPsEndpoints(Criteria $criteria = null)
@@ -183,7 +226,7 @@ trait RetailAccountTrait
      *
      * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi
      *
-     * @return RetailAccountTrait
+     * @return static
      */
     public function addDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi)
     {
@@ -205,10 +248,10 @@ trait RetailAccountTrait
     /**
      * Replace ddis
      *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface[] $ddis
-     * @return self
+     * @param ArrayCollection $ddis of Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return static
      */
-    public function replaceDdis(Collection $ddis)
+    public function replaceDdis(ArrayCollection $ddis)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -238,7 +281,7 @@ trait RetailAccountTrait
 
     /**
      * Get ddis
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface[]
      */
     public function getDdis(Criteria $criteria = null)
@@ -250,6 +293,75 @@ trait RetailAccountTrait
         return $this->ddis->toArray();
     }
 
+    /**
+     * Add callForwardSetting
+     *
+     * @param \Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface $callForwardSetting
+     *
+     * @return static
+     */
+    public function addCallForwardSetting(\Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface $callForwardSetting)
+    {
+        $this->callForwardSettings->add($callForwardSetting);
 
+        return $this;
+    }
+
+    /**
+     * Remove callForwardSetting
+     *
+     * @param \Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface $callForwardSetting
+     */
+    public function removeCallForwardSetting(\Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface $callForwardSetting)
+    {
+        $this->callForwardSettings->removeElement($callForwardSetting);
+    }
+
+    /**
+     * Replace callForwardSettings
+     *
+     * @param ArrayCollection $callForwardSettings of Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface
+     * @return static
+     */
+    public function replaceCallForwardSettings(ArrayCollection $callForwardSettings)
+    {
+        $updatedEntities = [];
+        $fallBackId = -1;
+        foreach ($callForwardSettings as $entity) {
+            $index = $entity->getId() ? $entity->getId() : $fallBackId--;
+            $updatedEntities[$index] = $entity;
+            $entity->setRetailAccount($this);
+        }
+        $updatedEntityKeys = array_keys($updatedEntities);
+
+        foreach ($this->callForwardSettings as $key => $entity) {
+            $identity = $entity->getId();
+            if (in_array($identity, $updatedEntityKeys)) {
+                $this->callForwardSettings->set($key, $updatedEntities[$identity]);
+            } else {
+                $this->callForwardSettings->remove($key);
+            }
+            unset($updatedEntities[$identity]);
+        }
+
+        foreach ($updatedEntities as $entity) {
+            $this->addCallForwardSetting($entity);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get callForwardSettings
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface[]
+     */
+    public function getCallForwardSettings(Criteria $criteria = null)
+    {
+        if (!is_null($criteria)) {
+            return $this->callForwardSettings->matching($criteria)->toArray();
+        }
+
+        return $this->callForwardSettings->toArray();
+    }
 }
-

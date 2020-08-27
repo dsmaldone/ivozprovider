@@ -13,15 +13,6 @@ interface MediaRelaySetInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
-
-    /**
      * Get name
      *
      * @return string
@@ -29,36 +20,9 @@ interface MediaRelaySetInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
-
-    /**
-     * Set type
-     *
-     * @param string $type
-     *
-     * @return self
-     */
-    public function setType($type);
-
-    /**
-     * Get type
-     *
-     * @return string
-     */
-    public function getType();
-
 }
-

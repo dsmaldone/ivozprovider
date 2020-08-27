@@ -35,8 +35,7 @@ class UserStatus extends RouteHandlerAbstract
         Wrapper $agi,
         EndpointResolver $endpointResolver,
         UserStatusAction $userStatusAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->endpointResolver = $endpointResolver;
         $this->userStatusAction = $userStatusAction;
@@ -46,7 +45,7 @@ class UserStatus extends RouteHandlerAbstract
     /**
      * Outgoing calls from terminals to Extensions, Services or World
      *
-     * @throws \Assert\AssertionFailedException
+     * @throws \InvalidArgumentException
      */
     public function process()
     {

@@ -8,6 +8,30 @@ production:
       required: true
       maxLength: 30
       default: true
+    numberSequence:
+      title: _('Invoice number sequence')
+      type: select
+      required: false
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\InvoiceNumberSequence\InvoiceNumberSequence
+          filterClass: IvozProvider_Klear_Filter_Brand
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+          order:
+            InvoiceNumberSequence.name: asc
+          visualFilter:
+            name:
+              'null':
+                show: ["number"]
+                hide: []
+              __default__:
+                show: []
+                hide: ["number"]
+        'null': _("Unassigned")
     inDate:
       title: _('In date')
       type: picker
@@ -17,7 +41,7 @@ production:
         settings:
           disabled: 'false'
           dateFormate: 'dd-mm-yy'
-#          timeFormat: '00:00:00'
+          isDateTime: true
     outDate:
       title: _('Out date')
       type: picker
@@ -27,12 +51,13 @@ production:
         settings:
           disabled: 'false'
           dateFormate: 'dd-mm-yy'
-#          timeFormat: '23:59:59'
+          isDateTime: true
     total:
       title: _('Total')
-      type: text
-      trim: both
-      sufix: "€"
+      type: ghost
+      source:
+        class: IvozProvider_Klear_Ghost_Invoice
+        method: getTotal
     taxRate:
       title: _('Tax rate')
       type: text
@@ -41,14 +66,17 @@ production:
       sufix: "%"
     totalWithTax:
       title: _('Total with tax')
-      type: text
-      trim: both
-      sufix: "€"
+      type: ghost
+      source:
+        class: IvozProvider_Klear_Ghost_Invoice
+        method: getTotalWithTax
     status:
       title: _('Status')
-      type: select
+      type: ghost
+      dirty: true
       source:
-        data: inline
+        class: IvozProvider_Klear_Ghost_Invoice
+        method: getStatus
         values:
           'waiting': _('Waiting')
           'processing': _('Processing')
@@ -73,9 +101,9 @@ production:
             onNull: hide
       options:
         commands:
-          invoicesPdfFileDownload_command: true
+          invoicesPdfFileDownload_command: ${auth.acls.Invoices.read}
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       required: true
       source:
@@ -112,13 +140,29 @@ production:
         data: mapper
         config:
           entity: \Ivoz\Provider\Domain\Model\InvoiceTemplate\InvoiceTemplate
-          filterClass: IvozProvider_Klear_Filter_Brand
+          filterClass: IvozProvider_Klear_Filter_InvoiceTemplates
           fieldName: 
             fields: 
               - name
             template: '%name%'
           order:
             InvoiceTemplate.name: asc
+        'null': _("Unassigned")
+    scheduler:
+      title: ngettext('Invoice scheduler', 'Invoice schedulers', 1)
+      type: select
+      required: true
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\InvoiceScheduler\InvoiceScheduler
+          filterClass: IvozProvider_Klear_Filter_Brand
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+          order:
+            InvoiceScheduler.name: asc
         'null': _("Unassigned")
     FixedCostsRelInvoices:
       title: ngettext('Fixed cost', 'Fixed costs', 1)
@@ -141,7 +185,7 @@ production:
               field:
                 - name
                 - cost
-              pattern: "%name% - %cost% €"
+              pattern: "%name% - %cost%"
             quantity:
               title: _("Quantity")
         options:
@@ -153,6 +197,22 @@ production:
       options:
         screens:
           fixedCostsRelInvoicesNew_screen: true
+    scheduler:
+      title: _('Invoice scheduler')
+      type: select
+      required: true
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\InvoiceScheduler\InvoiceScheduler
+          filterClass: IvozProvider_Klear_Filter_Brand
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+          order:
+            InvoiceScheduler.name: asc
+        'null': _("Unassigned")
 staging:
   _extends: production
 testing:

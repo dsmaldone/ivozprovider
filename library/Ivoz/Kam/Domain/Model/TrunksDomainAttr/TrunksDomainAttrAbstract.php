@@ -63,7 +63,8 @@ abstract class TrunksDomainAttrAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TrunksDomainAttr",
             $this->getId()
         );
@@ -87,7 +88,8 @@ abstract class TrunksDomainAttrAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TrunksDomainAttrInterface|null $entity
      * @param int $depth
      * @return TrunksDomainAttrDto|null
      */
@@ -107,19 +109,22 @@ abstract class TrunksDomainAttrAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TrunksDomainAttrDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksDomainAttrDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksDomainAttrDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksDomainAttrDto::class);
 
         $self = new static(
@@ -127,25 +132,23 @@ abstract class TrunksDomainAttrAbstract
             $dto->getName(),
             $dto->getType(),
             $dto->getValue(),
-            $dto->getLastModified());
+            $dto->getLastModified()
+        );
 
-        $self;
-
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksDomainAttrDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksDomainAttrDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksDomainAttrDto::class);
 
         $this
@@ -157,11 +160,11 @@ abstract class TrunksDomainAttrAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TrunksDomainAttrDto
      */
@@ -188,8 +191,6 @@ abstract class TrunksDomainAttrAbstract
             'last_modified' => self::getLastModified()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -197,9 +198,9 @@ abstract class TrunksDomainAttrAbstract
      *
      * @param string $did
      *
-     * @return self
+     * @return static
      */
-    public function setDid($did)
+    protected function setDid($did)
     {
         Assertion::notNull($did, 'did value "%s" is null, but non null value was expected.');
         Assertion::maxLength($did, 190, 'did value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -224,9 +225,9 @@ abstract class TrunksDomainAttrAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 32, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -251,15 +252,15 @@ abstract class TrunksDomainAttrAbstract
      *
      * @param integer $type
      *
-     * @return self
+     * @return static
      */
-    public function setType($type)
+    protected function setType($type)
     {
         Assertion::notNull($type, 'type value "%s" is null, but non null value was expected.');
         Assertion::integerish($type, 'type value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($type, 0, 'type provided "%s" is not greater or equal than "%s".');
 
-        $this->type = $type;
+        $this->type = (int) $type;
 
         return $this;
     }
@@ -279,9 +280,9 @@ abstract class TrunksDomainAttrAbstract
      *
      * @param string $value
      *
-     * @return self
+     * @return static
      */
-    public function setValue($value)
+    protected function setValue($value)
     {
         Assertion::notNull($value, 'value value "%s" is null, but non null value was expected.');
         Assertion::maxLength($value, 255, 'value value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -306,15 +307,19 @@ abstract class TrunksDomainAttrAbstract
      *
      * @param \DateTime $lastModified
      *
-     * @return self
+     * @return static
      */
-    public function setLastModified($lastModified)
+    protected function setLastModified($lastModified)
     {
         Assertion::notNull($lastModified, 'lastModified value "%s" is null, but non null value was expected.');
         $lastModified = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $lastModified,
             '1900-01-01 00:00:01'
         );
+
+        if ($this->lastModified == $lastModified) {
+            return $this;
+        }
 
         $this->lastModified = $lastModified;
 
@@ -328,11 +333,8 @@ abstract class TrunksDomainAttrAbstract
      */
     public function getLastModified()
     {
-        return $this->lastModified;
+        return clone $this->lastModified;
     }
-
-
 
     // @codeCoverageIgnoreEnd
 }
-

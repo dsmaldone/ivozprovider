@@ -21,7 +21,7 @@ Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountAbstract:
         default: ''
     transport:
       type: string
-      nullable: false
+      nullable: true
       length: 25
       options:
         fixed: false
@@ -37,68 +37,19 @@ Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountAbstract:
       nullable: true
       options:
         unsigned: true
-    authNeeded:
-      type: string
-      nullable: false
-      length: null
-      options:
-        fixed: false
-        default: 'yes'
-      column: auth_needed
     password:
       type: string
       nullable: true
       length: 64
       options:
       fixed: false
-    disallow:
-      type: string
-      nullable: false
-      length: 200
-      options:
-        fixed: false
-        default: all
-    allow:
-      type: string
-      nullable: false
-      length: 200
-      options:
-        fixed: false
-        default: alaw
-    directMediaMethod:
-      type: string
-      nullable: false
-      length: null
-      options:
-        fixed: false
-        comment: '[enum:invite|update]'
-        default: update
-      column: direct_media_method
-    calleridUpdateHeader:
-      type: string
-      nullable: false
-      length: null
-      options:
-        fixed: false
-        comment: '[enum:pai|rpid]'
-        default: pai
-      column: callerid_update_header
-    updateCallerid:
-      type: string
-      nullable: false
-      length: null
-      options:
-        fixed: false
-        comment: '[enum:yes|no]'
-        default: 'yes'
-      column: update_callerid
     fromDomain:
       type: string
       nullable: true
       length: 190
       options:
         fixed: false
-      column: from_domain
+      column: fromDomain
     directConnectivity:
       type: string
       nullable: false
@@ -108,13 +59,31 @@ Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountAbstract:
         comment: '[enum:yes|no]'
         default: 'yes'
       column: directConnectivity
+    ddiIn:
+      type: string
+      nullable: false
+      length: null
+      options:
+        fixed: false
+        comment: '[enum:yes|no]'
+        default: 'yes'
+      column: ddiIn
+    t38Passthrough:
+      type: string
+      nullable: false
+      length: null
+      options:
+        fixed: false
+        comment: '[enum:yes|no]'
+        default: 'no'
+      column: t38Passthrough
   manyToOne:
     brand:
       targetEntity: Ivoz\Provider\Domain\Model\Brand\BrandInterface
       cascade: {  }
       fetch: LAZY
       mappedBy: null
-      inversedBy: retailAccounts
+      inversedBy: residentialDevices
       joinColumns:
         brandId:
           referencedColumnName: id
@@ -126,7 +95,7 @@ Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountAbstract:
       cascade: {  }
       fetch: LAZY
       mappedBy: null
-      inversedBy: retailAccounts
+      inversedBy: residentialDevices
       joinColumns:
         domainId:
           domainId: id
@@ -164,17 +133,6 @@ Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountAbstract:
       inversedBy: null
       joinColumns:
         outgoingDdiId:
-          referencedColumnName: id
-          onDelete: set null
-      orphanRemoval: false
-    language:
-      targetEntity: Ivoz\Provider\Domain\Model\Language\LanguageInterface
-      cascade: {  }
-      fetch: LAZY
-      mappedBy: null
-      inversedBy: null
-      joinColumns:
-        languageId:
           referencedColumnName: id
           onDelete: set null
       orphanRemoval: false

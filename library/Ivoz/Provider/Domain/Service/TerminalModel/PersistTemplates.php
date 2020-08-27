@@ -32,7 +32,10 @@ class PersistTemplates implements TerminalModelLifecycleEventHandlerInterface
         ];
     }
 
-    public function execute(TerminalModelInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(TerminalModelInterface $entity)
     {
         $genericMustChange = $entity->hasChanged('genericTemplate');
         $specificMustChange = $entity->hasChanged('specificTemplate');
@@ -63,6 +66,9 @@ class PersistTemplates implements TerminalModelLifecycleEventHandlerInterface
         }
     }
 
+    /**
+     * @return void
+     */
     protected function createFolder($route)
     {
         $folderExists = $this->fs->exists($route);
@@ -75,12 +81,21 @@ class PersistTemplates implements TerminalModelLifecycleEventHandlerInterface
         umask($old);
     }
 
+    /**
+     * @return void
+     */
     protected function saveFiles($file, $route, $template)
     {
         $fileRoute = $route . DIRECTORY_SEPARATOR .$file;
         $fileExists = $this->fs->exists($fileRoute);
 
-        if($fileExists) {
+        if ($fileExists) {
+            $backupExists = $this->fs->exists($fileRoute . '.back');
+            if ($backupExists) {
+                $this->fs->remove(
+                    $fileRoute . '.back'
+                );
+            }
             $this->fs->rename(
                 $fileRoute,
                 $fileRoute . '.back'

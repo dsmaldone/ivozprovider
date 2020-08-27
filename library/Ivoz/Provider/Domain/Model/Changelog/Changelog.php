@@ -3,20 +3,24 @@
 namespace Ivoz\Provider\Domain\Model\Changelog;
 
 use Ivoz\Core\Domain\Event\EntityEventInterface;
+use Ivoz\Core\Domain\Model\LoggerEntityInterface;
+use Ivoz\Provider\Domain\Model\Commandlog\CommandlogInterface;
 
 /**
  * Changelog
  */
-class Changelog extends ChangelogAbstract implements ChangelogInterface
+class Changelog extends ChangelogAbstract implements LoggerEntityInterface, ChangelogInterface
 {
     use ChangelogTrait;
 
     /**
-     * @param EntityEventInterface $event
-     * @return Changelog
+     * @param \Ivoz\Core\Domain\Event\EntityEventInterface $event
+     * @return self
      */
-    public static function fromEvent(EntityEventInterface $event)
-    {
+    public static function fromEvent(
+        EntityEventInterface $event,
+        CommandlogInterface $command
+    ) {
         $entity = new static(
             $event->getEntityClass(),
             (string) $event->getEntityId(),
@@ -29,17 +33,21 @@ class Changelog extends ChangelogAbstract implements ChangelogInterface
             $event->getData()
         );
 
+        $entity->setCommand($command);
+
+        $entity->sanitizeValues();
+        $entity->initChangelog();
+
         return $entity;
     }
 
     /**
      * Get id
      * @codeCoverageIgnore
-     * @return integer
+     * @return string
      */
     public function getId()
     {
         return $this->id;
     }
 }
-

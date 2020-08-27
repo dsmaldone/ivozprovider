@@ -5,15 +5,8 @@ namespace Ivoz\Provider\Domain\Service\Invoice;
 use Ivoz\Core\Infrastructure\Domain\Service\Gearman\Jobs\Invoicer;
 use Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface;
 
-/**
- * Class SendGenerateOrder
- * @package Ivoz\Provider\Domain\Service\Invoice
- */
 class SendGenerateOrder implements InvoiceLifecycleEventHandlerInterface
 {
-    /**
-     * @var Invoicer
-     */
     protected $invoicer;
 
     public function __construct(
@@ -29,15 +22,18 @@ class SendGenerateOrder implements InvoiceLifecycleEventHandlerInterface
         ];
     }
 
-    public function execute(InvoiceInterface $entity)
+    /**
+     * @return void
+     */
+    public function execute(InvoiceInterface $invoice)
     {
-        $pendingStatus = $entity->getStatus() === 'waiting';
-        $statusHasChanged = $entity->hasChanged('status');
-
-        if ($pendingStatus && $statusHasChanged) {
-            $this->invoicer
-                ->setId($entity->getId())
-                ->send();
+        $mustRunInvoicer = $invoice->mustRunInvoicer();
+        if (!$mustRunInvoicer) {
+            return;
         }
+
+        $this->invoicer
+            ->setId($invoice->getId())
+            ->send();
     }
 }

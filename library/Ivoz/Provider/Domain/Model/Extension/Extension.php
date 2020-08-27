@@ -2,8 +2,8 @@
 
 namespace Ivoz\Provider\Domain\Model\Extension;
 
-use Ivoz\Provider\Domain\Traits\RoutableTrait;
 use Assert\Assertion;
+use Ivoz\Provider\Domain\Traits\RoutableTrait;
 
 /**
  * Extension
@@ -38,7 +38,8 @@ class Extension extends ExtensionAbstract implements ExtensionInterface
      */
     public function __toString()
     {
-        return sprintf("%s [%s]",
+        return sprintf(
+            "%s [%s]",
             $this->getNumber(),
             parent::__toString()
         );
@@ -108,6 +109,4 @@ class Extension extends ExtensionAbstract implements ExtensionInterface
             $this->getNumberCountry()->getCountryCode() .
             $this->getNumberValue();
     }
-
 }
-

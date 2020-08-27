@@ -3,7 +3,8 @@
 namespace Ivoz\Provider\Domain\Model\RoutingPatternGroup;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface RoutingPatternGroupInterface extends LoggableEntityInterface
 {
@@ -14,18 +15,10 @@ interface RoutingPatternGroupInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
+     * @param Criteria|null $criteria
      * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface[]
      */
-    public function getRoutingPatterns();
-
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
+    public function getRoutingPatterns(\Doctrine\Common\Collections\Criteria $criteria = null);
 
     /**
      * Get name
@@ -35,29 +28,11 @@ interface RoutingPatternGroupInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
-
-    /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand);
 
     /**
      * Get brand
@@ -71,7 +46,7 @@ interface RoutingPatternGroupInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternInterface $relPattern
      *
-     * @return RoutingPatternGroupTrait
+     * @return static
      */
     public function addRelPattern(\Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternInterface $relPattern);
 
@@ -85,14 +60,14 @@ interface RoutingPatternGroupInterface extends LoggableEntityInterface
     /**
      * Replace relPatterns
      *
-     * @param \Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternInterface[] $relPatterns
-     * @return self
+     * @param ArrayCollection $relPatterns of Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternInterface
+     * @return static
      */
-    public function replaceRelPatterns(Collection $relPatterns);
+    public function replaceRelPatterns(ArrayCollection $relPatterns);
 
     /**
      * Get relPatterns
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternInterface[]
      */
     public function getRelPatterns(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -102,7 +77,7 @@ interface RoutingPatternGroupInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting
      *
-     * @return RoutingPatternGroupTrait
+     * @return static
      */
     public function addOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting);
 
@@ -116,17 +91,15 @@ interface RoutingPatternGroupInterface extends LoggableEntityInterface
     /**
      * Replace outgoingRoutings
      *
-     * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[] $outgoingRoutings
-     * @return self
+     * @param ArrayCollection $outgoingRoutings of Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface
+     * @return static
      */
-    public function replaceOutgoingRoutings(Collection $outgoingRoutings);
+    public function replaceOutgoingRoutings(ArrayCollection $outgoingRoutings);
 
     /**
      * Get outgoingRoutings
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[]
      */
     public function getOutgoingRoutings(\Doctrine\Common\Collections\Criteria $criteria = null);
-
 }
-

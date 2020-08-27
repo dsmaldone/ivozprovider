@@ -6,6 +6,11 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface HolidayDateInterface extends LoggableEntityInterface
 {
+    const ROUTETYPE_NUMBER = 'number';
+    const ROUTETYPE_EXTENSION = 'extension';
+    const ROUTETYPE_VOICEMAIL = 'voicemail';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -13,13 +18,11 @@ interface HolidayDateInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set name
+     * Get the numberValue in E.164 format when routing to 'number'
      *
-     * @param string $name
-     *
-     * @return self
+     * @return string
      */
-    public function setName($name);
+    public function getNumberValueE164();
 
     /**
      * Get name
@@ -29,15 +32,6 @@ interface HolidayDateInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set eventDate
-     *
-     * @param \DateTime $eventDate
-     *
-     * @return self
-     */
-    public function setEventDate($eventDate);
-
-    /**
      * Get eventDate
      *
      * @return \DateTime
@@ -45,13 +39,48 @@ interface HolidayDateInterface extends LoggableEntityInterface
     public function getEventDate();
 
     /**
+     * Get wholeDayEvent
+     *
+     * @return boolean
+     */
+    public function getWholeDayEvent();
+
+    /**
+     * Get timeIn
+     *
+     * @return \DateTime | null
+     */
+    public function getTimeIn();
+
+    /**
+     * Get timeOut
+     *
+     * @return \DateTime | null
+     */
+    public function getTimeOut();
+
+    /**
+     * Get routeType
+     *
+     * @return string | null
+     */
+    public function getRouteType();
+
+    /**
+     * Get numberValue
+     *
+     * @return string | null
+     */
+    public function getNumberValue();
+
+    /**
      * Set calendar
      *
      * @param \Ivoz\Provider\Domain\Model\Calendar\CalendarInterface $calendar
      *
-     * @return self
+     * @return static
      */
-    public function setCalendar(\Ivoz\Provider\Domain\Model\Calendar\CalendarInterface $calendar = null);
+    public function setCalendar(\Ivoz\Provider\Domain\Model\Calendar\CalendarInterface $calendar);
 
     /**
      * Get calendar
@@ -61,20 +90,36 @@ interface HolidayDateInterface extends LoggableEntityInterface
     public function getCalendar();
 
     /**
-     * Set locution
-     *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $locution
-     *
-     * @return self
-     */
-    public function setLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $locution = null);
-
-    /**
      * Get locution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getLocution();
 
-}
+    /**
+     * Get extension
+     *
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
+     */
+    public function getExtension();
 
+    /**
+     * Get voiceMailUser
+     *
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
+     */
+    public function getVoiceMailUser();
+
+    /**
+     * Get numberCountry
+     *
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
+     */
+    public function getNumberCountry();
+
+    /**
+     * @param string $prefix
+     * @return null|string
+     */
+    public function getTarget(string $prefix = '');
+}

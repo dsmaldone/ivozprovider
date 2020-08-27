@@ -1,8 +1,13 @@
 <?php
 
-use Ivoz\Provider\Domain\Service\Company\IncrementBalance;
-use Ivoz\Provider\Domain\Service\Company\DecrementBalance;
+use Ivoz\Provider\Domain\Model\Carrier\Carrier;
+use Ivoz\Provider\Domain\Model\Carrier\CarrierInterface;
+use Ivoz\Provider\Domain\Model\Company\Company;
+use Ivoz\Provider\Domain\Service\Carrier\DecrementBalance as DecrementCarrierBalance;
+use Ivoz\Provider\Domain\Service\Carrier\IncrementBalance as IncrementCarrierBalance;
 use Ivoz\Provider\Domain\Service\Company\AbstractBalanceOperation;
+use Ivoz\Provider\Domain\Service\Company\DecrementBalance;
+use Ivoz\Provider\Domain\Service\Company\IncrementBalance;
 
 class KlearCustomIncrementBalanceController extends Zend_Controller_Action
 {
@@ -19,13 +24,14 @@ class KlearCustomIncrementBalanceController extends Zend_Controller_Action
 
     public function init()
     {
-        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter)) ) {
-            throw New Zend_Exception('', Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
+        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter))) {
+            throw new Zend_Exception('', Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
         }
 
         $this->_helper
             ->ContextSwitch()
             ->addActionContext('add-to-balance', 'json')
+            ->addActionContext('add-to-carrier-balance', 'json')
             ->initContext('json');
 
         $this->_helper->layout->disableLayout();
@@ -42,19 +48,25 @@ class KlearCustomIncrementBalanceController extends Zend_Controller_Action
         $id = $this->_mainRouter->getParam('pk', false);
 
         if (!$id) {
-
-            $message = _('Id not found');
-            return $this->_dispatch( $message, $buttons);
+            $message = $this->_helper->translate('Id not found');
+            return $this->_dispatch($message, $buttons);
         }
 
         /** @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company */
         $company = $this->dataGateway->find(
-            \Ivoz\Provider\Domain\Model\Company\Company::class,
+            Company::class,
             $id
         );
 
-        if (($this->getParam("sent"))) {
+        // Get company currency symbol
+        $currencySymbol = $this->dataGateway->remoteProcedureCall(
+            Company::class,
+            $company->getId(),
+            'getCurrencySymbol',
+            []
+        );
 
+        if (($this->getParam("sent"))) {
             $targetService = $this->getParam("operation") === 'add'
                 ? IncrementBalance::class
                 : DecrementBalance::class;
@@ -70,12 +82,74 @@ class KlearCustomIncrementBalanceController extends Zend_Controller_Action
             );
 
             $reponseMessage = $success
-                ? _('Balance modified successfully')
-                : sprintf(_('There was an error: %s'), $balanceService->getLastError());
+                ? $this->_helper->translate('Balance modified successfully')
+                : sprintf($this->_helper->translate('There was an error: %s'), $balanceService->getLastError());
 
-            return $this->_dispatch( $reponseMessage, $buttons);
+            return $this->_dispatch($reponseMessage, $buttons);
         }
 
+        return $this->_showDialog(
+            $company->getName(),
+            $company->getId(),
+            $currencySymbol
+        );
+    }
+
+    public function addToCarrierBalanceAction()
+    {
+        $buttons = array();
+        $id = $this->_mainRouter->getParam('pk', false);
+
+        if (!$id) {
+            $message = $this->_helper->translate('Id not found');
+            return $this->_dispatch($message, $buttons);
+        }
+
+        /** @var CarrierInterface $carrier */
+        $carrier = $this->dataGateway->find(
+            Carrier::class,
+            $id
+        );
+
+        if (($this->getParam("sent"))) {
+            $targetService = $this->getParam("operation") === 'add'
+                ? IncrementCarrierBalance::class
+                : DecrementCarrierBalance::class;
+
+            /** @var AbstractBalanceOperation $balanceService */
+            $balanceService = $this->container->get(
+                $targetService
+            );
+
+            $success = $balanceService->execute(
+                $id,
+                $this->getParam("amount")
+            );
+
+            $reponseMessage = $success
+                ? $this->_helper->translate('Balance modified successfully')
+                : sprintf($this->_helper->translate('There was an error: %s'), $balanceService->getLastError());
+
+            return $this->_dispatch($reponseMessage, $buttons);
+        }
+
+        // Get company currency symbol
+        $currencySymbol = $this->dataGateway->remoteProcedureCall(
+            Carrier::class,
+            $carrier->getId(),
+            'getCurrencySymbol',
+            []
+        );
+
+        return $this->_showDialog(
+            $carrier->getName(),
+            $carrier->getId(),
+            $currencySymbol
+        );
+    }
+
+    private function _showDialog($name, $id, $symbol)
+    {
         $styles = '
             <style>
                 .ui-widget.ui-dialog-content.ui-widget-content {
@@ -133,35 +207,39 @@ class KlearCustomIncrementBalanceController extends Zend_Controller_Action
             . $styles
             . '<p class="updateable-item" style="font-size: 0.8em;">'
             . sprintf(
-                _('Add balance operation to <strong>%s</strong>'),
-                $company->getName(),
-                $company->getId()
+                $this->_helper->translate('Add balance operation to <strong>%s</strong>'),
+                $name,
+                $id
             )
             . '</p>'
-            . '<p class="updateable-item" style="font-size: 0.8em;z-index: 9999999;"><label for="amount">Amount</label>'
+            . '<p class="updateable-item" style="font-size: 0.8em;z-index: 9999999;"><label for="amount">'
+            . $this->_helper->translate('Amount')
+            . '</label>'
             . $operationSelector
             . $inputFld
-            . ' €'
+            . ' '
+            . $symbol
             . '</p>'
             . '</form>';
 
         $buttons = [
-            _('Send') => [
+            $this->_helper->translate('Send') => [
                 'reloadParent' => false,
                 'recall' => true,
                 'params' => ['sent' => true]
             ]
         ];
-        $this->_dispatch( $message, $buttons);
+        $this->_dispatch($message, $buttons);
     }
 
-    protected function _dispatch( $message, $buttons = array()){
-        $buttons[_('Close')] = [
+    protected function _dispatch($message, $buttons = array())
+    {
+        $buttons[$this->_helper->translate('Close')] = [
             'reloadParent' => true,
             'recall' => false,
         ];
         $data = [
-            'title' => _("Add balance"),
+            'title' => $this->_helper->translate("Add balance"),
             'message' => $message,
             'buttons'=>$buttons
         ];

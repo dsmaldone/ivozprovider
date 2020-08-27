@@ -2,30 +2,35 @@
 
 namespace Ivoz\Provider\Application\Service\User;
 
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Domain\Model\EntityInterface;
-use Ivoz\Core\Application\Service\Assembler\CustomEntityAssemblerInterface;
 use Assert\Assertion;
+use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Application\ForeignKeyTransformerInterface;
+use Ivoz\Core\Application\Service\Assembler\CustomEntityAssemblerInterface;
+use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Provider\Domain\Model\User\UserDto;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
 
 class UserAssembler implements CustomEntityAssemblerInterface
 {
     /**
-     * @param DataTransferObjectInterface|UserDto $dto
-     * @param EntityInterface|UserInterface $entity
+     * @param UserDto $userDto
+     * @param UserInterface $user
      * @throws \Exception
      */
-    public function fromDto(DataTransferObjectInterface $dto, EntityInterface $entity)
-    {
-        Assertion::isInstanceOf($entity, UserInterface::class);
+    public function fromDto(
+        DataTransferObjectInterface $userDto,
+        EntityInterface $user,
+        ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        Assertion::isInstanceOf($user, UserInterface::class);
 
-        $oldPass = $dto->getOldPass();
-        if ($oldPass && !password_verify($oldPass, $entity->getPass())) {
+        /** @var UserDto $userDto */
+        $oldPass = $userDto->getOldPass();
+        if ($oldPass && !password_verify($oldPass, $user->getPass())) {
             throw new \DomainException('Invalid password');
         }
         // There is not oldPass validation in klear, so, we can't do any further validation
 
-        $entity->updateFromDto($dto);
+        $user->updateFromDto($userDto, $fkTransformer);
     }
 }

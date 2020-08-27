@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Timezone;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -38,6 +36,16 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     private $labelEs = '';
 
     /**
+     * @var string
+     */
+    private $labelCa = '';
+
+    /**
+     * @var string
+     */
+    private $labelIt = '';
+
+    /**
      * @var \Ivoz\Provider\Domain\Model\Country\CountryDto | null
      */
     private $country;
@@ -53,7 +61,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -63,7 +71,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
             'tz' => 'tz',
             'comment' => 'comment',
             'id' => 'id',
-            'label' => ['en','es'],
+            'label' => ['en','es','ca','it'],
             'countryId' => 'country'
         ];
     }
@@ -73,32 +81,31 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'tz' => $this->getTz(),
             'comment' => $this->getComment(),
             'id' => $this->getId(),
             'label' => [
                 'en' => $this->getLabelEn(),
-                'es' => $this->getLabelEs()
+                'es' => $this->getLabelEs(),
+                'ca' => $this->getLabelCa(),
+                'it' => $this->getLabelIt()
             ],
             'country' => $this->getCountry()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->country = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Country\\Country', $this->getCountryId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -114,7 +121,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTz()
     {
@@ -134,7 +141,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getComment()
     {
@@ -154,7 +161,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -174,7 +181,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getLabelEn()
     {
@@ -194,11 +201,51 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getLabelEs()
     {
         return $this->labelEs;
+    }
+
+    /**
+     * @param string $labelCa
+     *
+     * @return static
+     */
+    public function setLabelCa($labelCa = null)
+    {
+        $this->labelCa = $labelCa;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getLabelCa()
+    {
+        return $this->labelCa;
+    }
+
+    /**
+     * @param string $labelIt
+     *
+     * @return static
+     */
+    public function setLabelIt($labelIt = null)
+    {
+        $this->labelIt = $labelIt;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getLabelIt()
+    {
+        return $this->labelIt;
     }
 
     /**
@@ -214,7 +261,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto | null
      */
     public function getCountry()
     {
@@ -222,7 +269,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -236,7 +283,7 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCountryId()
     {
@@ -247,5 +294,3 @@ abstract class TimezoneDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

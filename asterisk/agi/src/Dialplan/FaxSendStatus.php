@@ -4,9 +4,9 @@ namespace Dialplan;
 
 use Agi\Wrapper;
 use Doctrine\ORM\EntityManagerInterface;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOut;
-use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutDTO;
+use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutDto;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutInterface;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutRepository;
 use RouteHandlerAbstract;
@@ -25,25 +25,24 @@ class FaxSendStatus extends RouteHandlerAbstract
     protected $em;
 
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
      * Dial constructor.
      * @param Wrapper $agi
      * @param EntityManagerInterface $em
-     * @param EntityPersisterInterface $entityPersister
+     * @param EntityTools $entityTools
      */
     public function __construct(
         Wrapper $agi,
         EntityManagerInterface $em,
-        EntityPersisterInterface $entityPersister
-    )
-    {
+        EntityTools $entityTools
+    ) {
         $this->agi = $agi;
         $this->em = $em;
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
     }
 
     public function process()
@@ -54,7 +53,7 @@ class FaxSendStatus extends RouteHandlerAbstract
         /** @var FaxesInOutRepository $faxInOutRepository */
         $faxInOutRepository = $this->em->getRepository(FaxesInOut::class);
 
-        /** @var FaxesInOutInterface $faxOut */
+        /** @var FaxesInOutInterface|null $faxOut */
         $faxOut = $faxInOutRepository->find($faxId);
         if (is_null($faxOut)) {
             $this->agi->error("Faxfile %d not found in database", $faxId);
@@ -74,10 +73,13 @@ class FaxSendStatus extends RouteHandlerAbstract
         if (! empty($error) && $statusstr != "OK") {
             // Show error message in asterisk CLI
             $this->agi->error("Error sending fax: $statusstr ($error)");
-            /** @var FaxesInOutDTO $faxOutDto */
-            $faxOutDto = $faxOut->toDTO();
+            /** @var FaxesInOutDto $faxOutDto */
+            $faxOutDto = $this->entityTools->entityToDto($faxOut);
             $faxOutDto->setStatus('error');
-            $this->entityPersister->persistDto($faxOutDto, $faxOut);
+            $this->entityTools->persistDto(
+                $faxOutDto,
+                $faxOut
+            );
             return;
         }
 
@@ -86,11 +88,14 @@ class FaxSendStatus extends RouteHandlerAbstract
 
         // Mark as success and save
         /** @var FaxesInOutDTO $faxOutDto */
-        $faxOutDto = $faxOut->toDTO();
+        $faxOutDto = $this->entityTools->entityToDto($faxOut);
         $faxOutDto
             ->setStatus('completed')
             ->setPages($pages);
 
-        $this->entityPersister->persistDto($faxOutDto, $faxOut);
+        $this->entityTools->persistDto(
+            $faxOutDto,
+            $faxOut
+        );
     }
 }

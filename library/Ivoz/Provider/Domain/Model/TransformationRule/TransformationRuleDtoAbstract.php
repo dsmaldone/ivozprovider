@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\TransformationRule;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -58,7 +56,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -80,7 +78,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'type' => $this->getType(),
             'description' => $this->getDescription(),
             'priority' => $this->getPriority(),
@@ -89,22 +87,19 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
             'id' => $this->getId(),
             'transformationRuleSet' => $this->getTransformationRuleSet()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->transformationRuleSet = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\TransformationRuleSet\\TransformationRuleSet', $this->getTransformationRuleSetId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -120,7 +115,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getType()
     {
@@ -140,7 +135,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -160,7 +155,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPriority()
     {
@@ -180,7 +175,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getMatchExpr()
     {
@@ -200,7 +195,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getReplaceExpr()
     {
@@ -220,7 +215,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -240,7 +235,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetDto
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetDto | null
      */
     public function getTransformationRuleSet()
     {
@@ -248,7 +243,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -262,7 +257,7 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getTransformationRuleSetId()
     {
@@ -273,5 +268,3 @@ abstract class TransformationRuleDtoAbstract implements DataTransferObjectInterf
         return null;
     }
 }
-
-

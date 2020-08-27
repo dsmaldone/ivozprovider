@@ -12,27 +12,27 @@ production:
       pagination:
         items: 25
       <<: *PickUpGroups
-      class: fa fa-phone orange
+      class: ui-silk-group-link
       title: _("List of %s %2s", ngettext('Pick up group', 'Pick up groups', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/company/call_captures.html"
+        href: "/doc/en/administration_portal/client/vpbx/user_configuration/pick_up_groups.html"
       forcedValues:
         <<: *forcedCompany
       fields:
         options:
           title: _("Options")
           screens:
-            pickUpGroupsEdit_screen: true
+            pickUpGroupsEdit_screen: ${auth.acls.PickUpGroups.update}
           dialogs:
-            pickUpGroupsDel_dialog: true
+            pickUpGroupsDel_dialog: ${auth.acls.PickUpGroups.delete}
           default: pickUpGroupsEdit_screen
       options:
         title: _("Options")
         screens:
-          pickUpGroupsNew_screen: true
+          pickUpGroupsNew_screen: ${auth.acls.PickUpGroups.create}
         dialogs:
-          pickUpGroupsDel_dialog: true
+          pickUpGroupsDel_dialog: ${auth.acls.PickUpGroups.delete}
     pickUpGroupsNew_screen: &pickUpGroupsNew_screenLink
       <<: *PickUpGroups
       controller: new

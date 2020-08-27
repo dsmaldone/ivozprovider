@@ -37,6 +37,23 @@ class ImportFileController extends Zend_Controller_Action
             ->addActionContext("import-holiday-dates", "json")
             ->initContext("json");
 
+        $nullableFields = [
+            'timeIn',
+            'timeOut',
+            'numberCountry',
+            'numberValue',
+            'voiceMailUser',
+            'extension',
+        ];
+
+        foreach ($nullableFields as $nullableField) {
+            if (isset($this->_availableFields[$nullableField])) {
+                $settings = $this->_availableFields[$nullableField]->toArray();
+                $settings['required'] = false;
+                $this->_availableFields[$nullableField] = new Zend_Config($settings, false);
+            }
+        }
+
         $selectableFields = array_diff_key($this->_availableFields, $this->_forcedValues);
         $this->_customFormBuilder = new HolidayDatesFormBuilder(
             $selectableFields,
@@ -56,7 +73,6 @@ class ImportFileController extends Zend_Controller_Action
                 }
                 break;
             default:
-
                 $helpMessages[] = $this->_helper->translate(
                     "This importer expects values to be within quotation marks and separated by semicolons."
                 );

@@ -6,20 +6,15 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface CodecInterface extends LoggableEntityInterface
 {
+    const TYPE_AUDIO = 'audio';
+    const TYPE_VIDEO = 'video';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
      */
     public function getChangeSet();
-
-    /**
-     * Set type
-     *
-     * @param string $type
-     *
-     * @return self
-     */
-    public function setType($type);
 
     /**
      * Get type
@@ -29,15 +24,6 @@ interface CodecInterface extends LoggableEntityInterface
     public function getType();
 
     /**
-     * Set iden
-     *
-     * @param string $iden
-     *
-     * @return self
-     */
-    public function setIden($iden);
-
-    /**
      * Get iden
      *
      * @return string
@@ -45,20 +31,9 @@ interface CodecInterface extends LoggableEntityInterface
     public function getIden();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
-
-    /**
      * Get name
      *
      * @return string
      */
     public function getName();
-
 }
-

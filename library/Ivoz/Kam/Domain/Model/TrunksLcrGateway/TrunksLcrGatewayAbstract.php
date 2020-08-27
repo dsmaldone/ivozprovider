@@ -17,7 +17,7 @@ abstract class TrunksLcrGatewayAbstract
      * column: lcr_id
      * @var integer
      */
-    protected $lcrId = '1';
+    protected $lcrId = 1;
 
     /**
      * column: gw_name
@@ -26,60 +26,60 @@ abstract class TrunksLcrGatewayAbstract
     protected $gwName;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $ip;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $hostname;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $port;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $params;
 
     /**
      * column: uri_scheme
-     * @var integer
+     * @var integer | null
      */
     protected $uriScheme;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $transport;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
     protected $strip;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $prefix;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $tag;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $defunct;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\PeerServer\PeerServerInterface
+     * @var \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerInterface | null
      */
-    protected $peerServer;
+    protected $carrierServer;
 
 
     use ChangelogTrait;
@@ -97,7 +97,8 @@ abstract class TrunksLcrGatewayAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TrunksLcrGateway",
             $this->getId()
         );
@@ -121,7 +122,8 @@ abstract class TrunksLcrGatewayAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TrunksLcrGatewayInterface|null $entity
      * @param int $depth
      * @return TrunksLcrGatewayDto|null
      */
@@ -141,24 +143,28 @@ abstract class TrunksLcrGatewayAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TrunksLcrGatewayDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksLcrGatewayDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksLcrGatewayDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksLcrGatewayDto::class);
 
         $self = new static(
             $dto->getLcrId(),
-            $dto->getGwName());
+            $dto->getGwName()
+        );
 
         $self
             ->setIp($dto->getIp())
@@ -171,24 +177,23 @@ abstract class TrunksLcrGatewayAbstract
             ->setPrefix($dto->getPrefix())
             ->setTag($dto->getTag())
             ->setDefunct($dto->getDefunct())
-            ->setPeerServer($dto->getPeerServer())
+            ->setCarrierServer($fkTransformer->transform($dto->getCarrierServer()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksLcrGatewayDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksLcrGatewayDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksLcrGatewayDto::class);
 
         $this
@@ -204,15 +209,15 @@ abstract class TrunksLcrGatewayAbstract
             ->setPrefix($dto->getPrefix())
             ->setTag($dto->getTag())
             ->setDefunct($dto->getDefunct())
-            ->setPeerServer($dto->getPeerServer());
+            ->setCarrierServer($fkTransformer->transform($dto->getCarrierServer()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TrunksLcrGatewayDto
      */
@@ -231,7 +236,7 @@ abstract class TrunksLcrGatewayAbstract
             ->setPrefix(self::getPrefix())
             ->setTag(self::getTag())
             ->setDefunct(self::getDefunct())
-            ->setPeerServer(\Ivoz\Provider\Domain\Model\PeerServer\PeerServer::entityToDto(self::getPeerServer(), $depth));
+            ->setCarrierServer(\Ivoz\Provider\Domain\Model\CarrierServer\CarrierServer::entityToDto(self::getCarrierServer(), $depth));
     }
 
     /**
@@ -252,11 +257,9 @@ abstract class TrunksLcrGatewayAbstract
             'prefix' => self::getPrefix(),
             'tag' => self::getTag(),
             'defunct' => self::getDefunct(),
-            'peerServerId' => self::getPeerServer() ? self::getPeerServer()->getId() : null
+            'carrierServerId' => self::getCarrierServer() ? self::getCarrierServer()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -264,15 +267,15 @@ abstract class TrunksLcrGatewayAbstract
      *
      * @param integer $lcrId
      *
-     * @return self
+     * @return static
      */
-    public function setLcrId($lcrId)
+    protected function setLcrId($lcrId)
     {
         Assertion::notNull($lcrId, 'lcrId value "%s" is null, but non null value was expected.');
         Assertion::integerish($lcrId, 'lcrId value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($lcrId, 0, 'lcrId provided "%s" is not greater or equal than "%s".');
 
-        $this->lcrId = $lcrId;
+        $this->lcrId = (int) $lcrId;
 
         return $this;
     }
@@ -292,9 +295,9 @@ abstract class TrunksLcrGatewayAbstract
      *
      * @param string $gwName
      *
-     * @return self
+     * @return static
      */
-    public function setGwName($gwName)
+    protected function setGwName($gwName)
     {
         Assertion::notNull($gwName, 'gwName value "%s" is null, but non null value was expected.');
         Assertion::maxLength($gwName, 200, 'gwName value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -317,11 +320,11 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set ip
      *
-     * @param string $ip
+     * @param string $ip | null
      *
-     * @return self
+     * @return static
      */
-    public function setIp($ip = null)
+    protected function setIp($ip = null)
     {
         if (!is_null($ip)) {
             Assertion::maxLength($ip, 50, 'ip value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -335,7 +338,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get ip
      *
-     * @return string
+     * @return string | null
      */
     public function getIp()
     {
@@ -345,11 +348,11 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set hostname
      *
-     * @param string $hostname
+     * @param string $hostname | null
      *
-     * @return self
+     * @return static
      */
-    public function setHostname($hostname = null)
+    protected function setHostname($hostname = null)
     {
         if (!is_null($hostname)) {
             Assertion::maxLength($hostname, 64, 'hostname value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -363,7 +366,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get hostname
      *
-     * @return string
+     * @return string | null
      */
     public function getHostname()
     {
@@ -373,17 +376,16 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set port
      *
-     * @param integer $port
+     * @param integer $port | null
      *
-     * @return self
+     * @return static
      */
-    public function setPort($port = null)
+    protected function setPort($port = null)
     {
         if (!is_null($port)) {
-            if (!is_null($port)) {
-                Assertion::integerish($port, 'port value "%s" is not an integer or a number castable to integer.');
-                Assertion::greaterOrEqualThan($port, 0, 'port provided "%s" is not greater or equal than "%s".');
-            }
+            Assertion::integerish($port, 'port value "%s" is not an integer or a number castable to integer.');
+            Assertion::greaterOrEqualThan($port, 0, 'port provided "%s" is not greater or equal than "%s".');
+            $port = (int) $port;
         }
 
         $this->port = $port;
@@ -394,7 +396,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get port
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPort()
     {
@@ -404,11 +406,11 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set params
      *
-     * @param string $params
+     * @param string $params | null
      *
-     * @return self
+     * @return static
      */
-    public function setParams($params = null)
+    protected function setParams($params = null)
     {
         if (!is_null($params)) {
             Assertion::maxLength($params, 64, 'params value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -422,7 +424,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get params
      *
-     * @return string
+     * @return string | null
      */
     public function getParams()
     {
@@ -432,17 +434,16 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set uriScheme
      *
-     * @param integer $uriScheme
+     * @param integer $uriScheme | null
      *
-     * @return self
+     * @return static
      */
-    public function setUriScheme($uriScheme = null)
+    protected function setUriScheme($uriScheme = null)
     {
         if (!is_null($uriScheme)) {
-            if (!is_null($uriScheme)) {
-                Assertion::integerish($uriScheme, 'uriScheme value "%s" is not an integer or a number castable to integer.');
-                Assertion::greaterOrEqualThan($uriScheme, 0, 'uriScheme provided "%s" is not greater or equal than "%s".');
-            }
+            Assertion::integerish($uriScheme, 'uriScheme value "%s" is not an integer or a number castable to integer.');
+            Assertion::greaterOrEqualThan($uriScheme, 0, 'uriScheme provided "%s" is not greater or equal than "%s".');
+            $uriScheme = (int) $uriScheme;
         }
 
         $this->uriScheme = $uriScheme;
@@ -453,7 +454,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get uriScheme
      *
-     * @return integer
+     * @return integer | null
      */
     public function getUriScheme()
     {
@@ -463,17 +464,16 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set transport
      *
-     * @param integer $transport
+     * @param integer $transport | null
      *
-     * @return self
+     * @return static
      */
-    public function setTransport($transport = null)
+    protected function setTransport($transport = null)
     {
         if (!is_null($transport)) {
-            if (!is_null($transport)) {
-                Assertion::integerish($transport, 'transport value "%s" is not an integer or a number castable to integer.');
-                Assertion::greaterOrEqualThan($transport, 0, 'transport provided "%s" is not greater or equal than "%s".');
-            }
+            Assertion::integerish($transport, 'transport value "%s" is not an integer or a number castable to integer.');
+            Assertion::greaterOrEqualThan($transport, 0, 'transport provided "%s" is not greater or equal than "%s".');
+            $transport = (int) $transport;
         }
 
         $this->transport = $transport;
@@ -484,7 +484,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get transport
      *
-     * @return integer
+     * @return integer | null
      */
     public function getTransport()
     {
@@ -494,14 +494,15 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set strip
      *
-     * @param boolean $strip
+     * @param boolean $strip | null
      *
-     * @return self
+     * @return static
      */
-    public function setStrip($strip = null)
+    protected function setStrip($strip = null)
     {
         if (!is_null($strip)) {
             Assertion::between(intval($strip), 0, 1, 'strip provided "%s" is not a valid boolean value.');
+            $strip = (bool) $strip;
         }
 
         $this->strip = $strip;
@@ -512,7 +513,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get strip
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getStrip()
     {
@@ -522,11 +523,11 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set prefix
      *
-     * @param string $prefix
+     * @param string $prefix | null
      *
-     * @return self
+     * @return static
      */
-    public function setPrefix($prefix = null)
+    protected function setPrefix($prefix = null)
     {
         if (!is_null($prefix)) {
             Assertion::maxLength($prefix, 16, 'prefix value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -540,7 +541,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get prefix
      *
-     * @return string
+     * @return string | null
      */
     public function getPrefix()
     {
@@ -550,11 +551,11 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set tag
      *
-     * @param string $tag
+     * @param string $tag | null
      *
-     * @return self
+     * @return static
      */
-    public function setTag($tag = null)
+    protected function setTag($tag = null)
     {
         if (!is_null($tag)) {
             Assertion::maxLength($tag, 64, 'tag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -568,7 +569,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -578,17 +579,16 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Set defunct
      *
-     * @param integer $defunct
+     * @param integer $defunct | null
      *
-     * @return self
+     * @return static
      */
-    public function setDefunct($defunct = null)
+    protected function setDefunct($defunct = null)
     {
         if (!is_null($defunct)) {
-            if (!is_null($defunct)) {
-                Assertion::integerish($defunct, 'defunct value "%s" is not an integer or a number castable to integer.');
-                Assertion::greaterOrEqualThan($defunct, 0, 'defunct provided "%s" is not greater or equal than "%s".');
-            }
+            Assertion::integerish($defunct, 'defunct value "%s" is not an integer or a number castable to integer.');
+            Assertion::greaterOrEqualThan($defunct, 0, 'defunct provided "%s" is not greater or equal than "%s".');
+            $defunct = (int) $defunct;
         }
 
         $this->defunct = $defunct;
@@ -599,7 +599,7 @@ abstract class TrunksLcrGatewayAbstract
     /**
      * Get defunct
      *
-     * @return integer
+     * @return integer | null
      */
     public function getDefunct()
     {
@@ -607,31 +607,28 @@ abstract class TrunksLcrGatewayAbstract
     }
 
     /**
-     * Set peerServer
+     * Set carrierServer
      *
-     * @param \Ivoz\Provider\Domain\Model\PeerServer\PeerServerInterface $peerServer
+     * @param \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerInterface $carrierServer | null
      *
-     * @return self
+     * @return static
      */
-    public function setPeerServer(\Ivoz\Provider\Domain\Model\PeerServer\PeerServerInterface $peerServer)
+    public function setCarrierServer(\Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerInterface $carrierServer = null)
     {
-        $this->peerServer = $peerServer;
+        $this->carrierServer = $carrierServer;
 
         return $this;
     }
 
     /**
-     * Get peerServer
+     * Get carrierServer
      *
-     * @return \Ivoz\Provider\Domain\Model\PeerServer\PeerServerInterface
+     * @return \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerInterface | null
      */
-    public function getPeerServer()
+    public function getCarrierServer()
     {
-        return $this->peerServer;
+        return $this->carrierServer;
     }
-
-
 
     // @codeCoverageIgnoreEnd
 }
-

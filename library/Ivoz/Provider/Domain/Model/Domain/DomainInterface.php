@@ -3,7 +3,8 @@
 namespace Ivoz\Provider\Domain\Model\Domain;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface DomainInterface extends LoggableEntityInterface
 {
@@ -14,29 +15,11 @@ interface DomainInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set domain
-     *
-     * @param string $domain
-     *
-     * @return self
-     */
-    public function setDomain($domain);
-
-    /**
      * Get domain
      *
      * @return string
      */
     public function getDomain();
-
-    /**
-     * Set pointsTo
-     *
-     * @param string $pointsTo
-     *
-     * @return self
-     */
-    public function setPointsTo($pointsTo);
 
     /**
      * Get pointsTo
@@ -46,18 +29,9 @@ interface DomainInterface extends LoggableEntityInterface
     public function getPointsTo();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
 
@@ -66,7 +40,7 @@ interface DomainInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend
      *
-     * @return DomainTrait
+     * @return static
      */
     public function addFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend);
 
@@ -80,55 +54,55 @@ interface DomainInterface extends LoggableEntityInterface
     /**
      * Replace friends
      *
-     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface[] $friends
-     * @return self
+     * @param ArrayCollection $friends of Ivoz\Provider\Domain\Model\Friend\FriendInterface
+     * @return static
      */
-    public function replaceFriends(Collection $friends);
+    public function replaceFriends(ArrayCollection $friends);
 
     /**
      * Get friends
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface[]
      */
     public function getFriends(\Doctrine\Common\Collections\Criteria $criteria = null);
 
     /**
-     * Add retailAccount
+     * Add residentialDevice
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice
      *
-     * @return DomainTrait
+     * @return static
      */
-    public function addRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount);
+    public function addResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice);
 
     /**
-     * Remove retailAccount
+     * Remove residentialDevice
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice
      */
-    public function removeRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount);
+    public function removeResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice);
 
     /**
-     * Replace retailAccounts
+     * Replace residentialDevices
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface[] $retailAccounts
-     * @return self
+     * @param ArrayCollection $residentialDevices of Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
+     * @return static
      */
-    public function replaceRetailAccounts(Collection $retailAccounts);
+    public function replaceResidentialDevices(ArrayCollection $residentialDevices);
 
     /**
-     * Get retailAccounts
-     *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface[]
+     * Get residentialDevices
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface[]
      */
-    public function getRetailAccounts(\Doctrine\Common\Collections\Criteria $criteria = null);
+    public function getResidentialDevices(\Doctrine\Common\Collections\Criteria $criteria = null);
 
     /**
      * Add terminal
      *
      * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal
      *
-     * @return DomainTrait
+     * @return static
      */
     public function addTerminal(\Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal);
 
@@ -142,17 +116,15 @@ interface DomainInterface extends LoggableEntityInterface
     /**
      * Replace terminals
      *
-     * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface[] $terminals
-     * @return self
+     * @param ArrayCollection $terminals of Ivoz\Provider\Domain\Model\Terminal\TerminalInterface
+     * @return static
      */
-    public function replaceTerminals(Collection $terminals);
+    public function replaceTerminals(ArrayCollection $terminals);
 
     /**
      * Get terminals
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface[]
      */
     public function getTerminals(\Doctrine\Common\Collections\Criteria $criteria = null);
-
 }
-

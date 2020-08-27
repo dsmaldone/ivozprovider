@@ -18,7 +18,42 @@ Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingAbstract:
       nullable: false
       options:
         unsigned: true
-        default: '1'
+        default: 1
+    routingMode:
+      type: string
+      nullable: true
+      length: 25
+      options:
+        fixed: false
+        comment: '[enum:static|lcr|block]'
+        default: 'static'
+      column: routingMode
+    prefix:
+      type: string
+      nullable: true
+      length: 25
+      options:
+        fixed: false
+    stopper:
+      type: boolean
+      nullable: false
+      options:
+        default: '0'
+        unsigned: true
+      column: stopper
+    forceClid:
+      type: boolean
+      nullable: true
+      options:
+        default: '0'
+        unsigned: true
+      column: forceClid
+    clid:
+      type: string
+      nullable: true
+      length: 25
+      options:
+        fixed: false
   manyToOne:
     brand:
       targetEntity: \Ivoz\Provider\Domain\Model\Brand\BrandInterface
@@ -42,17 +77,18 @@ Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingAbstract:
         companyId:
           referencedColumnName: id
           onDelete: cascade
+          nullable: true
       orphanRemoval: false
-    peeringContract:
-      targetEntity: \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+    carrier:
+      targetEntity: \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface
       cascade: {  }
       fetch: LAZY
       mappedBy: null
       inversedBy: outgoingRoutings
       joinColumns:
-        peeringContractId:
+        carrierId:
           referencedColumnName: id
-          nullable: false
+          nullable: true
           onDelete: cascade
       orphanRemoval: false
     routingPattern:
@@ -65,6 +101,7 @@ Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingAbstract:
         routingPatternId:
           referencedColumnName: id
           onDelete: cascade
+          nullable: true
       orphanRemoval: false
     routingPatternGroup:
       targetEntity: \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface
@@ -76,6 +113,7 @@ Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingAbstract:
         routingPatternGroupId:
           referencedColumnName: id
           onDelete: cascade
+          nullable: true
       orphanRemoval: false
     routingTag:
       targetEntity: \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface
@@ -87,4 +125,16 @@ Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingAbstract:
         routingTagId:
           referencedColumnName: id
           onDelete: cascade
+          nullable: true
+      orphanRemoval: false
+    clidCountry:
+      targetEntity: \Ivoz\Provider\Domain\Model\Country\CountryInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        clidCountryId:
+          referencedColumnName: id
+          onDelete: set null
       orphanRemoval: false

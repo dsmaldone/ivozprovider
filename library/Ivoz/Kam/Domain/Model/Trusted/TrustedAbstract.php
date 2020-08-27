@@ -15,44 +15,44 @@ abstract class TrustedAbstract
 {
     /**
      * column: src_ip
-     * @var string
+     * @var string | null
      */
     protected $srcIp;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $proto;
 
     /**
      * column: from_pattern
-     * @var string
+     * @var string | null
      */
     protected $fromPattern;
 
     /**
      * column: ruri_pattern
-     * @var string
+     * @var string | null
      */
     protected $ruriPattern;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $tag;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $description;
 
     /**
      * @var integer
      */
-    protected $priority = '0';
+    protected $priority = 0;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     protected $company;
 
@@ -71,7 +71,8 @@ abstract class TrustedAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Trusted",
             $this->getId()
         );
@@ -95,7 +96,8 @@ abstract class TrustedAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TrustedInterface|null $entity
      * @param int $depth
      * @return TrustedDto|null
      */
@@ -115,23 +117,27 @@ abstract class TrustedAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TrustedDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrustedDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrustedDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrustedDto::class);
 
         $self = new static(
-            $dto->getPriority());
+            $dto->getPriority()
+        );
 
         $self
             ->setSrcIp($dto->getSrcIp())
@@ -140,24 +146,23 @@ abstract class TrustedAbstract
             ->setRuriPattern($dto->getRuriPattern())
             ->setTag($dto->getTag())
             ->setDescription($dto->getDescription())
-            ->setCompany($dto->getCompany())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrustedDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrustedDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrustedDto::class);
 
         $this
@@ -168,15 +173,15 @@ abstract class TrustedAbstract
             ->setTag($dto->getTag())
             ->setDescription($dto->getDescription())
             ->setPriority($dto->getPriority())
-            ->setCompany($dto->getCompany());
+            ->setCompany($fkTransformer->transform($dto->getCompany()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TrustedDto
      */
@@ -209,18 +214,16 @@ abstract class TrustedAbstract
             'companyId' => self::getCompany() ? self::getCompany()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set srcIp
      *
-     * @param string $srcIp
+     * @param string $srcIp | null
      *
-     * @return self
+     * @return static
      */
-    public function setSrcIp($srcIp = null)
+    protected function setSrcIp($srcIp = null)
     {
         if (!is_null($srcIp)) {
             Assertion::maxLength($srcIp, 50, 'srcIp value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -234,7 +237,7 @@ abstract class TrustedAbstract
     /**
      * Get srcIp
      *
-     * @return string
+     * @return string | null
      */
     public function getSrcIp()
     {
@@ -244,11 +247,11 @@ abstract class TrustedAbstract
     /**
      * Set proto
      *
-     * @param string $proto
+     * @param string $proto | null
      *
-     * @return self
+     * @return static
      */
-    public function setProto($proto = null)
+    protected function setProto($proto = null)
     {
         if (!is_null($proto)) {
             Assertion::maxLength($proto, 4, 'proto value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -262,7 +265,7 @@ abstract class TrustedAbstract
     /**
      * Get proto
      *
-     * @return string
+     * @return string | null
      */
     public function getProto()
     {
@@ -272,11 +275,11 @@ abstract class TrustedAbstract
     /**
      * Set fromPattern
      *
-     * @param string $fromPattern
+     * @param string $fromPattern | null
      *
-     * @return self
+     * @return static
      */
-    public function setFromPattern($fromPattern = null)
+    protected function setFromPattern($fromPattern = null)
     {
         if (!is_null($fromPattern)) {
             Assertion::maxLength($fromPattern, 64, 'fromPattern value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -290,7 +293,7 @@ abstract class TrustedAbstract
     /**
      * Get fromPattern
      *
-     * @return string
+     * @return string | null
      */
     public function getFromPattern()
     {
@@ -300,11 +303,11 @@ abstract class TrustedAbstract
     /**
      * Set ruriPattern
      *
-     * @param string $ruriPattern
+     * @param string $ruriPattern | null
      *
-     * @return self
+     * @return static
      */
-    public function setRuriPattern($ruriPattern = null)
+    protected function setRuriPattern($ruriPattern = null)
     {
         if (!is_null($ruriPattern)) {
             Assertion::maxLength($ruriPattern, 64, 'ruriPattern value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -318,7 +321,7 @@ abstract class TrustedAbstract
     /**
      * Get ruriPattern
      *
-     * @return string
+     * @return string | null
      */
     public function getRuriPattern()
     {
@@ -328,11 +331,11 @@ abstract class TrustedAbstract
     /**
      * Set tag
      *
-     * @param string $tag
+     * @param string $tag | null
      *
-     * @return self
+     * @return static
      */
-    public function setTag($tag = null)
+    protected function setTag($tag = null)
     {
         if (!is_null($tag)) {
             Assertion::maxLength($tag, 64, 'tag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -346,7 +349,7 @@ abstract class TrustedAbstract
     /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -356,11 +359,11 @@ abstract class TrustedAbstract
     /**
      * Set description
      *
-     * @param string $description
+     * @param string $description | null
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description = null)
+    protected function setDescription($description = null)
     {
         if (!is_null($description)) {
             Assertion::maxLength($description, 200, 'description value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -374,7 +377,7 @@ abstract class TrustedAbstract
     /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -386,14 +389,14 @@ abstract class TrustedAbstract
      *
      * @param integer $priority
      *
-     * @return self
+     * @return static
      */
-    public function setPriority($priority)
+    protected function setPriority($priority)
     {
         Assertion::notNull($priority, 'priority value "%s" is null, but non null value was expected.');
         Assertion::integerish($priority, 'priority value "%s" is not an integer or a number castable to integer.');
 
-        $this->priority = $priority;
+        $this->priority = (int) $priority;
 
         return $this;
     }
@@ -411,11 +414,11 @@ abstract class TrustedAbstract
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
     {
         $this->company = $company;
 
@@ -425,15 +428,12 @@ abstract class TrustedAbstract
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany()
     {
         return $this->company;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

@@ -13,13 +13,12 @@ interface TrunksLcrRuleInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set lcrId
+     * Return LcrRule FromUri string based on OutgoingRouting configuration
      *
-     * @param integer $lcrId
-     *
-     * @return self
+     * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting
+     * @return string
      */
-    public function setLcrId($lcrId);
+    public static function getFromUriForOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting);
 
     /**
      * Get lcrId
@@ -29,77 +28,32 @@ interface TrunksLcrRuleInterface extends LoggableEntityInterface
     public function getLcrId();
 
     /**
-     * Set prefix
-     *
-     * @param string $prefix
-     *
-     * @return self
-     */
-    public function setPrefix($prefix = null);
-
-    /**
      * Get prefix
      *
-     * @return string
+     * @return string | null
      */
     public function getPrefix();
 
     /**
-     * Set fromUri
-     *
-     * @param string $fromUri
-     *
-     * @return self
-     */
-    public function setFromUri($fromUri = null);
-
-    /**
      * Get fromUri
      *
-     * @return string
+     * @return string | null
      */
     public function getFromUri();
 
     /**
-     * Set requestUri
-     *
-     * @param string $requestUri
-     *
-     * @return self
-     */
-    public function setRequestUri($requestUri = null);
-
-    /**
      * Get requestUri
      *
-     * @return string
+     * @return string | null
      */
     public function getRequestUri();
 
     /**
-     * Set mtTvalue
-     *
-     * @param string $mtTvalue
-     *
-     * @return self
-     */
-    public function setMtTvalue($mtTvalue = null);
-
-    /**
      * Get mtTvalue
      *
-     * @return string
+     * @return string | null
      */
     public function getMtTvalue();
-
-    /**
-     * Set stopper
-     *
-     * @param integer $stopper
-     *
-     * @return self
-     */
-    public function setStopper($stopper);
 
     /**
      * Get stopper
@@ -107,15 +61,6 @@ interface TrunksLcrRuleInterface extends LoggableEntityInterface
      * @return integer
      */
     public function getStopper();
-
-    /**
-     * Set enabled
-     *
-     * @param integer $enabled
-     *
-     * @return self
-     */
-    public function setEnabled($enabled);
 
     /**
      * Get enabled
@@ -127,27 +72,34 @@ interface TrunksLcrRuleInterface extends LoggableEntityInterface
     /**
      * Set routingPattern
      *
-     * @param \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern
+     * @param \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern | null
      *
-     * @return self
+     * @return static
      */
     public function setRoutingPattern(\Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $routingPattern = null);
 
     /**
      * Get routingPattern
      *
-     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface
+     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface | null
      */
     public function getRoutingPattern();
+
+    /**
+     * Get routingPatternGroupsRelPattern
+     *
+     * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternInterface | null
+     */
+    public function getRoutingPatternGroupsRelPattern();
 
     /**
      * Set outgoingRouting
      *
      * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting
      *
-     * @return self
+     * @return static
      */
-    public function setOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting = null);
+    public function setOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting);
 
     /**
      * Get outgoingRouting
@@ -155,6 +107,4 @@ interface TrunksLcrRuleInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface
      */
     public function getOutgoingRouting();
-
 }
-

@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\OutgoingDdiRulesPattern;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -15,12 +13,22 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     /**
      * @var string
      */
+    private $type;
+
+    /**
+     * @var string
+     */
+    private $prefix;
+
+    /**
+     * @var string
+     */
     private $action;
 
     /**
      * @var integer
      */
-    private $priority = '1';
+    private $priority = 1;
 
     /**
      * @var integer
@@ -53,13 +61,15 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
         }
 
         return [
+            'type' => 'type',
+            'prefix' => 'prefix',
             'action' => 'action',
             'priority' => 'priority',
             'id' => 'id',
@@ -74,7 +84,9 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
+            'type' => $this->getType(),
+            'prefix' => $this->getPrefix(),
             'action' => $this->getAction(),
             'priority' => $this->getPriority(),
             'id' => $this->getId(),
@@ -82,24 +94,59 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
             'matchList' => $this->getMatchList(),
             'forcedDdi' => $this->getForcedDdi()
         ];
+
+        if (!$hideSensitiveData) {
+            return $response;
+        }
+
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
+
+        return $response;
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $type
+     *
+     * @return static
      */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
+    public function setType($type = null)
     {
-        $this->outgoingDdiRule = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\OutgoingDdiRule\\OutgoingDdiRule', $this->getOutgoingDdiRuleId());
-        $this->matchList = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\MatchList\\MatchList', $this->getMatchListId());
-        $this->forcedDdi = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Ddi\\Ddi', $this->getForcedDdiId());
+        $this->type = $type;
+
+        return $this;
     }
 
     /**
-     * {@inheritDoc}
+     * @return string | null
      */
-    public function transformCollections(CollectionTransformerInterface $transformer)
+    public function getType()
     {
+        return $this->type;
+    }
 
+    /**
+     * @param string $prefix
+     *
+     * @return static
+     */
+    public function setPrefix($prefix = null)
+    {
+        $this->prefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getPrefix()
+    {
+        return $this->prefix;
     }
 
     /**
@@ -115,7 +162,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getAction()
     {
@@ -135,7 +182,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPriority()
     {
@@ -155,7 +202,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -175,7 +222,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleDto
+     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleDto | null
      */
     public function getOutgoingDdiRule()
     {
@@ -183,7 +230,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -197,7 +244,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getOutgoingDdiRuleId()
     {
@@ -221,7 +268,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListDto
+     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListDto | null
      */
     public function getMatchList()
     {
@@ -229,7 +276,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -243,7 +290,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getMatchListId()
     {
@@ -267,7 +314,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto | null
      */
     public function getForcedDdi()
     {
@@ -275,7 +322,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -289,7 +336,7 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getForcedDdiId()
     {
@@ -300,5 +347,3 @@ abstract class OutgoingDdiRulesPatternDtoAbstract implements DataTransferObjectI
         return null;
     }
 }
-
-

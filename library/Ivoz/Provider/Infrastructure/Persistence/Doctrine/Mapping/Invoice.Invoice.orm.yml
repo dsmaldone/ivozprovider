@@ -1,6 +1,7 @@
 Ivoz\Provider\Domain\Model\Invoice\Invoice:
   repositoryClass: Ivoz\Provider\Infrastructure\Persistence\Doctrine\InvoiceDoctrineRepository
   type: entity
+  changeTrackingPolicy: DEFERRED_EXPLICIT
   table: Invoices
   id:
     id:
@@ -15,3 +16,5 @@ Ivoz\Provider\Domain\Model\Invoice\Invoice:
     relFixedCosts:
       targetEntity: Ivoz\Provider\Domain\Model\FixedCostsRelInvoice\FixedCostsRelInvoice
       mappedBy: invoice
+      cascade: ['persist']
+      orphanRemoval: true

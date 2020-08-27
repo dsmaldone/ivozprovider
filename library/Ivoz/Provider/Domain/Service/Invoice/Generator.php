@@ -2,31 +2,26 @@
 
 namespace Ivoz\Provider\Domain\Service\Invoice;
 
-use Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanDto;
-use Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanRepository;
-use Ivoz\Cgr\Domain\Model\TpCdr\TpCdr;
-use Ivoz\Cgr\Domain\Model\TpCdr\TpCdrInterface;
-use Ivoz\Cgr\Domain\Model\TpCdr\TpCdrRepository;
-use Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationRepository;
-use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
-use Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrInterface;
-use Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrRepository;
+use Handlebars\Handlebars;
+use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Provider\Domain\Model\BillableCall\BillableCallInterface;
+use Ivoz\Provider\Domain\Model\BillableCall\BillableCallRepository;
+use Ivoz\Provider\Domain\Model\Destination\DestinationDto;
 use Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface;
 use Ivoz\Provider\Domain\Model\Invoice\InvoiceRepository;
 use Ivoz\Provider\Domain\Model\InvoiceTemplate\InvoiceTemplate;
+use Ivoz\Provider\Domain\Model\RatingPlanGroup\RatingPlanGroupDto;
 use Knp\Snappy\Pdf;
-use Handlebars\Handlebars;
 use Monolog\Logger;
 
 class Generator
 {
     const DATE_FORMAT = 'd-m-Y';
     const DATE_TIME_FORMAT = 'd-m-Y H:i:s';
-    const MYSQL_DATETIME_FORMAT = 'Y-m-d H:i:s';
 
     const LOGGER_PREFIX = '[Invoices][Generator]';
 
-    protected $invoiceId = null;
+    protected $invoiceId;
     protected $fixedCostTotal = 0;
     protected $fixedCosts = array();
     protected $totals = array();
@@ -38,24 +33,14 @@ class Generator
     protected $invoiceRepository;
 
     /**
-     * @var TrunksCdrRepository
+     * @var BillableCallRepository
      */
-    protected $trunksCdrRepository;
+    protected $billableCallRepository;
 
     /**
-     * @var RatingPlanRepository
+     * @var EntityTools
      */
-    protected $ratingPlanRepository;
-
-    /**
-     * @var TpDestinationRepository
-     */
-    protected $tpDestinationRepository;
-
-    /**
-     * @var DtoAssembler
-     */
-    protected $dtoAssembler;
+    protected $entityTools;
 
     /**
      * @var Logger
@@ -71,35 +56,26 @@ class Generator
      * Generator constructor.
      *
      * @param InvoiceRepository $invoiceRepository
-     * @param TrunksCdrRepository $trunksCdrRepository
-     * @param TpCdrRepository $tpCdrRepository
-     * @param RatingPlanRepository $ratingPlanRepository
-     * @param TpDestinationRepository $destinationRepository
-     * @param DtoAssembler $dtoAssembler
+     * @param BillableCallRepository $billableCallRepository
+     * @param EntityTools $entityTools
      * @param Logger $logger
      * @param string $vendorDir
      */
     public function __construct(
         InvoiceRepository $invoiceRepository,
-        TrunksCdrRepository $trunksCdrRepository,
-        TpCdrRepository $tpCdrRepository,
-        RatingPlanRepository $ratingPlanRepository,
-        TpDestinationRepository $destinationRepository,
-        DtoAssembler $dtoAssembler,
+        BillableCallRepository $billableCallRepository,
+        EntityTools $entityTools,
         Logger $logger,
         string $vendorDir
     ) {
         $this->invoiceRepository = $invoiceRepository;
-        $this->trunksCdrRepository = $trunksCdrRepository;
-        $this->tpCdrRepository = $tpCdrRepository;
-        $this->ratingPlanRepository = $ratingPlanRepository;
-        $this->tpDestinationRepository = $destinationRepository;
-        $this->dtoAssembler = $dtoAssembler;
+        $this->billableCallRepository = $billableCallRepository;
+        $this->entityTools = $entityTools;
         $this->logger = $logger;
         $this->vendorDir = $vendorDir;
     }
 
-    public function setInvoiceId($id)
+    public function setInvoiceId($id): self
     {
         $this->invoiceId = $id;
         return $this;
@@ -113,6 +89,7 @@ class Generator
     /**
      * @param int $invoiceId
      * @return string
+     * @throws \Exception
      */
     public function getInvoicePDFContents(int $invoiceId)
     {
@@ -120,7 +97,7 @@ class Generator
         return $this->_createInvoice();
     }
 
-    protected function _createInvoice()
+    protected function _createInvoice(): string
     {
         /** @var InvoiceInterface $invoice */
         $invoice = $this->invoiceRepository->find($this->invoiceId);
@@ -128,30 +105,34 @@ class Generator
         $callData = $this->_getCallData($invoice);
 
         $brand = $invoice->getBrand();
-        $brandDto = $this->dtoAssembler->toDto($brand);
+        $brandDto = $this->entityTools->entityToDto($brand);
         $brandLogoPath = $brandDto->getLogoPath();
         if (!file_exists($brandLogoPath)) {
             $brandLogoPath = 'images/palmera90.png';
         }
 
         $company = $invoice->getCompany();
-        $companyDto = $this->dtoAssembler->toDto($company);
+        $companyDto = $this->entityTools->entityToDto($company);
         $invoiceTz = new \DateTimeZone(
             $company->getDefaultTimezone()->getTz()
         );
+
+        $currencySymbol = $company->getCurrencySymbol();
+
         $invoiceDate = new \DateTime();
         $invoiceDate->setTimezone($invoiceTz);
 
-        $inDate = clone $invoice->getInDate();
+        $inDate = $invoice->getInDate();
         $inDate->setTimezone($invoiceTz);
 
-        $outDate = clone $invoice->getOutDate();
+        $outDate = $invoice->getOutDate();
         $outDate->setTimezone($invoiceTz);
 
-        $invoiceDto = $this->dtoAssembler->toDto($invoice);
+        $invoiceDto = $this->entityTools->entityToDto($invoice);
 
         $invoiceArray = $invoiceDto->toArray();
         $invoiceArray['invoiceDate'] = $invoiceDate->format(self::DATE_FORMAT);
+        $invoiceArray['currency'] = $currencySymbol;
         $invoiceArray['inDate'] = $inDate->format(self::DATE_FORMAT);
         $invoiceArray['outDate'] = $outDate->format(self::DATE_FORMAT);
         $brandArray = $brandDto->toArray();
@@ -174,15 +155,15 @@ class Generator
         }
 
         $this->logger->debug(self::LOGGER_PREFIX . ' Preparing templates');
-        $templateEngine = new Handlebars;;
+        $templateEngine = new Handlebars;
+        ;
         $header = $templateEngine->render($templateModel->getTemplateHeader(), $variables);
         $body = $templateEngine->render($templateModel->getTemplate(), $variables);
         $footer = $templateEngine->render($templateModel->getTemplateFooter(), $variables);
 
         $this->logger->debug(self::LOGGER_PREFIX . ' Rendering the PDF');
-        $architecture = (php_uname('m') === 'x86_64') ? 'amd64' : 'i386';
 
-        $snappy = new Pdf($this->vendorDir . 'bin/wkhtmltopdf-' . $architecture);
+        $snappy = new Pdf($this->vendorDir . 'bin/wkhtmltopdf-amd64');
         $snappy->setTimeout(60 * 10);
         $snappy->setOption('header-html', $header);
         $snappy->setOption('header-spacing', 3);
@@ -194,9 +175,11 @@ class Generator
         return $content;
     }
 
-    protected function _getCallData(InvoiceInterface $invoice)
+    /**
+     * @return array
+     */
+    protected function _getCallData(InvoiceInterface $invoice): array
     {
-        $brand = $invoice->getBrand();
         $company = $invoice->getCompany();
         $lang = $company->getLanguageCode();
         $invoiceTz = new \DateTimeZone(
@@ -204,11 +187,7 @@ class Generator
         );
         $utcTz = new \DateTimeZone('UTC');
 
-        $inDate = clone $invoice->getInDate();
-        $utcInDate = $inDate->setTimezone($utcTz);
-
-        $outDate = clone $invoice->getOutDate();
-        $utcOutDate = $outDate->setTimezone($utcTz);
+        $currencySymbol = $company->getCurrencySymbol();
 
         $callsPerType = [];
         $callSumary = [];
@@ -216,42 +195,30 @@ class Generator
             'numberOfCalls' => 0,
             'totalCallsDuration' => 0,
             'totalCallsDurationFormatted' => $this->_timeFormat(0),
-            'totalPrice' => 0
+            'totalPrice' => 0,
         ];
         $inboundCalls = [];
 
         $this->setFixedCosts($invoice);
 
-        $conditions = [
-            ['brand', 'eq', $brand->getId()],
-            ['company', 'eq', $company->getId()],
-            ['peeringContract', 'isNotNull'],
-            ['startTime', 'gte', $utcInDate->format(self::MYSQL_DATETIME_FORMAT)],
-            ['startTime', 'lte', $utcOutDate->format(self::MYSQL_DATETIME_FORMAT)]
-        ];
-        $this->logger->debug('Where: ' . print_r($conditions, true));
+        $this
+            ->billableCallRepository
+            ->setInvoiceId(
+                $invoice
+            );
 
-        $this->trunksCdrRepository->setInvoiceId(
-            $conditions,
-            $invoice->getId()
+        $callGenerator = $this->billableCallRepository->getGeneratorByInvoice(
+            $invoice
         );
 
-        $callGenerator = $this->trunksCdrRepository->getGeneratorByConditions(
-            $conditions,
-            50,
-            ['self.startTime', 'ASC']
-        );
-
-        /** @var TrunksCdrInterface[] $calls */
+        /** @var BillableCallInterface[] $calls */
         foreach ($callGenerator as $calls) {
-
             if (empty($calls)) {
                 break;
             }
 
             foreach ($calls as $call) {
-
-                $callDto = $this->dtoAssembler->toDto($call);
+                $callDto = $this->entityTools->entityToDto($call);
                 $callData = $callDto->toArray();
                 $callData['calldate'] = $call
                     ->getStartTime()
@@ -260,77 +227,44 @@ class Generator
 
                 $callData['dst'] = $call->getCallee();
 
-                /** @var TpCdrInterface $tpCdr */
-                $tpCdr = null;
-                if ($call->getCgrid()) {
-                    $tpCdr = $this->tpCdrRepository->getOneByCgrid($call->getCgrid());
-                }
+                $callData['price'] = $this->roundAndFormat(
+                    $call->getPrice()
+                );
 
-                $price = $tpCdr
-                    ? $tpCdr->getCost()
-                    : $call->getPrice();
-                $callData['price'] = $this->roundAndFormat($price);
+                $callData['currency'] = $currencySymbol;
 
-                $duration = $tpCdr
-                    ? $tpCdr->getDuration()
-                    : $call->getDuration();
-                $callData['dst_duration_formatted'] = $this->_timeFormat($duration);
+                $callData['dst_duration_formatted'] = $this->_timeFormat(
+                    $call->getDuration()
+                );
 
-                /** @todo WTF */
                 $callData['durationFormatted'] = $callData['dst_duration_formatted'];
 
                 $callData['pricingPlan'] = [];
                 $callData['targetPattern'] = [];
 
-                if ($tpCdr) {
-                    // Checkpoint
-                    $costDetails = $tpCdr->getCostDetails();
-                    $timespan = $costDetails['Timespans'][0];
-                    $ratingPlanTag = $timespan['RatingPlanId'];
-                    $ratingPlan = $this->ratingPlanRepository->findOneByTag($ratingPlanTag);
+                $ratingPlanGroup = $call->getRatingPlanGroup();
+                if ($ratingPlanGroup) {
+                    /** @var RatingPlanGroupDto $ratingPlanGroupDto */
+                    $ratingPlanGroupDto = $this->entityTools->entityToDto($ratingPlanGroup);
 
-                    /** @var RatingPlanDto $ratingPlanDto */
-                    $ratingPlanDto = $this->dtoAssembler->toDto($ratingPlan);
-
-                    $callData['pricingPlan'] = $ratingPlanDto->toArray();
-                    $callData['pricingPlan']['name'] = $ratingPlan->getName()->{'get' . $lang}();
-                    $callData['pricingPlan']['description'] = $ratingPlan->getDescription()->{'get' . $lang}();
-
-                    // -----------------
-
-                    $matchedDestTag = $timespan['MatchedDestId'];
-                    $destination = $this->tpDestinationRepository->findOneByTag($matchedDestTag);
-                    $destinationDto = $this->dtoAssembler->toDto($destination);
-
-                    $callData['targetPattern'] = $destinationDto->toArray();
-                    $callData['targetPattern']['name'] = $destination->getName();
-                    $callData['targetPattern']['description'] = $destination->getName();
-
-                }  else if ($call->getDestinationRate()) {
-
-                    /* Legacy path */
-                    $destinationRate = $call->getDestinationRate();
-                    $destinationRateDto = $this->dtoAssembler->toDto($destinationRate);
-
-                    $callData['pricingPlan'] = $destinationRateDto->toArray();
-                    $callData['pricingPlan']['name'] = $destinationRate->getName()->{'get' . $lang}();
-                    $callData['pricingPlan']['description'] = $destinationRate->getDescription()->{'get' . $lang}();
-
-                    // -----------------
-
-                    $destination = $call->getDestination();
-                    $destinationDto = $this->dtoAssembler->toDto($destination);
-
-                    $callData['targetPattern'] = $destinationDto->toArray();
-                    $callData['targetPattern']['name'] = $destination->getName();
-                    $callData['targetPattern']['description'] = $destination->getName();
-
+                    $callData['pricingPlan'] = $ratingPlanGroupDto->toArray();
+                    $callData['pricingPlan']['name'] = $ratingPlanGroup->getName()->{'get' . $lang}();
+                    $callData['pricingPlan']['description'] = $ratingPlanGroup->getDescription()->{'get' . $lang}();
                 } else {
-
-                    $callData['pricingPlan']['name'] = '';
+                    $callData['pricingPlan']['name'] = $call->getRatingPlanName();
                     $callData['pricingPlan']['description'] = '';
+                }
 
-                    $callData['targetPattern']['name'] = '';
+                $destination = $call->getDestination();
+                if ($destination) {
+                    /** @var DestinationDto $destinationDto */
+                    $destinationDto = $this->entityTools->entityToDto($destination);
+
+                    $callData['targetPattern'] = $destinationDto->toArray();
+                    $callData['targetPattern']['name'] = $destination->getName()->{'get' . $lang}();
+                    $callData['targetPattern']['description'] = $destination->getName()->{'get' . $lang}();
+                } else {
+                    $callData['targetPattern']['name'] = $call->getDestinationName();
                     $callData['targetPattern']['description'] = '';
                 }
 
@@ -345,7 +279,8 @@ class Generator
                         'type' => $callData['targetPattern']['name'],
                         'numberOfCalls' => 0,
                         'totalCallsDuration' => 0,
-                        'totalPrice' => 0
+                        'totalPrice' => 0,
+                        'currency' => $currencySymbol
                     ];
                 }
 
@@ -377,14 +312,13 @@ class Generator
 
         asort($callSumary);
         asort($callsPerType);
-        $finalData = array(
+
+        return array(
             'callSumary' => array_values($callSumary),
             'callsPerType' => array_values($callsPerType),
             'callSumaryTotals' => $callSumaryTotals,
             'inboundCalls' => $inboundCalls,
         );
-
-        return $finalData;
     }
 
     /**
@@ -455,7 +389,7 @@ class Generator
         );
     }
 
-    protected function _timeFormat($seconds)
+    protected function _timeFormat($seconds): string
     {
         $hours = floor($seconds / 3600);
         $mins = floor($seconds / 60 % 60);
@@ -464,28 +398,18 @@ class Generator
     }
 
     /**
-     * @param $call
-     * @return mixed
-     */
-    protected function getCallPricingPlan(TrunksCdrInterface $call)
-    {
-        $pricingPlanId = $call->getPricingPlanId();
-        if (!array_key_exists($pricingPlanId, $this->pricingPlanCache)) {
-            $this->pricingPlanCache[$pricingPlanId] = $call->getPricingPlan();
-        }
-
-        return $this->pricingPlanCache[$pricingPlanId];
-    }
-
-    /**
      * @param InvoiceInterface $invoice
+     *
+     * @return void
      */
     protected function setFixedCosts(InvoiceInterface $invoice)
     {
         $this->fixedCostTotal = 0;
         $fixedCostsRelInvoices = $invoice->getRelFixedCosts();
 
-        foreach ($fixedCostsRelInvoices as $key => $fixedCostsRelInvoice) {
+        $currencySymbol = $invoice->getCompany()->getCurrencySymbol();
+
+        foreach ($fixedCostsRelInvoices as $fixedCostsRelInvoice) {
             $cost = $fixedCostsRelInvoice->getFixedCost()->getCost();
             $quantity = $fixedCostsRelInvoice->getQuantity();
             $subTotal = $cost * $quantity;
@@ -494,7 +418,8 @@ class Generator
                 'name' => $fixedCostsRelInvoice->getFixedCost()->getName(),
                 'description' => $fixedCostsRelInvoice->getFixedCost()->getDescription(),
                 'cost' => $this->roundAndFormat($cost),
-                'subTotal' => $this->roundAndFormat($subTotal)
+                'subTotal' => $this->roundAndFormat($subTotal),
+                'currency' => $currencySymbol
             );
             $this->fixedCostTotal += $this->roundAndFormat($subTotal);
         }

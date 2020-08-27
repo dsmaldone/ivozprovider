@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class ConditionalRoutesConditionsRelMatchlistAbstract
 {
     /**
-     * @var \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface
+     * @var \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface | null
      */
     protected $condition;
 
@@ -31,14 +31,14 @@ abstract class ConditionalRoutesConditionsRelMatchlistAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "ConditionalRoutesConditionsRelMatchlist",
             $this->getId()
         );
@@ -62,7 +62,8 @@ abstract class ConditionalRoutesConditionsRelMatchlistAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param ConditionalRoutesConditionsRelMatchlistInterface|null $entity
      * @param int $depth
      * @return ConditionalRoutesConditionsRelMatchlistDto|null
      */
@@ -82,56 +83,58 @@ abstract class ConditionalRoutesConditionsRelMatchlistAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var ConditionalRoutesConditionsRelMatchlistDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ConditionalRoutesConditionsRelMatchlistDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ConditionalRoutesConditionsRelMatchlistDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ConditionalRoutesConditionsRelMatchlistDto::class);
 
         $self = new static();
 
         $self
-            ->setCondition($dto->getCondition())
-            ->setMatchlist($dto->getMatchlist())
+            ->setCondition($fkTransformer->transform($dto->getCondition()))
+            ->setMatchlist($fkTransformer->transform($dto->getMatchlist()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ConditionalRoutesConditionsRelMatchlistDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ConditionalRoutesConditionsRelMatchlistDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ConditionalRoutesConditionsRelMatchlistDto::class);
 
         $this
-            ->setCondition($dto->getCondition())
-            ->setMatchlist($dto->getMatchlist());
+            ->setCondition($fkTransformer->transform($dto->getCondition()))
+            ->setMatchlist($fkTransformer->transform($dto->getMatchlist()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ConditionalRoutesConditionsRelMatchlistDto
      */
@@ -149,19 +152,17 @@ abstract class ConditionalRoutesConditionsRelMatchlistAbstract
     {
         return [
             'conditionId' => self::getCondition() ? self::getCondition()->getId() : null,
-            'matchlistId' => self::getMatchlist() ? self::getMatchlist()->getId() : null
+            'matchlistId' => self::getMatchlist()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set condition
      *
-     * @param \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface $condition
+     * @param \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface $condition | null
      *
-     * @return self
+     * @return static
      */
     public function setCondition(\Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface $condition = null)
     {
@@ -173,7 +174,7 @@ abstract class ConditionalRoutesConditionsRelMatchlistAbstract
     /**
      * Get condition
      *
-     * @return \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface
+     * @return \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface | null
      */
     public function getCondition()
     {
@@ -185,9 +186,9 @@ abstract class ConditionalRoutesConditionsRelMatchlistAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchlist
      *
-     * @return self
+     * @return static
      */
-    public function setMatchlist(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchlist)
+    protected function setMatchlist(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchlist)
     {
         $this->matchlist = $matchlist;
 
@@ -204,8 +205,5 @@ abstract class ConditionalRoutesConditionsRelMatchlistAbstract
         return $this->matchlist;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

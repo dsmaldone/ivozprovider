@@ -6,6 +6,14 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface OutgoingDdiRulesPatternInterface extends LoggableEntityInterface
 {
+    const TYPE_PREFIX = 'prefix';
+    const TYPE_DESTINATION = 'destination';
+
+
+    const ACTION_KEEP = 'keep';
+    const ACTION_FORCE = 'force';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -19,13 +27,18 @@ interface OutgoingDdiRulesPatternInterface extends LoggableEntityInterface
     public function getForcedDdi();
 
     /**
-     * Set action
+     * Get type
      *
-     * @param string $action
-     *
-     * @return self
+     * @return string
      */
-    public function setAction($action);
+    public function getType();
+
+    /**
+     * Get prefix
+     *
+     * @return string | null
+     */
+    public function getPrefix();
 
     /**
      * Get action
@@ -33,15 +46,6 @@ interface OutgoingDdiRulesPatternInterface extends LoggableEntityInterface
      * @return string
      */
     public function getAction();
-
-    /**
-     * Set priority
-     *
-     * @param integer $priority
-     *
-     * @return self
-     */
-    public function setPriority($priority);
 
     /**
      * Get priority
@@ -55,9 +59,9 @@ interface OutgoingDdiRulesPatternInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule
      *
-     * @return self
+     * @return static
      */
-    public function setOutgoingDdiRule(\Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule = null);
+    public function setOutgoingDdiRule(\Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule);
 
     /**
      * Get outgoingDdiRule
@@ -67,29 +71,9 @@ interface OutgoingDdiRulesPatternInterface extends LoggableEntityInterface
     public function getOutgoingDdiRule();
 
     /**
-     * Set matchList
-     *
-     * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList
-     *
-     * @return self
-     */
-    public function setMatchList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList);
-
-    /**
      * Get matchList
      *
-     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface
+     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface | null
      */
     public function getMatchList();
-
-    /**
-     * Set forcedDdi
-     *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $forcedDdi
-     *
-     * @return self
-     */
-    public function setForcedDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $forcedDdi = null);
-
 }
-

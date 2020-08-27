@@ -2,10 +2,10 @@
 
 namespace Ivoz\Ast\Domain\Service\Voicemail;
 
+use Ivoz\Ast\Domain\Model\Voicemail\VoicemailDto;
 use Ivoz\Ast\Domain\Model\Voicemail\VoicemailRepository;
 use Ivoz\Core\Domain\Service\EntityPersisterInterface;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
-use Ivoz\Ast\Domain\Model\Voicemail\VoicemailDto;
 use Ivoz\Provider\Domain\Service\User\UserLifecycleEventHandlerInterface;
 
 class UpdateByUser implements UserLifecycleEventHandlerInterface
@@ -35,41 +35,45 @@ class UpdateByUser implements UserLifecycleEventHandlerInterface
         ];
     }
 
-    public function execute(UserInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(UserInterface $user)
     {
-        $voicemail = $this->voicemailRepository->findOneBy([
-            'user' => $entity->getId()
-        ]);
+        $voicemail = $this->voicemailRepository->findOneByUserId(
+            $user->getId()
+        );
 
-        $voicemailDTO = is_null($voicemail)
+        /** @var VoicemailDto $voicemailDto */
+        $voicemailDto = is_null($voicemail)
             ? new VoicemailDto()
             : $voicemail->toDto();
 
-        if ($entity->getVoicemailSendMail()) {
-            $voicemailDTO->setEmail(
-                $entity->getEmail()
+        if ($user->getVoicemailSendMail()) {
+            $voicemailDto->setEmail(
+                $user->getEmail()
             );
         } else {
-            $voicemailDTO->setEmail(null);
+            $voicemailDto->setEmail(null);
         }
 
-        if ($entity->getVoicemailAttachSound()) {
-            $voicemailDTO->setAttach('yes');
+        if ($user->getVoicemailAttachSound()) {
+            $voicemailDto->setAttach('yes');
         } else {
-            $voicemailDTO->setAttach('no');
+            $voicemailDto->setAttach('no');
         }
 
         // Update/Insert endpoint data
-        $fullName = $entity->getName() . " " . $entity->getLastname();
-        $voicemailDTO
-            ->setUserId($entity->getId())
-            ->setContext($entity->getVoiceMailContext())
-            ->setMailbox($entity->getVoiceMailUser())
+        $fullName = $user->getName() . " " . $user->getLastname();
+        $voicemailDto
+            ->setUserId($user->getId())
+            ->setContext($user->getVoiceMailContext())
+            ->setMailbox($user->getVoiceMailUser())
             ->setFullname($fullName)
-            ->setTz($entity->getTimezone()->getTz());
+            ->setTz($user->getTimezone()->getTz());
 
         $this->entityPersister->persistDto(
-            $voicemailDTO,
+            $voicemailDto,
             $voicemail
         );
     }

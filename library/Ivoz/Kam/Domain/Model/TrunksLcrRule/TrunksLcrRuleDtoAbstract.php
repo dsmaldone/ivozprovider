@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\TrunksLcrRule;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -15,7 +13,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $lcrId = '1';
+    private $lcrId = 1;
 
     /**
      * @var string
@@ -40,12 +38,12 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $stopper = '0';
+    private $stopper = 0;
 
     /**
      * @var integer
      */
-    private $enabled = '1';
+    private $enabled = 1;
 
     /**
      * @var integer
@@ -56,6 +54,11 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
      * @var \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternDto | null
      */
     private $routingPattern;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternDto | null
+     */
+    private $routingPatternGroupsRelPattern;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingDto | null
@@ -73,7 +76,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -89,6 +92,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
             'enabled' => 'enabled',
             'id' => 'id',
             'routingPatternId' => 'routingPattern',
+            'routingPatternGroupsRelPatternId' => 'routingPatternGroupsRelPattern',
             'outgoingRoutingId' => 'outgoingRouting'
         ];
     }
@@ -98,7 +102,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'lcrId' => $this->getLcrId(),
             'prefix' => $this->getPrefix(),
             'fromUri' => $this->getFromUri(),
@@ -108,25 +112,22 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
             'enabled' => $this->getEnabled(),
             'id' => $this->getId(),
             'routingPattern' => $this->getRoutingPattern(),
+            'routingPatternGroupsRelPattern' => $this->getRoutingPatternGroupsRelPattern(),
             'outgoingRouting' => $this->getOutgoingRouting()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->routingPattern = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\RoutingPattern\\RoutingPattern', $this->getRoutingPatternId());
-        $this->outgoingRouting = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\OutgoingRouting\\OutgoingRouting', $this->getOutgoingRoutingId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -142,7 +143,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getLcrId()
     {
@@ -162,7 +163,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPrefix()
     {
@@ -182,7 +183,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromUri()
     {
@@ -202,7 +203,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRequestUri()
     {
@@ -222,7 +223,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getMtTvalue()
     {
@@ -242,7 +243,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getStopper()
     {
@@ -262,7 +263,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getEnabled()
     {
@@ -282,7 +283,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -302,7 +303,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternDto
+     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternDto | null
      */
     public function getRoutingPattern()
     {
@@ -310,7 +311,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -324,11 +325,57 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getRoutingPatternId()
     {
         if ($dto = $this->getRoutingPattern()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternDto $routingPatternGroupsRelPattern
+     *
+     * @return static
+     */
+    public function setRoutingPatternGroupsRelPattern(\Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternDto $routingPatternGroupsRelPattern = null)
+    {
+        $this->routingPatternGroupsRelPattern = $routingPatternGroupsRelPattern;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternDto | null
+     */
+    public function getRoutingPatternGroupsRelPattern()
+    {
+        return $this->routingPatternGroupsRelPattern;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setRoutingPatternGroupsRelPatternId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternDto($id)
+            : null;
+
+        return $this->setRoutingPatternGroupsRelPattern($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getRoutingPatternGroupsRelPatternId()
+    {
+        if ($dto = $this->getRoutingPatternGroupsRelPattern()) {
             return $dto->getId();
         }
 
@@ -348,7 +395,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingDto
+     * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingDto | null
      */
     public function getOutgoingRouting()
     {
@@ -356,7 +403,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -370,7 +417,7 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getOutgoingRoutingId()
     {
@@ -381,5 +428,3 @@ abstract class TrunksLcrRuleDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

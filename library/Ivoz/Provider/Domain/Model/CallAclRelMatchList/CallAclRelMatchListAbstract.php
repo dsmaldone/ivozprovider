@@ -25,7 +25,7 @@ abstract class CallAclRelMatchListAbstract
     protected $policy;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface
+     * @var \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface | null
      */
     protected $callAcl;
 
@@ -50,7 +50,8 @@ abstract class CallAclRelMatchListAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "CallAclRelMatchList",
             $this->getId()
         );
@@ -74,7 +75,8 @@ abstract class CallAclRelMatchListAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param CallAclRelMatchListInterface|null $entity
      * @param int $depth
      * @return CallAclRelMatchListDto|null
      */
@@ -94,60 +96,63 @@ abstract class CallAclRelMatchListAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var CallAclRelMatchListDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CallAclRelMatchListDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CallAclRelMatchListDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CallAclRelMatchListDto::class);
 
         $self = new static(
             $dto->getPriority(),
-            $dto->getPolicy());
+            $dto->getPolicy()
+        );
 
         $self
-            ->setCallAcl($dto->getCallAcl())
-            ->setMatchList($dto->getMatchList())
+            ->setCallAcl($fkTransformer->transform($dto->getCallAcl()))
+            ->setMatchList($fkTransformer->transform($dto->getMatchList()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CallAclRelMatchListDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CallAclRelMatchListDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CallAclRelMatchListDto::class);
 
         $this
             ->setPriority($dto->getPriority())
             ->setPolicy($dto->getPolicy())
-            ->setCallAcl($dto->getCallAcl())
-            ->setMatchList($dto->getMatchList());
+            ->setCallAcl($fkTransformer->transform($dto->getCallAcl()))
+            ->setMatchList($fkTransformer->transform($dto->getMatchList()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return CallAclRelMatchListDto
      */
@@ -169,11 +174,9 @@ abstract class CallAclRelMatchListAbstract
             'priority' => self::getPriority(),
             'policy' => self::getPolicy(),
             'callAclId' => self::getCallAcl() ? self::getCallAcl()->getId() : null,
-            'matchListId' => self::getMatchList() ? self::getMatchList()->getId() : null
+            'matchListId' => self::getMatchList()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -181,14 +184,14 @@ abstract class CallAclRelMatchListAbstract
      *
      * @param integer $priority
      *
-     * @return self
+     * @return static
      */
-    public function setPriority($priority)
+    protected function setPriority($priority)
     {
         Assertion::notNull($priority, 'priority value "%s" is null, but non null value was expected.');
         Assertion::integerish($priority, 'priority value "%s" is not an integer or a number castable to integer.');
 
-        $this->priority = $priority;
+        $this->priority = (int) $priority;
 
         return $this;
     }
@@ -208,16 +211,16 @@ abstract class CallAclRelMatchListAbstract
      *
      * @param string $policy
      *
-     * @return self
+     * @return static
      */
-    public function setPolicy($policy)
+    protected function setPolicy($policy)
     {
         Assertion::notNull($policy, 'policy value "%s" is null, but non null value was expected.');
         Assertion::maxLength($policy, 25, 'policy value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($policy, array (
-          0 => 'allow',
-          1 => 'deny',
-        ), 'policyvalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($policy, [
+            CallAclRelMatchListInterface::POLICY_ALLOW,
+            CallAclRelMatchListInterface::POLICY_DENY
+        ], 'policyvalue "%s" is not an element of the valid values: %s');
 
         $this->policy = $policy;
 
@@ -237,9 +240,9 @@ abstract class CallAclRelMatchListAbstract
     /**
      * Set callAcl
      *
-     * @param \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl
+     * @param \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl | null
      *
-     * @return self
+     * @return static
      */
     public function setCallAcl(\Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl = null)
     {
@@ -251,7 +254,7 @@ abstract class CallAclRelMatchListAbstract
     /**
      * Get callAcl
      *
-     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface
+     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface | null
      */
     public function getCallAcl()
     {
@@ -263,9 +266,9 @@ abstract class CallAclRelMatchListAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList
      *
-     * @return self
+     * @return static
      */
-    public function setMatchList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList)
+    protected function setMatchList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList)
     {
         $this->matchList = $matchList;
 
@@ -282,8 +285,5 @@ abstract class CallAclRelMatchListAbstract
         return $this->matchList;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

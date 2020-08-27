@@ -13,84 +13,54 @@ interface BalanceNotificationInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set toAddress
-     *
-     * @param string $toAddress
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
-    public function setToAddress($toAddress = null);
+    public function getLanguage();
+
+    /**
+     * @return string
+     */
+    public function getEntityName();
 
     /**
      * Get toAddress
      *
-     * @return string
+     * @return string | null
      */
     public function getToAddress();
 
     /**
-     * Set threshold
-     *
-     * @param string $threshold
-     *
-     * @return self
-     */
-    public function setThreshold($threshold = null);
-
-    /**
      * Get threshold
      *
-     * @return string
+     * @return float | null
      */
     public function getThreshold();
 
     /**
-     * Set lastSent
-     *
-     * @param \DateTime $lastSent
-     *
-     * @return self
-     */
-    public function setLastSent($lastSent = null);
-
-    /**
      * Get lastSent
      *
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getLastSent();
 
     /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
-
-    /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany();
 
     /**
-     * Set notificationTemplate
+     * Get carrier
      *
-     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
      */
-    public function setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate = null);
+    public function getCarrier();
 
     /**
      * Get notificationTemplate
      *
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     public function getNotificationTemplate();
-
 }
-

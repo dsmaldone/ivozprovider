@@ -17,7 +17,7 @@ abstract class TrunksLcrRuleTargetAbstract
      * column: lcr_id
      * @var integer
      */
-    protected $lcrId = '1';
+    protected $lcrId = 1;
 
     /**
      * @var integer
@@ -27,7 +27,7 @@ abstract class TrunksLcrRuleTargetAbstract
     /**
      * @var integer
      */
-    protected $weight = '1';
+    protected $weight = 1;
 
     /**
      * @var \Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface
@@ -61,7 +61,8 @@ abstract class TrunksLcrRuleTargetAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TrunksLcrRuleTarget",
             $this->getId()
         );
@@ -85,7 +86,8 @@ abstract class TrunksLcrRuleTargetAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TrunksLcrRuleTargetInterface|null $entity
      * @param int $depth
      * @return TrunksLcrRuleTargetDto|null
      */
@@ -105,64 +107,67 @@ abstract class TrunksLcrRuleTargetAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TrunksLcrRuleTargetDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksLcrRuleTargetDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksLcrRuleTargetDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksLcrRuleTargetDto::class);
 
         $self = new static(
             $dto->getLcrId(),
             $dto->getPriority(),
-            $dto->getWeight());
+            $dto->getWeight()
+        );
 
         $self
-            ->setRule($dto->getRule())
-            ->setGw($dto->getGw())
-            ->setOutgoingRouting($dto->getOutgoingRouting())
+            ->setRule($fkTransformer->transform($dto->getRule()))
+            ->setGw($fkTransformer->transform($dto->getGw()))
+            ->setOutgoingRouting($fkTransformer->transform($dto->getOutgoingRouting()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksLcrRuleTargetDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksLcrRuleTargetDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksLcrRuleTargetDto::class);
 
         $this
             ->setLcrId($dto->getLcrId())
             ->setPriority($dto->getPriority())
             ->setWeight($dto->getWeight())
-            ->setRule($dto->getRule())
-            ->setGw($dto->getGw())
-            ->setOutgoingRouting($dto->getOutgoingRouting());
+            ->setRule($fkTransformer->transform($dto->getRule()))
+            ->setGw($fkTransformer->transform($dto->getGw()))
+            ->setOutgoingRouting($fkTransformer->transform($dto->getOutgoingRouting()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TrunksLcrRuleTargetDto
      */
@@ -186,13 +191,11 @@ abstract class TrunksLcrRuleTargetAbstract
             'lcr_id' => self::getLcrId(),
             'priority' => self::getPriority(),
             'weight' => self::getWeight(),
-            'ruleId' => self::getRule() ? self::getRule()->getId() : null,
-            'gwId' => self::getGw() ? self::getGw()->getId() : null,
-            'outgoingRoutingId' => self::getOutgoingRouting() ? self::getOutgoingRouting()->getId() : null
+            'ruleId' => self::getRule()->getId(),
+            'gwId' => self::getGw()->getId(),
+            'outgoingRoutingId' => self::getOutgoingRouting()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -200,15 +203,15 @@ abstract class TrunksLcrRuleTargetAbstract
      *
      * @param integer $lcrId
      *
-     * @return self
+     * @return static
      */
-    public function setLcrId($lcrId)
+    protected function setLcrId($lcrId)
     {
         Assertion::notNull($lcrId, 'lcrId value "%s" is null, but non null value was expected.');
         Assertion::integerish($lcrId, 'lcrId value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($lcrId, 0, 'lcrId provided "%s" is not greater or equal than "%s".');
 
-        $this->lcrId = $lcrId;
+        $this->lcrId = (int) $lcrId;
 
         return $this;
     }
@@ -228,15 +231,15 @@ abstract class TrunksLcrRuleTargetAbstract
      *
      * @param integer $priority
      *
-     * @return self
+     * @return static
      */
-    public function setPriority($priority)
+    protected function setPriority($priority)
     {
         Assertion::notNull($priority, 'priority value "%s" is null, but non null value was expected.');
         Assertion::integerish($priority, 'priority value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($priority, 0, 'priority provided "%s" is not greater or equal than "%s".');
 
-        $this->priority = $priority;
+        $this->priority = (int) $priority;
 
         return $this;
     }
@@ -256,15 +259,15 @@ abstract class TrunksLcrRuleTargetAbstract
      *
      * @param integer $weight
      *
-     * @return self
+     * @return static
      */
-    public function setWeight($weight)
+    protected function setWeight($weight)
     {
         Assertion::notNull($weight, 'weight value "%s" is null, but non null value was expected.');
         Assertion::integerish($weight, 'weight value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($weight, 0, 'weight provided "%s" is not greater or equal than "%s".');
 
-        $this->weight = $weight;
+        $this->weight = (int) $weight;
 
         return $this;
     }
@@ -284,9 +287,9 @@ abstract class TrunksLcrRuleTargetAbstract
      *
      * @param \Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface $rule
      *
-     * @return self
+     * @return static
      */
-    public function setRule(\Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface $rule)
+    protected function setRule(\Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface $rule)
     {
         $this->rule = $rule;
 
@@ -308,9 +311,9 @@ abstract class TrunksLcrRuleTargetAbstract
      *
      * @param \Ivoz\Kam\Domain\Model\TrunksLcrGateway\TrunksLcrGatewayInterface $gw
      *
-     * @return self
+     * @return static
      */
-    public function setGw(\Ivoz\Kam\Domain\Model\TrunksLcrGateway\TrunksLcrGatewayInterface $gw)
+    protected function setGw(\Ivoz\Kam\Domain\Model\TrunksLcrGateway\TrunksLcrGatewayInterface $gw)
     {
         $this->gw = $gw;
 
@@ -332,7 +335,7 @@ abstract class TrunksLcrRuleTargetAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting
      *
-     * @return self
+     * @return static
      */
     public function setOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting)
     {
@@ -351,8 +354,5 @@ abstract class TrunksLcrRuleTargetAbstract
         return $this->outgoingRouting;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

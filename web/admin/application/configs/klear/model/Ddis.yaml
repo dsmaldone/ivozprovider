@@ -4,7 +4,7 @@ production:
   entity: \Ivoz\Provider\Domain\Model\Ddi\Ddi
   fields:
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       required: true
       source:
@@ -18,8 +18,8 @@ production:
             template: '%name%'
           order:
             Company.name: asc
-    DDI:
-      title: _('DDI')
+    ddi:
+      title: ngettext('DDI', 'DDIs', 1)
       type: text
       trim: both
       pattern: "^[0-9]+$"
@@ -59,8 +59,9 @@ production:
                 - conferenceRoom
                 - friendValue
                 - queue
-                - retailAccount
+                - residentialDevice
                 - conditionalRoute
+                - retailAccount
           'user':
             title: ngettext('User', 'Users', 1)
             visualFilter:
@@ -103,16 +104,22 @@ production:
               show: [ queue ]
               hide:
                 <<: *routableFields
-          'retailAccount':
-            title: _('Retail Account')
+          'residential':
+            title: _('Residential Device')
             visualFilter:
-              show: [ retailAccount, recordCalls ]
+              show: [ residentialDevice, recordCalls ]
               hide:
                 <<: *routableFields
           'conditional':
             title: _('Conditional Route')
             visualFilter:
               show: [ conditionalRoute ]
+              hide:
+                <<: *routableFields
+          'retail':
+            title: ngettext('Retail Account', 'Retail Accounts', 1)
+            visualFilter:
+              show: [ retailAccount ]
               hide:
                 <<: *routableFields
     recordCalls:
@@ -141,23 +148,6 @@ production:
         position: left
         icon: help
         text: _("This value will be displayed in the called terminals")
-        label: _("Need help?")
-    billInboundCalls:
-      title: _('Bill inbound call')
-      type: select
-      defaultValue: 0
-      source:
-        data: inline
-        values:
-          '0':
-            title: _("No")
-          '1':
-            title: _("Yes")
-      info:
-        type: box
-        position: left
-        icon: error
-        text: _("This setting needs external tarification module")
         label: _("Need help?")
     user:
       title: ngettext('User', 'Users', 1)
@@ -240,20 +230,21 @@ production:
           order:
             ConferenceRoom.name: asc
         'null': _("Unassigned")
-    retailAccount:
-      title: _('Retail Account')
+    residentialDevice:
+      title: _('Residential Device')
       type: select
+      required: true
       source:
         data: mapper
         config:
-          entity: \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccount
+          entity: \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDevice
           filterClass: IvozProvider_Klear_Filter_Company
           fieldName:
             fields:
               - name
             template: '%name%'
           order:
-            RetailAccount.name: asc
+            ResidentialDevice.name: asc
         'null': _("Unassigned")
     friendValue:
       title: _('Friend value')
@@ -261,21 +252,28 @@ production:
       maxLength: 25
       required: true
       <<: *friendValueHelp
-    peeringContract:
-      title: _('Peering contract id')
+    ddiProvider:
+      title: ngettext('DDI Provider', 'DDI Providers', 1)
       type: select
-      required: true
+      required: false
       source:
         data: mapper
         config:
-          entity: \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContract
+          entity: \Ivoz\Provider\Domain\Model\DdiProvider\DdiProvider
           filterClass: IvozProvider_Klear_Filter_Brand
           fieldName:
             fields:
               - name
             template: '%name%'
           order:
-            PeeringContract.description: asc
+            DdiProvider.description: asc
+        'null': _("Unassigned")
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("This assignment has no functional purpose, it is just for DDI Provider <-> DDI navigation in some brand level sections.")
+        label: _("Need help?")
     country:
       title: _('Country')
       type: select
@@ -304,7 +302,7 @@ production:
             template: '%name${lang}%'
           order:
             Language.name.${lang}: asc
-        'null': _("Company's default")
+        'null': _("Client's default")
     queue:
       title: ngettext('Queue', 'Queues', 1)
       type: select
@@ -336,6 +334,22 @@ production:
             template: '%name%'
           order:
             ConditionalRoute.name: asc
+        'null': _("Unassigned")
+    retailAccount:
+      title:  ngettext('Retail Account', 'Retail Accounts', 1)
+      type: select
+      required: true
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccount
+          filterClass: IvozProvider_Klear_Filter_Company
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+          order:
+            RetailAccount.name: asc
         'null': _("Unassigned")
     target:
       title: _('Target')

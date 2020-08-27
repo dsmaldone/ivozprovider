@@ -69,21 +69,46 @@ production:
             template: '%name%'
           order:
             RoutingPatternGroup.name: asc
-    peeringContract:
-      title: _('Peering contract')
+    carrier:
+      title: ngettext('Carrier', 'Carriers', 0)
       type: select
       required: true
       source:
         data: mapper
         config:
-          entity: \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContract
+          entity: \Ivoz\Provider\Domain\Model\Carrier\Carrier
           filterClass: IvozProvider_Klear_Filter_Brand
           fieldName:
             fields:
               - name
             template: '%name%'
           order:
-            PeeringContract.name: asc
+            Carrier.name: asc
+    relCarriers:
+      title: ngettext('Carrier', 'Carriers', 1)
+      type: multiselect
+      required: true
+      source:
+        data: mapper
+        config:
+          filterClass: IvozProvider_Klear_Filter_Brand
+          relation: \Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrier
+          relationProperty: outgoingRouting
+          relatedProperty: carrier
+          related: \Ivoz\Provider\Domain\Model\Carrier\Carrier
+          filterClass: IvozProvider_Klear_Filter_CarriersCost
+          relatedFieldName:
+            fields:
+              - name
+            template: '%name%'
+          order:
+            Carrier.name: asc
+    carriersGhost:
+      title: ngettext('Carrier', 'Carriers', 1)
+      type: ghost
+      source:
+        class: IvozProvider_Klear_Ghost_OutgoingRouting
+        method: getCarriers
     priority:
       title: _('Priority')
       type: number
@@ -101,9 +126,31 @@ production:
       source:
         control: Spinner
         min: 1
-        max: 254
+        max: 20
+    routingMode:
+      title: _('Route type')
+      type: select
+      source:
+        data: inline
+        filterClass: IvozProvider_Klear_Filter_OutgoingRoutingMode
+        values:
+          'static':
+            title: _("Static")
+            visualFilter:
+              show: [ carrier, prefix, forceClid, clidCountry, clid, weight, priority ]
+              hide: [ relCarriers ]
+          'lcr':
+            title: _("LCR")
+            visualFilter:
+              show: [ relCarriers, weight, priority ]
+              hide: [ carrier, prefix, forceClid, clidCountry, clid ]
+          'block':
+            title: _("Block")
+            visualFilter:
+              show: [ ]
+              hide: [ carrier, prefix, forceClid, clidCountry, clid, relCarriers, weight, priority, stopper]
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       source:
         data: mapper
@@ -116,7 +163,7 @@ production:
             template: '%name%'
           order:
             Company.name: asc
-        'null': _("Apply to all companies")
+        'null': _("Apply to all clients")
       default: true
     target:
       title: _('Destination')
@@ -124,7 +171,79 @@ production:
       source:
         class: IvozProvider_Klear_Ghost_OutgoingRouteType
         method: getData
-
+    prefix:
+      title: _('Destination prefix')
+      type: text
+      trim: both
+      maxLength: 25
+      required: false
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("This prefix will be added to the callee after carrier's numeric transformations.")
+        label: _("Need help?")
+    clid:
+      title: _('Clid')
+      type: text
+      trim: both
+      maxLength: 25
+      required: true
+    stopper:
+      title: _('Stopper')
+      type: select
+      defaultValue: 0
+      source:
+        data: inline
+        values:
+          '1':
+            title: _("Yes")
+          '0':
+            title: _("No")
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("Routes with higher priority won't be evaluated. Those with same priority will be evaluated.")
+        label: _("Need help?")
+    forceClid:
+      title: _('Force Clid')
+      type: select
+      defaultValue: 0
+      source:
+        data: inline
+        values:
+          '1':
+            title: _("Yes")
+            visualFilter:
+              show: [ clid, clidCountry ]
+              hide: []
+          '0':
+            title: _("No")
+            visualFilter:
+              show: []
+              hide: [ clid, clidCountry ]
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("Instead of getting the caller from PAI/RPID headers, this clid will be used (and will be adapted using carrier's numeric transformations).")
+        label: _("Need help?")
+    clidCountry:
+      title: _('Country')
+      type: select
+      required: true
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\Country\Country
+          fieldName:
+            fields:
+              - name${lang}
+              - countryCode
+            template: '%name${lang}% (%countryCode%)'
+          order:
+            Country.name.${lang}: asc
 staging:
   _extends: production
 testing:

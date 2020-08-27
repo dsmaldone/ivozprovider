@@ -3,8 +3,6 @@
 namespace Ivoz\Cgr\Domain\Model\TpCdr;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -73,12 +71,12 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     private $destination;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $setupTime;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $answerTime;
 
@@ -98,7 +96,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     private $costSource;
 
     /**
-     * @var string
+     * @var float
      */
     private $cost;
 
@@ -113,17 +111,17 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     private $extraInfo;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $createdAt;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $updatedAt;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $deletedAt;
 
@@ -143,7 +141,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -182,7 +180,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'cgrid' => $this->getCgrid(),
             'runId' => $this->getRunId(),
             'originHost' => $this->getOriginHost(),
@@ -208,22 +206,19 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
             'deletedAt' => $this->getDeletedAt(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -239,7 +234,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCgrid()
     {
@@ -259,7 +254,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRunId()
     {
@@ -279,7 +274,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getOriginHost()
     {
@@ -299,7 +294,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSource()
     {
@@ -319,7 +314,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getOriginId()
     {
@@ -339,7 +334,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTor()
     {
@@ -359,7 +354,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRequestType()
     {
@@ -379,7 +374,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTenant()
     {
@@ -399,7 +394,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCategory()
     {
@@ -419,7 +414,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getAccount()
     {
@@ -439,7 +434,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSubject()
     {
@@ -459,7 +454,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDestination()
     {
@@ -479,7 +474,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getSetupTime()
     {
@@ -499,7 +494,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getAnswerTime()
     {
@@ -519,7 +514,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getUsage()
     {
@@ -539,7 +534,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getExtraFields()
     {
@@ -559,7 +554,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCostSource()
     {
@@ -567,7 +562,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param string $cost
+     * @param float $cost
      *
      * @return static
      */
@@ -579,7 +574,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return float | null
      */
     public function getCost()
     {
@@ -599,7 +594,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getCostDetails()
     {
@@ -619,7 +614,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getExtraInfo()
     {
@@ -639,7 +634,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedAt()
     {
@@ -659,7 +654,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getUpdatedAt()
     {
@@ -679,7 +674,7 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getDeletedAt()
     {
@@ -699,12 +694,10 @@ abstract class TpCdrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

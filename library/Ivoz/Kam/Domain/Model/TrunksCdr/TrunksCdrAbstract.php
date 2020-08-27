@@ -28,102 +28,113 @@ abstract class TrunksCdrAbstract
     /**
      * @var float
      */
-    protected $duration = '0.000';
+    protected $duration = 0.0;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $caller;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $callee;
 
     /**
-     * @var string
-     */
-    protected $referee;
-
-    /**
-     * @var string
-     */
-    protected $referrer;
-
-    /**
-     * @var string
+     * @var string | null
      */
     protected $callid;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $callidHash;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $xcallid;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $diversion;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
     protected $bounced;
 
     /**
-     * @var string
+     * @var boolean | null
      */
-    protected $price;
+    protected $parsed = false;
 
     /**
-     * @var string
+     * @var \DateTime
      */
-    protected $priceDetails;
+    protected $parserScheduledAt;
 
     /**
-     * @var string
+     * comment: enum:inbound|outbound
+     * @var string | null
      */
     protected $direction;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $cgrid;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface
-     */
-    protected $invoice;
-
-    /**
-     * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     protected $brand;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     protected $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
      */
-    protected $peeringContract;
+    protected $carrier;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface
+     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
-    protected $tpDestination;
+    protected $retailAccount;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
      */
-    protected $destinationRate;
+    protected $residentialDevice;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
+     */
+    protected $user;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Friend\FriendInterface | null
+     */
+    protected $friend;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Fax\FaxInterface | null
+     */
+    protected $fax;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
+     */
+    protected $ddi;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface | null
+     */
+    protected $ddiProvider;
 
 
     use ChangelogTrait;
@@ -131,18 +142,24 @@ abstract class TrunksCdrAbstract
     /**
      * Constructor
      */
-    protected function __construct($startTime, $endTime, $duration)
-    {
+    protected function __construct(
+        $startTime,
+        $endTime,
+        $duration,
+        $parserScheduledAt
+    ) {
         $this->setStartTime($startTime);
         $this->setEndTime($endTime);
         $this->setDuration($duration);
+        $this->setParserScheduledAt($parserScheduledAt);
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TrunksCdr",
             $this->getId()
         );
@@ -166,7 +183,8 @@ abstract class TrunksCdrAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TrunksCdrInterface|null $entity
      * @param int $depth
      * @return TrunksCdrDto|null
      */
@@ -186,63 +204,68 @@ abstract class TrunksCdrAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TrunksCdrDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksCdrDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksCdrDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksCdrDto::class);
 
         $self = new static(
             $dto->getStartTime(),
             $dto->getEndTime(),
-            $dto->getDuration());
+            $dto->getDuration(),
+            $dto->getParserScheduledAt()
+        );
 
         $self
             ->setCaller($dto->getCaller())
             ->setCallee($dto->getCallee())
-            ->setReferee($dto->getReferee())
-            ->setReferrer($dto->getReferrer())
             ->setCallid($dto->getCallid())
             ->setCallidHash($dto->getCallidHash())
             ->setXcallid($dto->getXcallid())
             ->setDiversion($dto->getDiversion())
             ->setBounced($dto->getBounced())
-            ->setPrice($dto->getPrice())
-            ->setPriceDetails($dto->getPriceDetails())
+            ->setParsed($dto->getParsed())
             ->setDirection($dto->getDirection())
             ->setCgrid($dto->getCgrid())
-            ->setInvoice($dto->getInvoice())
-            ->setBrand($dto->getBrand())
-            ->setCompany($dto->getCompany())
-            ->setPeeringContract($dto->getPeeringContract())
-            ->setTpDestination($dto->getTpDestination())
-            ->setDestinationRate($dto->getDestinationRate())
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()))
+            ->setRetailAccount($fkTransformer->transform($dto->getRetailAccount()))
+            ->setResidentialDevice($fkTransformer->transform($dto->getResidentialDevice()))
+            ->setUser($fkTransformer->transform($dto->getUser()))
+            ->setFriend($fkTransformer->transform($dto->getFriend()))
+            ->setFax($fkTransformer->transform($dto->getFax()))
+            ->setDdi($fkTransformer->transform($dto->getDdi()))
+            ->setDdiProvider($fkTransformer->transform($dto->getDdiProvider()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TrunksCdrDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TrunksCdrDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TrunksCdrDto::class);
 
         $this
@@ -251,31 +274,33 @@ abstract class TrunksCdrAbstract
             ->setDuration($dto->getDuration())
             ->setCaller($dto->getCaller())
             ->setCallee($dto->getCallee())
-            ->setReferee($dto->getReferee())
-            ->setReferrer($dto->getReferrer())
             ->setCallid($dto->getCallid())
             ->setCallidHash($dto->getCallidHash())
             ->setXcallid($dto->getXcallid())
             ->setDiversion($dto->getDiversion())
             ->setBounced($dto->getBounced())
-            ->setPrice($dto->getPrice())
-            ->setPriceDetails($dto->getPriceDetails())
+            ->setParsed($dto->getParsed())
+            ->setParserScheduledAt($dto->getParserScheduledAt())
             ->setDirection($dto->getDirection())
             ->setCgrid($dto->getCgrid())
-            ->setInvoice($dto->getInvoice())
-            ->setBrand($dto->getBrand())
-            ->setCompany($dto->getCompany())
-            ->setPeeringContract($dto->getPeeringContract())
-            ->setTpDestination($dto->getTpDestination())
-            ->setDestinationRate($dto->getDestinationRate());
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()))
+            ->setRetailAccount($fkTransformer->transform($dto->getRetailAccount()))
+            ->setResidentialDevice($fkTransformer->transform($dto->getResidentialDevice()))
+            ->setUser($fkTransformer->transform($dto->getUser()))
+            ->setFriend($fkTransformer->transform($dto->getFriend()))
+            ->setFax($fkTransformer->transform($dto->getFax()))
+            ->setDdi($fkTransformer->transform($dto->getDdi()))
+            ->setDdiProvider($fkTransformer->transform($dto->getDdiProvider()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TrunksCdrDto
      */
@@ -287,23 +312,25 @@ abstract class TrunksCdrAbstract
             ->setDuration(self::getDuration())
             ->setCaller(self::getCaller())
             ->setCallee(self::getCallee())
-            ->setReferee(self::getReferee())
-            ->setReferrer(self::getReferrer())
             ->setCallid(self::getCallid())
             ->setCallidHash(self::getCallidHash())
             ->setXcallid(self::getXcallid())
             ->setDiversion(self::getDiversion())
             ->setBounced(self::getBounced())
-            ->setPrice(self::getPrice())
-            ->setPriceDetails(self::getPriceDetails())
+            ->setParsed(self::getParsed())
+            ->setParserScheduledAt(self::getParserScheduledAt())
             ->setDirection(self::getDirection())
             ->setCgrid(self::getCgrid())
-            ->setInvoice(\Ivoz\Provider\Domain\Model\Invoice\Invoice::entityToDto(self::getInvoice(), $depth))
             ->setBrand(\Ivoz\Provider\Domain\Model\Brand\Brand::entityToDto(self::getBrand(), $depth))
             ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
-            ->setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContract::entityToDto(self::getPeeringContract(), $depth))
-            ->setTpDestination(\Ivoz\Cgr\Domain\Model\TpDestination\TpDestination::entityToDto(self::getTpDestination(), $depth))
-            ->setDestinationRate(\Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRate::entityToDto(self::getDestinationRate(), $depth));
+            ->setCarrier(\Ivoz\Provider\Domain\Model\Carrier\Carrier::entityToDto(self::getCarrier(), $depth))
+            ->setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccount::entityToDto(self::getRetailAccount(), $depth))
+            ->setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDevice::entityToDto(self::getResidentialDevice(), $depth))
+            ->setUser(\Ivoz\Provider\Domain\Model\User\User::entityToDto(self::getUser(), $depth))
+            ->setFriend(\Ivoz\Provider\Domain\Model\Friend\Friend::entityToDto(self::getFriend(), $depth))
+            ->setFax(\Ivoz\Provider\Domain\Model\Fax\Fax::entityToDto(self::getFax(), $depth))
+            ->setDdi(\Ivoz\Provider\Domain\Model\Ddi\Ddi::entityToDto(self::getDdi(), $depth))
+            ->setDdiProvider(\Ivoz\Provider\Domain\Model\DdiProvider\DdiProvider::entityToDto(self::getDdiProvider(), $depth));
     }
 
     /**
@@ -317,27 +344,27 @@ abstract class TrunksCdrAbstract
             'duration' => self::getDuration(),
             'caller' => self::getCaller(),
             'callee' => self::getCallee(),
-            'referee' => self::getReferee(),
-            'referrer' => self::getReferrer(),
             'callid' => self::getCallid(),
             'callidHash' => self::getCallidHash(),
             'xcallid' => self::getXcallid(),
             'diversion' => self::getDiversion(),
             'bounced' => self::getBounced(),
-            'price' => self::getPrice(),
-            'priceDetails' => self::getPriceDetails(),
+            'parsed' => self::getParsed(),
+            'parserScheduledAt' => self::getParserScheduledAt(),
             'direction' => self::getDirection(),
             'cgrid' => self::getCgrid(),
-            'invoiceId' => self::getInvoice() ? self::getInvoice()->getId() : null,
             'brandId' => self::getBrand() ? self::getBrand()->getId() : null,
             'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
-            'peeringContractId' => self::getPeeringContract() ? self::getPeeringContract()->getId() : null,
-            'tpDestinationId' => self::getTpDestination() ? self::getTpDestination()->getId() : null,
-            'destinationRateId' => self::getDestinationRate() ? self::getDestinationRate()->getId() : null
+            'carrierId' => self::getCarrier() ? self::getCarrier()->getId() : null,
+            'retailAccountId' => self::getRetailAccount() ? self::getRetailAccount()->getId() : null,
+            'residentialDeviceId' => self::getResidentialDevice() ? self::getResidentialDevice()->getId() : null,
+            'userId' => self::getUser() ? self::getUser()->getId() : null,
+            'friendId' => self::getFriend() ? self::getFriend()->getId() : null,
+            'faxId' => self::getFax() ? self::getFax()->getId() : null,
+            'ddiId' => self::getDdi() ? self::getDdi()->getId() : null,
+            'ddiProviderId' => self::getDdiProvider() ? self::getDdiProvider()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -345,15 +372,19 @@ abstract class TrunksCdrAbstract
      *
      * @param \DateTime $startTime
      *
-     * @return self
+     * @return static
      */
-    public function setStartTime($startTime)
+    protected function setStartTime($startTime)
     {
         Assertion::notNull($startTime, 'startTime value "%s" is null, but non null value was expected.');
         $startTime = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $startTime,
             '2000-01-01 00:00:00'
         );
+
+        if ($this->startTime == $startTime) {
+            return $this;
+        }
 
         $this->startTime = $startTime;
 
@@ -367,7 +398,7 @@ abstract class TrunksCdrAbstract
      */
     public function getStartTime()
     {
-        return $this->startTime;
+        return clone $this->startTime;
     }
 
     /**
@@ -375,15 +406,19 @@ abstract class TrunksCdrAbstract
      *
      * @param \DateTime $endTime
      *
-     * @return self
+     * @return static
      */
-    public function setEndTime($endTime)
+    protected function setEndTime($endTime)
     {
         Assertion::notNull($endTime, 'endTime value "%s" is null, but non null value was expected.');
         $endTime = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $endTime,
             '2000-01-01 00:00:00'
         );
+
+        if ($this->endTime == $endTime) {
+            return $this;
+        }
 
         $this->endTime = $endTime;
 
@@ -397,7 +432,7 @@ abstract class TrunksCdrAbstract
      */
     public function getEndTime()
     {
-        return $this->endTime;
+        return clone $this->endTime;
     }
 
     /**
@@ -405,14 +440,14 @@ abstract class TrunksCdrAbstract
      *
      * @param float $duration
      *
-     * @return self
+     * @return static
      */
-    public function setDuration($duration)
+    protected function setDuration($duration)
     {
         Assertion::notNull($duration, 'duration value "%s" is null, but non null value was expected.');
         Assertion::numeric($duration);
 
-        $this->duration = $duration;
+        $this->duration = (float) $duration;
 
         return $this;
     }
@@ -430,11 +465,11 @@ abstract class TrunksCdrAbstract
     /**
      * Set caller
      *
-     * @param string $caller
+     * @param string $caller | null
      *
-     * @return self
+     * @return static
      */
-    public function setCaller($caller = null)
+    protected function setCaller($caller = null)
     {
         if (!is_null($caller)) {
             Assertion::maxLength($caller, 128, 'caller value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -448,7 +483,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get caller
      *
-     * @return string
+     * @return string | null
      */
     public function getCaller()
     {
@@ -458,11 +493,11 @@ abstract class TrunksCdrAbstract
     /**
      * Set callee
      *
-     * @param string $callee
+     * @param string $callee | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallee($callee = null)
+    protected function setCallee($callee = null)
     {
         if (!is_null($callee)) {
             Assertion::maxLength($callee, 128, 'callee value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -476,7 +511,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get callee
      *
-     * @return string
+     * @return string | null
      */
     public function getCallee()
     {
@@ -484,69 +519,13 @@ abstract class TrunksCdrAbstract
     }
 
     /**
-     * Set referee
-     *
-     * @param string $referee
-     *
-     * @return self
-     */
-    public function setReferee($referee = null)
-    {
-        if (!is_null($referee)) {
-            Assertion::maxLength($referee, 128, 'referee value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        }
-
-        $this->referee = $referee;
-
-        return $this;
-    }
-
-    /**
-     * Get referee
-     *
-     * @return string
-     */
-    public function getReferee()
-    {
-        return $this->referee;
-    }
-
-    /**
-     * Set referrer
-     *
-     * @param string $referrer
-     *
-     * @return self
-     */
-    public function setReferrer($referrer = null)
-    {
-        if (!is_null($referrer)) {
-            Assertion::maxLength($referrer, 128, 'referrer value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        }
-
-        $this->referrer = $referrer;
-
-        return $this;
-    }
-
-    /**
-     * Get referrer
-     *
-     * @return string
-     */
-    public function getReferrer()
-    {
-        return $this->referrer;
-    }
-
-    /**
      * Set callid
      *
-     * @param string $callid
+     * @param string $callid | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallid($callid = null)
+    protected function setCallid($callid = null)
     {
         if (!is_null($callid)) {
             Assertion::maxLength($callid, 255, 'callid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -560,7 +539,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get callid
      *
-     * @return string
+     * @return string | null
      */
     public function getCallid()
     {
@@ -570,11 +549,11 @@ abstract class TrunksCdrAbstract
     /**
      * Set callidHash
      *
-     * @param string $callidHash
+     * @param string $callidHash | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallidHash($callidHash = null)
+    protected function setCallidHash($callidHash = null)
     {
         if (!is_null($callidHash)) {
             Assertion::maxLength($callidHash, 128, 'callidHash value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -588,7 +567,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get callidHash
      *
-     * @return string
+     * @return string | null
      */
     public function getCallidHash()
     {
@@ -598,11 +577,11 @@ abstract class TrunksCdrAbstract
     /**
      * Set xcallid
      *
-     * @param string $xcallid
+     * @param string $xcallid | null
      *
-     * @return self
+     * @return static
      */
-    public function setXcallid($xcallid = null)
+    protected function setXcallid($xcallid = null)
     {
         if (!is_null($xcallid)) {
             Assertion::maxLength($xcallid, 255, 'xcallid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -616,7 +595,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get xcallid
      *
-     * @return string
+     * @return string | null
      */
     public function getXcallid()
     {
@@ -626,11 +605,11 @@ abstract class TrunksCdrAbstract
     /**
      * Set diversion
      *
-     * @param string $diversion
+     * @param string $diversion | null
      *
-     * @return self
+     * @return static
      */
-    public function setDiversion($diversion = null)
+    protected function setDiversion($diversion = null)
     {
         if (!is_null($diversion)) {
             Assertion::maxLength($diversion, 64, 'diversion value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -644,7 +623,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get diversion
      *
-     * @return string
+     * @return string | null
      */
     public function getDiversion()
     {
@@ -654,14 +633,15 @@ abstract class TrunksCdrAbstract
     /**
      * Set bounced
      *
-     * @param boolean $bounced
+     * @param boolean $bounced | null
      *
-     * @return self
+     * @return static
      */
-    public function setBounced($bounced = null)
+    protected function setBounced($bounced = null)
     {
         if (!is_null($bounced)) {
             Assertion::between(intval($bounced), 0, 1, 'bounced provided "%s" is not a valid boolean value.');
+            $bounced = (bool) $bounced;
         }
 
         $this->bounced = $bounced;
@@ -672,7 +652,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get bounced
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getBounced()
     {
@@ -680,73 +660,82 @@ abstract class TrunksCdrAbstract
     }
 
     /**
-     * Set price
+     * Set parsed
      *
-     * @param string $price
+     * @param boolean $parsed | null
      *
-     * @return self
+     * @return static
      */
-    public function setPrice($price = null)
+    protected function setParsed($parsed = null)
     {
-        if (!is_null($price)) {
-            if (!is_null($price)) {
-                Assertion::numeric($price);
-            }
+        if (!is_null($parsed)) {
+            Assertion::between(intval($parsed), 0, 1, 'parsed provided "%s" is not a valid boolean value.');
+            $parsed = (bool) $parsed;
         }
 
-        $this->price = $price;
+        $this->parsed = $parsed;
 
         return $this;
     }
 
     /**
-     * Get price
+     * Get parsed
      *
-     * @return string
+     * @return boolean | null
      */
-    public function getPrice()
+    public function getParsed()
     {
-        return $this->price;
+        return $this->parsed;
     }
 
     /**
-     * Set priceDetails
+     * Set parserScheduledAt
      *
-     * @param string $priceDetails
+     * @param \DateTime $parserScheduledAt
      *
-     * @return self
+     * @return static
      */
-    public function setPriceDetails($priceDetails = null)
+    protected function setParserScheduledAt($parserScheduledAt)
     {
-        if (!is_null($priceDetails)) {
-            Assertion::maxLength($priceDetails, 65535, 'priceDetails value "%s" is too long, it should have no more than %d characters, but has %d characters.');
+        Assertion::notNull($parserScheduledAt, 'parserScheduledAt value "%s" is null, but non null value was expected.');
+        $parserScheduledAt = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
+            $parserScheduledAt,
+            'CURRENT_TIMESTAMP'
+        );
+
+        if ($this->parserScheduledAt == $parserScheduledAt) {
+            return $this;
         }
 
-        $this->priceDetails = $priceDetails;
+        $this->parserScheduledAt = $parserScheduledAt;
 
         return $this;
     }
 
     /**
-     * Get priceDetails
+     * Get parserScheduledAt
      *
-     * @return string
+     * @return \DateTime
      */
-    public function getPriceDetails()
+    public function getParserScheduledAt()
     {
-        return $this->priceDetails;
+        return clone $this->parserScheduledAt;
     }
 
     /**
      * Set direction
      *
-     * @param string $direction
+     * @param string $direction | null
      *
-     * @return self
+     * @return static
      */
-    public function setDirection($direction = null)
+    protected function setDirection($direction = null)
     {
         if (!is_null($direction)) {
+            Assertion::choice($direction, [
+                TrunksCdrInterface::DIRECTION_INBOUND,
+                TrunksCdrInterface::DIRECTION_OUTBOUND
+            ], 'directionvalue "%s" is not an element of the valid values: %s');
         }
 
         $this->direction = $direction;
@@ -757,7 +746,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get direction
      *
-     * @return string
+     * @return string | null
      */
     public function getDirection()
     {
@@ -767,11 +756,11 @@ abstract class TrunksCdrAbstract
     /**
      * Set cgrid
      *
-     * @param string $cgrid
+     * @param string $cgrid | null
      *
-     * @return self
+     * @return static
      */
-    public function setCgrid($cgrid = null)
+    protected function setCgrid($cgrid = null)
     {
         if (!is_null($cgrid)) {
             Assertion::maxLength($cgrid, 40, 'cgrid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -785,7 +774,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get cgrid
      *
-     * @return string
+     * @return string | null
      */
     public function getCgrid()
     {
@@ -793,37 +782,13 @@ abstract class TrunksCdrAbstract
     }
 
     /**
-     * Set invoice
-     *
-     * @param \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface $invoice
-     *
-     * @return self
-     */
-    public function setInvoice(\Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface $invoice = null)
-    {
-        $this->invoice = $invoice;
-
-        return $this;
-    }
-
-    /**
-     * Get invoice
-     *
-     * @return \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface
-     */
-    public function getInvoice()
-    {
-        return $this->invoice;
-    }
-
-    /**
      * Set brand
      *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
+     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand | null
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null)
+    protected function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null)
     {
         $this->brand = $brand;
 
@@ -833,7 +798,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand()
     {
@@ -843,11 +808,11 @@ abstract class TrunksCdrAbstract
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
     {
         $this->company = $company;
 
@@ -857,7 +822,7 @@ abstract class TrunksCdrAbstract
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany()
     {
@@ -865,79 +830,196 @@ abstract class TrunksCdrAbstract
     }
 
     /**
-     * Set peeringContract
+     * Set carrier
      *
-     * @param \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier | null
      *
-     * @return self
+     * @return static
      */
-    public function setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract = null)
+    protected function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier = null)
     {
-        $this->peeringContract = $peeringContract;
+        $this->carrier = $carrier;
 
         return $this;
     }
 
     /**
-     * Get peeringContract
+     * Get carrier
      *
-     * @return \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
      */
-    public function getPeeringContract()
+    public function getCarrier()
     {
-        return $this->peeringContract;
+        return $this->carrier;
     }
 
     /**
-     * Set tpDestination
+     * Set retailAccount
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface $tpDestination
+     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount | null
      *
-     * @return self
+     * @return static
      */
-    public function setTpDestination(\Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface $tpDestination = null)
+    protected function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount = null)
     {
-        $this->tpDestination = $tpDestination;
+        $this->retailAccount = $retailAccount;
 
         return $this;
     }
 
     /**
-     * Get tpDestination
+     * Get retailAccount
      *
-     * @return \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
-    public function getTpDestination()
+    public function getRetailAccount()
     {
-        return $this->tpDestination;
+        return $this->retailAccount;
     }
 
     /**
-     * Set destinationRate
+     * Set residentialDevice
      *
-     * @param \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface $destinationRate
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice | null
      *
-     * @return self
+     * @return static
      */
-    public function setDestinationRate(\Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface $destinationRate = null)
+    protected function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice = null)
     {
-        $this->destinationRate = $destinationRate;
+        $this->residentialDevice = $residentialDevice;
 
         return $this;
     }
 
     /**
-     * Get destinationRate
+     * Get residentialDevice
      *
-     * @return \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
      */
-    public function getDestinationRate()
+    public function getResidentialDevice()
     {
-        return $this->destinationRate;
+        return $this->residentialDevice;
     }
 
+    /**
+     * Set user
+     *
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user | null
+     *
+     * @return static
+     */
+    protected function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null)
+    {
+        $this->user = $user;
 
+        return $this;
+    }
+
+    /**
+     * Get user
+     *
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * Set friend
+     *
+     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend | null
+     *
+     * @return static
+     */
+    protected function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend = null)
+    {
+        $this->friend = $friend;
+
+        return $this;
+    }
+
+    /**
+     * Get friend
+     *
+     * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface | null
+     */
+    public function getFriend()
+    {
+        return $this->friend;
+    }
+
+    /**
+     * Set fax
+     *
+     * @param \Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax | null
+     *
+     * @return static
+     */
+    protected function setFax(\Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax = null)
+    {
+        $this->fax = $fax;
+
+        return $this;
+    }
+
+    /**
+     * Get fax
+     *
+     * @return \Ivoz\Provider\Domain\Model\Fax\FaxInterface | null
+     */
+    public function getFax()
+    {
+        return $this->fax;
+    }
+
+    /**
+     * Set ddi
+     *
+     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi | null
+     *
+     * @return static
+     */
+    protected function setDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi = null)
+    {
+        $this->ddi = $ddi;
+
+        return $this;
+    }
+
+    /**
+     * Get ddi
+     *
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
+     */
+    public function getDdi()
+    {
+        return $this->ddi;
+    }
+
+    /**
+     * Set ddiProvider
+     *
+     * @param \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface $ddiProvider | null
+     *
+     * @return static
+     */
+    protected function setDdiProvider(\Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface $ddiProvider = null)
+    {
+        $this->ddiProvider = $ddiProvider;
+
+        return $this;
+    }
+
+    /**
+     * Get ddiProvider
+     *
+     * @return \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface | null
+     */
+    public function getDdiProvider()
+    {
+        return $this->ddiProvider;
+    }
 
     // @codeCoverageIgnoreEnd
 }
-

@@ -2,6 +2,7 @@
 
 namespace spec\Ivoz\Provider\Domain\Service\User;
 
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Core\Domain\Service\EntityPersisterInterface;
 use Ivoz\Provider\Domain\Model\User\UserDto;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
@@ -13,9 +14,9 @@ use Prophecy\Argument;
 class UnsetBossAssistantSpec extends ObjectBehavior
 {
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
      * @var UserRepository
@@ -23,14 +24,14 @@ class UnsetBossAssistantSpec extends ObjectBehavior
     protected $userRepository;
 
     public function let(
-        EntityPersisterInterface $entityPersister,
+        EntityTools $entityTools,
         UserRepository $userRepository
     ) {
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
         $this->userRepository = $userRepository;
 
         $this->beConstructedWith(
-            $entityPersister,
+            $entityTools,
             $userRepository
         );
     }
@@ -44,6 +45,10 @@ class UnsetBossAssistantSpec extends ObjectBehavior
         UserInterface $entity
     ) {
         $entity
+            ->isNew()
+            ->willReturn(true);
+
+        $entity
             ->getIsBoss()
             ->willReturn(true);
 
@@ -52,17 +57,22 @@ class UnsetBossAssistantSpec extends ObjectBehavior
             ->willReturn(true);
 
         $this
-            ->entityPersister
+            ->entityTools
             ->persistDto(Argument::any())
             ->shouldNotBeCalled();
 
-        $this->execute($entity, true);
+
+        $this->execute($entity);
     }
 
     function it_does_nothing_unless_isBoss(
         UserInterface $entity
     ) {
         $entity
+            ->isNew()
+            ->willReturn(false);
+
+        $entity
             ->getIsBoss()
             ->willReturn(false);
 
@@ -71,17 +81,21 @@ class UnsetBossAssistantSpec extends ObjectBehavior
             ->willReturn(true);
 
         $this
-            ->entityPersister
+            ->entityTools
             ->persistDto(Argument::any())
             ->shouldNotBeCalled();
 
-        $this->execute($entity, false);
+        $this->execute($entity);
     }
 
     function it_does_nothing_unless_isBossHasChanged(
         UserInterface $entity
     ) {
         $entity
+            ->isNew()
+            ->willReturn(false);
+
+        $entity
             ->getIsBoss()
             ->willReturn(true);
 
@@ -90,16 +104,20 @@ class UnsetBossAssistantSpec extends ObjectBehavior
             ->willReturn(false);
 
         $this
-            ->entityPersister
+            ->entityTools
             ->persistDto(Argument::any())
             ->shouldNotBeCalled();
 
-        $this->execute($entity, false);
+        $this->execute($entity);
     }
 
     function it_does_nothing_unless_it_has_an_assistant(
         UserInterface $entity
     ) {
+        $entity
+            ->isNew()
+            ->willReturn(false);
+
         $entity
             ->getIsBoss()
             ->willReturn(true);
@@ -114,15 +132,15 @@ class UnsetBossAssistantSpec extends ObjectBehavior
 
         $this
             ->userRepository
-            ->findBy(['bossAssistant' => 1])
+            ->findByBossAssistantId(1)
             ->willReturn([])
             ->shouldBeCalled();
         $this
-            ->entityPersister
+            ->entityTools
             ->persistDto(Argument::any())
             ->shouldNotBeCalled();
 
-        $this->execute($entity, false);
+        $this->execute($entity);
     }
 
     function it_resets_old_assistant(
@@ -130,6 +148,10 @@ class UnsetBossAssistantSpec extends ObjectBehavior
         UserInterface $boss
     ) {
         $entity
+            ->isNew()
+            ->willReturn(false);
+
+        $entity
             ->getIsBoss()
             ->willReturn(true);
 
@@ -143,15 +165,16 @@ class UnsetBossAssistantSpec extends ObjectBehavior
 
         $this
             ->userRepository
-            ->findBy(['bossAssistant' => 1])
+            ->findByBossAssistantId(1)
             ->willReturn([$boss])
             ->shouldBeCalled();
 
         $bossDto = new UserDto();
         $bossDto->setBossAssistantId(1);
 
-        $boss
-            ->toDto()
+        $this
+            ->entityTools
+            ->entityToDto($boss)
             ->willReturn($bossDto)
             ->shouldBeCalled();
 
@@ -160,13 +183,13 @@ class UnsetBossAssistantSpec extends ObjectBehavior
         };
 
         $this
-            ->entityPersister
+            ->entityTools
             ->persistDto(
                 Argument::that($assistantValidatorCallback),
                 $boss
             )
             ->shouldBeCalled();
 
-        $this->execute($entity, false);
+        $this->execute($entity);
     }
 }

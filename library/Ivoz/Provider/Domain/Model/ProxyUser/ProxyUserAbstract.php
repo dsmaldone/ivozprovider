@@ -14,12 +14,12 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class ProxyUserAbstract
 {
     /**
-     * @var string
+     * @var string | null
      */
     protected $name;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $ip;
 
@@ -31,14 +31,14 @@ abstract class ProxyUserAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "ProxyUser",
             $this->getId()
         );
@@ -62,7 +62,8 @@ abstract class ProxyUserAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param ProxyUserInterface|null $entity
      * @param int $depth
      * @return ProxyUserDto|null
      */
@@ -82,19 +83,22 @@ abstract class ProxyUserAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var ProxyUserDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ProxyUserDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ProxyUserDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ProxyUserDto::class);
 
         $self = new static();
@@ -104,21 +108,20 @@ abstract class ProxyUserAbstract
             ->setIp($dto->getIp())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ProxyUserDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ProxyUserDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ProxyUserDto::class);
 
         $this
@@ -127,11 +130,11 @@ abstract class ProxyUserAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ProxyUserDto
      */
@@ -152,18 +155,16 @@ abstract class ProxyUserAbstract
             'ip' => self::getIp()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set name
      *
-     * @param string $name
+     * @param string $name | null
      *
-     * @return self
+     * @return static
      */
-    public function setName($name = null)
+    protected function setName($name = null)
     {
         if (!is_null($name)) {
             Assertion::maxLength($name, 100, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -177,7 +178,7 @@ abstract class ProxyUserAbstract
     /**
      * Get name
      *
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -187,11 +188,11 @@ abstract class ProxyUserAbstract
     /**
      * Set ip
      *
-     * @param string $ip
+     * @param string $ip | null
      *
-     * @return self
+     * @return static
      */
-    public function setIp($ip = null)
+    protected function setIp($ip = null)
     {
         if (!is_null($ip)) {
             Assertion::maxLength($ip, 50, 'ip value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -205,15 +206,12 @@ abstract class ProxyUserAbstract
     /**
      * Get ip
      *
-     * @return string
+     * @return string | null
      */
     public function getIp()
     {
         return $this->ip;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

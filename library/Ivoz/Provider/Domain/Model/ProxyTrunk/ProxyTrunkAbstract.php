@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class ProxyTrunkAbstract
 {
     /**
-     * @var string
+     * @var string | null
      */
     protected $name;
 
@@ -38,7 +38,8 @@ abstract class ProxyTrunkAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "ProxyTrunk",
             $this->getId()
         );
@@ -62,7 +63,8 @@ abstract class ProxyTrunkAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param ProxyTrunkInterface|null $entity
      * @param int $depth
      * @return ProxyTrunkDto|null
      */
@@ -82,43 +84,46 @@ abstract class ProxyTrunkAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var ProxyTrunkDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ProxyTrunkDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ProxyTrunkDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ProxyTrunkDto::class);
 
         $self = new static(
-            $dto->getIp());
+            $dto->getIp()
+        );
 
         $self
             ->setName($dto->getName())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ProxyTrunkDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ProxyTrunkDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ProxyTrunkDto::class);
 
         $this
@@ -127,11 +132,11 @@ abstract class ProxyTrunkAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ProxyTrunkDto
      */
@@ -152,18 +157,16 @@ abstract class ProxyTrunkAbstract
             'ip' => self::getIp()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set name
      *
-     * @param string $name
+     * @param string $name | null
      *
-     * @return self
+     * @return static
      */
-    public function setName($name = null)
+    protected function setName($name = null)
     {
         if (!is_null($name)) {
             Assertion::maxLength($name, 100, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -177,7 +180,7 @@ abstract class ProxyTrunkAbstract
     /**
      * Get name
      *
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -189,9 +192,9 @@ abstract class ProxyTrunkAbstract
      *
      * @param string $ip
      *
-     * @return self
+     * @return static
      */
-    public function setIp($ip)
+    protected function setIp($ip)
     {
         Assertion::notNull($ip, 'ip value "%s" is null, but non null value was expected.');
         Assertion::maxLength($ip, 50, 'ip value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -211,8 +214,5 @@ abstract class ProxyTrunkAbstract
         return $this->ip;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

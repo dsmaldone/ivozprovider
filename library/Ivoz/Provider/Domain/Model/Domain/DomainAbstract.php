@@ -24,7 +24,7 @@ abstract class DomainAbstract
     protected $pointsTo = 'proxyusers';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $description;
 
@@ -44,7 +44,8 @@ abstract class DomainAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Domain",
             $this->getId()
         );
@@ -68,7 +69,8 @@ abstract class DomainAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param DomainInterface|null $entity
      * @param int $depth
      * @return DomainDto|null
      */
@@ -88,44 +90,47 @@ abstract class DomainAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var DomainDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param DomainDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto DomainDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, DomainDto::class);
 
         $self = new static(
             $dto->getDomain(),
-            $dto->getPointsTo());
+            $dto->getPointsTo()
+        );
 
         $self
             ->setDescription($dto->getDescription())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param DomainDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto DomainDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, DomainDto::class);
 
         $this
@@ -135,11 +140,11 @@ abstract class DomainAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return DomainDto
      */
@@ -162,8 +167,6 @@ abstract class DomainAbstract
             'description' => self::getDescription()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -171,9 +174,9 @@ abstract class DomainAbstract
      *
      * @param string $domain
      *
-     * @return self
+     * @return static
      */
-    public function setDomain($domain)
+    protected function setDomain($domain)
     {
         Assertion::notNull($domain, 'domain value "%s" is null, but non null value was expected.');
         Assertion::maxLength($domain, 190, 'domain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -198,9 +201,9 @@ abstract class DomainAbstract
      *
      * @param string $pointsTo
      *
-     * @return self
+     * @return static
      */
-    public function setPointsTo($pointsTo)
+    protected function setPointsTo($pointsTo)
     {
         Assertion::notNull($pointsTo, 'pointsTo value "%s" is null, but non null value was expected.');
 
@@ -222,11 +225,11 @@ abstract class DomainAbstract
     /**
      * Set description
      *
-     * @param string $description
+     * @param string $description | null
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description = null)
+    protected function setDescription($description = null)
     {
         if (!is_null($description)) {
             Assertion::maxLength($description, 500, 'description value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -240,15 +243,12 @@ abstract class DomainAbstract
     /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
         return $this->description;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

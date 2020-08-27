@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\HolidayDate;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -18,9 +16,34 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     private $name;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $eventDate;
+
+    /**
+     * @var boolean
+     */
+    private $wholeDayEvent = true;
+
+    /**
+     * @var \DateTime | string
+     */
+    private $timeIn;
+
+    /**
+     * @var \DateTime | string
+     */
+    private $timeOut;
+
+    /**
+     * @var string
+     */
+    private $routeType;
+
+    /**
+     * @var string
+     */
+    private $numberValue;
 
     /**
      * @var integer
@@ -37,6 +60,21 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
      */
     private $locution;
 
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionDto | null
+     */
+    private $extension;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\User\UserDto | null
+     */
+    private $voiceMailUser;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryDto | null
+     */
+    private $numberCountry;
+
 
     use DtoNormalizer;
 
@@ -48,7 +86,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -57,9 +95,17 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
         return [
             'name' => 'name',
             'eventDate' => 'eventDate',
+            'wholeDayEvent' => 'wholeDayEvent',
+            'timeIn' => 'timeIn',
+            'timeOut' => 'timeOut',
+            'routeType' => 'routeType',
+            'numberValue' => 'numberValue',
             'id' => 'id',
             'calendarId' => 'calendar',
-            'locutionId' => 'locution'
+            'locutionId' => 'locution',
+            'extensionId' => 'extension',
+            'voiceMailUserId' => 'voiceMailUser',
+            'numberCountryId' => 'numberCountry'
         ];
     }
 
@@ -68,30 +114,34 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'eventDate' => $this->getEventDate(),
+            'wholeDayEvent' => $this->getWholeDayEvent(),
+            'timeIn' => $this->getTimeIn(),
+            'timeOut' => $this->getTimeOut(),
+            'routeType' => $this->getRouteType(),
+            'numberValue' => $this->getNumberValue(),
             'id' => $this->getId(),
             'calendar' => $this->getCalendar(),
-            'locution' => $this->getLocution()
+            'locution' => $this->getLocution(),
+            'extension' => $this->getExtension(),
+            'voiceMailUser' => $this->getVoiceMailUser(),
+            'numberCountry' => $this->getNumberCountry()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->calendar = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Calendar\\Calendar', $this->getCalendarId());
-        $this->locution = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Locution\\Locution', $this->getLocutionId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -107,7 +157,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -127,11 +177,111 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getEventDate()
     {
         return $this->eventDate;
+    }
+
+    /**
+     * @param boolean $wholeDayEvent
+     *
+     * @return static
+     */
+    public function setWholeDayEvent($wholeDayEvent = null)
+    {
+        $this->wholeDayEvent = $wholeDayEvent;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean | null
+     */
+    public function getWholeDayEvent()
+    {
+        return $this->wholeDayEvent;
+    }
+
+    /**
+     * @param \DateTime $timeIn
+     *
+     * @return static
+     */
+    public function setTimeIn($timeIn = null)
+    {
+        $this->timeIn = $timeIn;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTime | null
+     */
+    public function getTimeIn()
+    {
+        return $this->timeIn;
+    }
+
+    /**
+     * @param \DateTime $timeOut
+     *
+     * @return static
+     */
+    public function setTimeOut($timeOut = null)
+    {
+        $this->timeOut = $timeOut;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTime | null
+     */
+    public function getTimeOut()
+    {
+        return $this->timeOut;
+    }
+
+    /**
+     * @param string $routeType
+     *
+     * @return static
+     */
+    public function setRouteType($routeType = null)
+    {
+        $this->routeType = $routeType;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getRouteType()
+    {
+        return $this->routeType;
+    }
+
+    /**
+     * @param string $numberValue
+     *
+     * @return static
+     */
+    public function setNumberValue($numberValue = null)
+    {
+        $this->numberValue = $numberValue;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNumberValue()
+    {
+        return $this->numberValue;
     }
 
     /**
@@ -147,7 +297,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -167,7 +317,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Calendar\CalendarDto
+     * @return \Ivoz\Provider\Domain\Model\Calendar\CalendarDto | null
      */
     public function getCalendar()
     {
@@ -175,7 +325,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -189,7 +339,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCalendarId()
     {
@@ -213,7 +363,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto | null
      */
     public function getLocution()
     {
@@ -221,7 +371,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -235,7 +385,7 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getLocutionId()
     {
@@ -245,6 +395,142 @@ abstract class HolidayDateDtoAbstract implements DataTransferObjectInterface
 
         return null;
     }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionDto $extension
+     *
+     * @return static
+     */
+    public function setExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionDto $extension = null)
+    {
+        $this->extension = $extension;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto | null
+     */
+    public function getExtension()
+    {
+        return $this->extension;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setExtensionId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Extension\ExtensionDto($id)
+            : null;
+
+        return $this->setExtension($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getExtensionId()
+    {
+        if ($dto = $this->getExtension()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\User\UserDto $voiceMailUser
+     *
+     * @return static
+     */
+    public function setVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserDto $voiceMailUser = null)
+    {
+        $this->voiceMailUser = $voiceMailUser;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\User\UserDto | null
+     */
+    public function getVoiceMailUser()
+    {
+        return $this->voiceMailUser;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setVoiceMailUserId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\User\UserDto($id)
+            : null;
+
+        return $this->setVoiceMailUser($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getVoiceMailUserId()
+    {
+        if ($dto = $this->getVoiceMailUser()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryDto $numberCountry
+     *
+     * @return static
+     */
+    public function setNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryDto $numberCountry = null)
+    {
+        $this->numberCountry = $numberCountry;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto | null
+     */
+    public function getNumberCountry()
+    {
+        return $this->numberCountry;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setNumberCountryId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Country\CountryDto($id)
+            : null;
+
+        return $this->setNumberCountry($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getNumberCountryId()
+    {
+        if ($dto = $this->getNumberCountry()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
 }
-
-

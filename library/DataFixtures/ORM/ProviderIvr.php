@@ -17,28 +17,56 @@ class ProviderIvr extends Fixture implements DependentFixtureInterface
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(Ivr::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
     
-        $item1 = $this->createEntityInstanceWithPublicMethods(Ivr::class);
-        $item1->setName("testIvrCustom");
-        $item1->setTimeout(6);
-        $item1->setMaxDigits(0);
-        $item1->setAllowExtensions(false);
-        $item1->setNoInputRouteType("number");
-        $item1->setNoInputNumberValue("946002020");
-        $item1->setErrorRouteType("number");
-        $item1->setErrorNumberValue("946002021");
-        $item1->setCompany($this->getReference('_reference_ProviderCompany1'));
-        $item1->setWelcomeLocution($this->getReference('_reference_ProviderLocution1'));
-        $item1->setSuccessLocution($this->getReference('_reference_ProviderLocution1'));
-        $item1->setNoInputNumberCountry($this->getReference('_reference_ProviderCountry70'));
-        $item1->setErrorNumberCountry($this->getReference('_reference_ProviderCountry70'));
-        $this->addReference('_reference_ProviderIvrIvr1', $item1);
+        $item1 = $this->createEntityInstance(Ivr::class);
+        (function () use ($fixture) {
+            $this->setName("testIvrCustom");
+            $this->setTimeout(6);
+            $this->setMaxDigits(0);
+            $this->setAllowExtensions(false);
+            $this->setNoInputRouteType("number");
+            $this->setNoInputNumberValue("946002020");
+            $this->setErrorRouteType("voicemail");
+
+            $this->setErrorVoiceMailUser($fixture->getReference('_reference_ProviderUser1'));
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany1'));
+            $this->setWelcomeLocution($fixture->getReference('_reference_ProviderLocution1'));
+            $this->setSuccessLocution($fixture->getReference('_reference_ProviderLocution1'));
+            $this->setNoInputNumberCountry($fixture->getReference('_reference_ProviderCountry70'));
+            $this->setErrorNumberCountry($fixture->getReference('_reference_ProviderCountry70'));
+        })->call($item1);
+
+        $this->addReference('_reference_ProviderIvr1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);
 
-    
+        $item2 = $this->createEntityInstance(Ivr::class);
+        (function () use ($fixture) {
+            $this->setName("testIvrCustom2");
+            $this->setTimeout(6);
+            $this->setMaxDigits(0);
+            $this->setAllowExtensions(false);
+            $this->setNoInputRouteType("extension");
+            $this->setErrorRouteType("voicemail");
+            $this->setNoInputExtension(
+                $fixture->getReference('_reference_ProviderExtension1')
+            );
+
+            $this->setErrorVoiceMailUser($fixture->getReference('_reference_ProviderUser1'));
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany1'));
+            $this->setWelcomeLocution($fixture->getReference('_reference_ProviderLocution1'));
+            $this->setSuccessLocution($fixture->getReference('_reference_ProviderLocution1'));
+            $this->setNoInputNumberCountry($fixture->getReference('_reference_ProviderCountry70'));
+            $this->setErrorNumberCountry($fixture->getReference('_reference_ProviderCountry70'));
+        })->call($item2);
+
+        $this->addReference('_reference_ProviderIvr2', $item2);
+        $this->sanitizeEntityValues($item2);
+        $manager->persist($item2);
+
         $manager->flush();
     }
 
@@ -46,6 +74,8 @@ class ProviderIvr extends Fixture implements DependentFixtureInterface
     {
         return array(
             ProviderCompany::class,
+            ProviderUser::class,
+            ProviderExtension::class,
             ProviderLocution::class,
             ProviderCountry::class
         );

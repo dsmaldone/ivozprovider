@@ -1,6 +1,8 @@
 #include conf.d/mapperList.yaml
 #include conf.d/actions.yaml
 #include conf.d/documentationLink.yaml
+#include DdisList.yaml
+#include CallForwardSettingsList.yaml
 
 production:
   main:
@@ -9,6 +11,10 @@ production:
   screens: &retailAccounts_screensLink
     retailAccountsList_screen: &retailAccountsList_screenLink
       controller: list
+      order:
+        field:
+        - RetailAccount.name
+        type: asc
       pagination:
         items: 25
       <<: *RetailAccounts
@@ -16,29 +22,24 @@ production:
       title: _("List of %s %2s", ngettext('Retail Account', 'Retail Accounts', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/retail/accounts.html"
+        href: "/doc/en/administration_portal/client/retail/retail_accounts.html"
       forcedValues:
         <<: *forcedCompany
         <<: *forcedBrand
       fields:
         blacklist: &retailAccounts_blacklistLink
           transport: true
-          authNeeded: true
           password: true
-          areaCode: true
-          country: true
-          allow: true
-          disallow: true
-          directMediaMethod: true
-          updateCallerid: true
           fromDomain: true
-          calleridUpdateHeader: true
-          directConnectivity: true
           transformationRuleSet: true
+          directConnectivity: true
           ip: true
           port: true
           language: true
           status: true
+          ddiIn: true
+          t38Passthrough: true
+          outgoingDdi: true
         order:
           name: true
           domain: true
@@ -48,16 +49,18 @@ production:
         options:
           title: _("Options")
           screens:
-            retailAccountsEdit_screen: ${auth.canSeeBrand}
+            retailAccountsEdit_screen: $[${auth.acls.RetailAccounts.update} && ${auth.canSeeBrand}]
+            ddisList_screen: ${auth.acls.DDIs.read}
+            callForwardSettingsList_screen: ${auth.acls.CallForwardSettings.read}
           dialogs:
             retailAccountsDel_dialog: ${auth.canSeeBrand}
           default: retailAccountsEdit_screen
       options:
         title: _("Options")
         screens:
-          retailAccountsNew_screen: ${auth.canSeeBrand}
+          retailAccountsNew_screen: $[${auth.acls.RetailAccounts.create} && ${auth.canSeeBrand}]
         dialogs:
-          retailAccountsDel_dialog: ${auth.canSeeBrand}
+          retailAccountsDel_dialog: $[${auth.acls.RetailAccounts.delete} && ${auth.canSeeBrand}]
 
     retailAccountsNew_screen: &retailAccountsNew_screenLink
       <<: *RetailAccounts
@@ -73,29 +76,30 @@ production:
       forcedValues:
         <<: *forcedCompany
         <<: *forcedBrand
+        ddiIn: "yes"
       fields:
         blacklist: &retailAccounts_blacklistLink
           domain: true
-          directMediaMethod: true
-          updateCallerid: true
-          calleridUpdateHeader: true
-          authNeeded: true
-          disallow: true
           status: true
           statusIcon: true
+          t38Passthrough: true
+          outgoingDdi: true
+          transformationRuleSet: true
+          fromDomain: true
+          ddiIn: true
         order: &retailAccounts_orderLink
+          id: true
           name: true
           description: true
-          priority: true
           password: true
           directConnectivity: true
           transport: true
           ip: true
           port: true
-          language: true
           outgoingDdi: true
-          allow: true
+          transformationRuleSet: true
           fromDomain: true
+          ddiIn: true
           status: true
       fixedPositions: &retailAccounts_FixedPositionsLink
         group0:
@@ -126,8 +130,9 @@ production:
           label: _("Advanced Configuration")
           colsPerRow: 6
           fields:
-            allow: 2
-            fromDomain: 2
+            fromDomain: 3
+            ddiIn: 3
+            t38Passthrough: 3
 
     retailAccountsEdit_screen: &retailAccountsEdit_screenLink
       <<: *RetailAccounts
@@ -145,17 +150,48 @@ production:
           <<: *retailAccounts_orderLink
         blacklist:
           domain: true
-          directMediaMethod: true
-          updateCallerid: true
-          calleridUpdateHeader: true
-          authNeeded: true
-          disallow: true
           statusIcon: true
+        whitelist:
+          id: true
       fixedPositions:
           <<: *retailAccounts_FixedPositionsLink
       forcedValues:
         <<: *forcedCompany
         <<: *forcedBrand
+
+    <<: *ddis_screenLink
+    ddisList_screen:
+      <<: *ddisList_screenLink
+      filterField: retailAccount
+      parentOptionCustomizer:
+        - recordCount
+    ddisNew_screen:
+      <<: *ddisNew_screenLink
+      filterField: retailAccount
+    ddisEdit_screen:
+      <<: *ddisEdit_screenLink
+      filterField: retailAccount
+
+    # CallForwardSettings:
+    <<: *callForwardSettings_screensLink
+    callForwardSettingsList_screen:
+      <<: *callForwardSettingsList_screenLink
+      filterField: retailAccount
+      parentOptionCustomizer:
+        - IvozProvider_Klear_Options_OptionsCustomizer
+        - recordCount
+      forcedValues:
+        callTypeFilter: both
+    callForwardSettingsNew_screen:
+      <<: *callForwardSettingsNew_screenLink
+      filterField: retailAccount
+      forcedValues:
+        callTypeFilter: both
+    callForwardSettingsEdit_screen:
+      <<: *callForwardSettingsEdit_screenLink
+      filterField: retailAccount
+      forcedValues:
+        callTypeFilter: both
 
   dialogs: &retailAccounts_dialogsLink
     retailAccountsDel_dialog: &retailAccountsDel_dialogLink
@@ -168,6 +204,11 @@ production:
       message: _("%s successfully deleted.", ngettext('Retail Account', 'Retail Accounts', 1))
       multiItem: 1
       labelOnList: 1
+
+    <<: *ddis_dialogsLink
+
+    # CallForwardSettings dialogs:
+    <<: *callForwardSettings_dialogsLink
 
   commands:
     generatePassword_command:

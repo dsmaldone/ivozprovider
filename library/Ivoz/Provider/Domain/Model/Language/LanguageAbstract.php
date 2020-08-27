@@ -19,7 +19,7 @@ abstract class LanguageAbstract
     protected $iden;
 
     /**
-     * @var Name
+     * @var Name | null
      */
     protected $name;
 
@@ -39,7 +39,8 @@ abstract class LanguageAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Language",
             $this->getId()
         );
@@ -63,7 +64,8 @@ abstract class LanguageAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param LanguageInterface|null $entity
      * @param int $depth
      * @return LanguageDto|null
      */
@@ -83,24 +85,29 @@ abstract class LanguageAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var LanguageDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param LanguageDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto LanguageDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, LanguageDto::class);
 
         $name = new Name(
             $dto->getNameEn(),
-            $dto->getNameEs()
+            $dto->getNameEs(),
+            $dto->getNameCa(),
+            $dto->getNameIt()
         );
 
         $self = new static(
@@ -108,28 +115,27 @@ abstract class LanguageAbstract
             $name
         );
 
-        $self;
-
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param LanguageDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto LanguageDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, LanguageDto::class);
 
         $name = new Name(
             $dto->getNameEn(),
-            $dto->getNameEs()
+            $dto->getNameEs(),
+            $dto->getNameCa(),
+            $dto->getNameIt()
         );
 
         $this
@@ -138,11 +144,11 @@ abstract class LanguageAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return LanguageDto
      */
@@ -151,7 +157,9 @@ abstract class LanguageAbstract
         return self::createDto()
             ->setIden(self::getIden())
             ->setNameEn(self::getName()->getEn())
-            ->setNameEs(self::getName()->getEs());
+            ->setNameEs(self::getName()->getEs())
+            ->setNameCa(self::getName()->getCa())
+            ->setNameIt(self::getName()->getIt());
     }
 
     /**
@@ -162,11 +170,11 @@ abstract class LanguageAbstract
         return [
             'iden' => self::getIden(),
             'nameEn' => self::getName()->getEn(),
-            'nameEs' => self::getName()->getEs()
+            'nameEs' => self::getName()->getEs(),
+            'nameCa' => self::getName()->getCa(),
+            'nameIt' => self::getName()->getIt()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -174,9 +182,9 @@ abstract class LanguageAbstract
      *
      * @param string $iden
      *
-     * @return self
+     * @return static
      */
-    public function setIden($iden)
+    protected function setIden($iden)
     {
         Assertion::notNull($iden, 'iden value "%s" is null, but non null value was expected.');
         Assertion::maxLength($iden, 100, 'iden value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -201,12 +209,16 @@ abstract class LanguageAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Language\Name $name
      *
-     * @return self
+     * @return static
      */
-    public function setName(Name $name)
+    protected function setName(Name $name)
     {
-        $this->name = $name;
+        $isEqual = $this->name && $this->name->equals($name);
+        if ($isEqual) {
+            return $this;
+        }
 
+        $this->name = $name;
         return $this;
     }
 
@@ -219,7 +231,5 @@ abstract class LanguageAbstract
     {
         return $this->name;
     }
-
     // @codeCoverageIgnoreEnd
 }
-

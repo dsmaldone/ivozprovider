@@ -13,15 +13,6 @@ interface TimezoneInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set tz
-     *
-     * @param string $tz
-     *
-     * @return self
-     */
-    public function setTz($tz);
-
-    /**
      * Get tz
      *
      * @return string
@@ -29,45 +20,18 @@ interface TimezoneInterface extends LoggableEntityInterface
     public function getTz();
 
     /**
-     * Set comment
-     *
-     * @param string $comment
-     *
-     * @return self
-     */
-    public function setComment($comment = null);
-
-    /**
      * Get comment
      *
-     * @return string
+     * @return string | null
      */
     public function getComment();
 
     /**
-     * Set country
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $country
-     *
-     * @return self
-     */
-    public function setCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $country = null);
-
-    /**
      * Get country
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getCountry();
-
-    /**
-     * Set label
-     *
-     * @param \Ivoz\Provider\Domain\Model\Timezone\Label $label
-     *
-     * @return self
-     */
-    public function setLabel(\Ivoz\Provider\Domain\Model\Timezone\Label $label);
 
     /**
      * Get label
@@ -75,6 +39,4 @@ interface TimezoneInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\Timezone\Label
      */
     public function getLabel();
-
 }
-

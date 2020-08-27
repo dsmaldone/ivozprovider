@@ -1,20 +1,31 @@
 <?php
+
 namespace Ivoz\Provider\Domain\Model\OutgoingRouting;
+
+use Assert\Assertion;
+use Doctrine\Common\Collections\ArrayCollection;
 use Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface;
 
-/**
- * OutgoingRouting
- */
 class OutgoingRouting extends OutgoingRoutingAbstract implements OutgoingRoutingInterface
 {
     use OutgoingRoutingTrait;
 
     /**
      * Available OutgoingRoutings Types
+     * @todo restrict values on the setter
      */
-    const PATTERN   = 'pattern';
-    const GROUP     = 'group';
-    const FAX       = 'fax';
+    const TYPE_PATTERN   = 'pattern';
+    const TYPE_GROUP     = 'group';
+    const TYPE_FAX       = 'fax';
+
+    /**
+     * Available OugoingRoutings Route Mode
+     */
+    /** @deprecated */
+    const MODE_STATIC = self::ROUTINGMODE_STATIC;
+
+    /** @deprecated */
+    const MODE_LCR    = self::ROUTINGMODE_LCR;
 
     /**
      * @codeCoverageIgnore
@@ -35,42 +46,97 @@ class OutgoingRouting extends OutgoingRoutingAbstract implements OutgoingRouting
         return $this->id;
     }
 
+    protected function setWeight($weight)
+    {
+        Assertion::between($weight, 1, 20, 'weight provided "%s" is not between "%s" and "%s"');
+        return parent::setWeight($weight);
+    }
+
     protected function sanitizeValues()
     {
         switch ($this->getType()) {
-            case 'group':
+            case self::TYPE_GROUP:
                 $this->setRoutingPattern(null);
                 break;
-            case 'pattern':
+            case self::TYPE_PATTERN:
                 $this->setRoutingPatternGroup(null);
                 break;
-            case 'fax':
+            case self::TYPE_FAX:
                 $this->setRoutingPattern(null);
                 $this->setRoutingPatternGroup(null);
                 break;
             default:
                 throw new \DomainException('Incorrect Outgoing Routing Type');
         }
+
+        switch ($this->getRoutingMode()) {
+            case self::MODE_STATIC:
+                $this->replaceRelCarriers(new ArrayCollection());
+                break;
+            case self::MODE_LCR:
+                $this->setCarrier(null);
+                break;
+            case self::ROUTINGMODE_BLOCK:
+                $this->setCarrier(null);
+                $this->setPriority(0);
+                $this->setStopper(true);
+                break;
+            default:
+                throw new \DomainException('Incorrect Outgoing Routing Mode');
+        }
+
+        if (!$this->getForceClid()) {
+            $this->setClid(null);
+            $this->setClidCountry(null);
+        }
     }
 
     /**
-     * @return RoutingPatternInterface[]
+     * @todo awkward return type
+     * @return array of \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface or null
      */
     public function getRoutingPatterns()
     {
         switch ($this->getType()) {
-            case OutgoingRouting::GROUP:
+            case self::TYPE_GROUP:
                 return $this->getRoutingPatternGroup()->getRoutingPatterns();
-            case OutgoingRouting::PATTERN:
+            case self::TYPE_PATTERN:
                 return [ $this->getRoutingPattern() ];
-            case OutgoingRouting::FAX:
+            case self::TYPE_FAX:
+                return [ null ];
             default:
                 return [ ];
         }
     }
 
     /**
-     * @param RoutingPatternInterface $pattern
+     * Return CGRates tag for LCR category
+     *
+     * @return string
+     */
+    public function getCgrCategory()
+    {
+        return sprintf(
+            "or%d",
+            $this->getId()
+        );
+    }
+
+    /**
+     * Return CGRates tag for LCR rating plan category
+     *
+     * @return string
+     */
+    public function getCgrRpCategory()
+    {
+        return sprintf(
+            "lcr_profile%d",
+            $this->getId()
+        );
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface $pattern
      * @return bool
      */
     public function hasRoutingPattern(RoutingPatternInterface $pattern)
@@ -86,4 +152,3 @@ class OutgoingRouting extends OutgoingRoutingAbstract implements OutgoingRouting
         return false;
     }
 }
-

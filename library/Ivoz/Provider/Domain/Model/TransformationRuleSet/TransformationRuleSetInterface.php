@@ -3,7 +3,8 @@
 namespace Ivoz\Provider\Domain\Model\TransformationRuleSet;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface TransformationRuleSetInterface extends LoggableEntityInterface
 {
@@ -24,123 +25,60 @@ interface TransformationRuleSetInterface extends LoggableEntityInterface
     public function setTrunkPrefix($trunkPrefix = null);
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
 
     /**
      * Get internationalCode
      *
-     * @return string
+     * @return string | null
      */
     public function getInternationalCode();
 
     /**
      * Get trunkPrefix
      *
-     * @return string
+     * @return string | null
      */
     public function getTrunkPrefix();
 
     /**
-     * Set areaCode
-     *
-     * @param string $areaCode
-     *
-     * @return self
-     */
-    public function setAreaCode($areaCode = null);
-
-    /**
      * Get areaCode
      *
-     * @return string
+     * @return string | null
      */
     public function getAreaCode();
 
     /**
-     * Set nationalLen
-     *
-     * @param integer $nationalLen
-     *
-     * @return self
-     */
-    public function setNationalLen($nationalLen = null);
-
-    /**
      * Get nationalLen
      *
-     * @return integer
+     * @return integer | null
      */
     public function getNationalLen();
 
     /**
-     * Set generateRules
-     *
-     * @param boolean $generateRules
-     *
-     * @return self
-     */
-    public function setGenerateRules($generateRules = null);
-
-    /**
      * Get generateRules
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getGenerateRules();
 
     /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null);
-
-    /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand();
 
     /**
-     * Set country
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $country
-     *
-     * @return self
-     */
-    public function setCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $country = null);
-
-    /**
      * Get country
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getCountry();
-
-    /**
-     * Set name
-     *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\Name $name
-     *
-     * @return self
-     */
-    public function setName(\Ivoz\Provider\Domain\Model\TransformationRuleSet\Name $name);
 
     /**
      * Get name
@@ -154,7 +92,7 @@ interface TransformationRuleSetInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface $rule
      *
-     * @return TransformationRuleSetTrait
+     * @return static
      */
     public function addRule(\Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface $rule);
 
@@ -168,17 +106,15 @@ interface TransformationRuleSetInterface extends LoggableEntityInterface
     /**
      * Replace rules
      *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface[] $rules
-     * @return self
+     * @param ArrayCollection $rules of Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface
+     * @return static
      */
-    public function replaceRules(Collection $rules);
+    public function replaceRules(ArrayCollection $rules);
 
     /**
      * Get rules
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleInterface[]
      */
     public function getRules(\Doctrine\Common\Collections\Criteria $criteria = null);
-
 }
-

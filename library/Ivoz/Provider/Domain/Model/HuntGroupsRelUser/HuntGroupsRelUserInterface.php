@@ -6,6 +6,10 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface HuntGroupsRelUserInterface extends LoggableEntityInterface
 {
+    const ROUTETYPE_NUMBER = 'number';
+    const ROUTETYPE_USER = 'user';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -13,68 +17,73 @@ interface HuntGroupsRelUserInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set timeoutTime
+     * Get the numberValue in E.164 format when routing to 'number'
      *
-     * @param integer $timeoutTime
-     *
-     * @return self
+     * @return string
      */
-    public function setTimeoutTime($timeoutTime = null);
+    public function getNumberValueE164();
 
     /**
      * Get timeoutTime
      *
-     * @return integer
+     * @return integer | null
      */
     public function getTimeoutTime();
 
     /**
-     * Set priority
-     *
-     * @param integer $priority
-     *
-     * @return self
-     */
-    public function setPriority($priority = null);
-
-    /**
      * Get priority
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPriority();
 
     /**
+     * Get routeType
+     *
+     * @return string
+     */
+    public function getRouteType();
+
+    /**
+     * Get numberValue
+     *
+     * @return string | null
+     */
+    public function getNumberValue();
+
+    /**
      * Set huntGroup
      *
-     * @param \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup
+     * @param \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup | null
      *
-     * @return self
+     * @return static
      */
     public function setHuntGroup(\Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup = null);
 
     /**
      * Get huntGroup
      *
-     * @return \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface
+     * @return \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface | null
      */
     public function getHuntGroup();
 
     /**
-     * Set user
-     *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
-     *
-     * @return self
-     */
-    public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user);
-
-    /**
      * Get user
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getUser();
 
-}
+    /**
+     * Get numberCountry
+     *
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
+     */
+    public function getNumberCountry();
 
+    /**
+     * @param string $prefix
+     * @return null|string
+     */
+    public function getTarget(string $prefix = '');
+}

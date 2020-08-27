@@ -11,7 +11,8 @@ class CallForwardSettingSpec extends ObjectBehavior
 {
     protected $dto;
 
-    function let() {
+    function let()
+    {
         $this->dto = $dto = new CallForwardSettingDto();
 
         $dto->setCallTypeFilter('internal')
@@ -21,7 +22,7 @@ class CallForwardSettingSpec extends ObjectBehavior
 
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 

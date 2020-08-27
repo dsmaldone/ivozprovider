@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\NotificationTemplate;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -48,7 +46,7 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -67,43 +65,26 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'type' => $this->getType(),
             'id' => $this->getId(),
             'brand' => $this->getBrand(),
             'contents' => $this->getContents()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        if (!is_null($this->contents)) {
-            $items = $this->getContents();
-            $this->contents = [];
-            foreach ($items as $item) {
-                $this->contents[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\NotificationTemplateContent\\NotificationTemplateContent',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->contents = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\NotificationTemplateContent\\NotificationTemplateContent',
-            $this->contents
-        );
+        return $response;
     }
 
     /**
@@ -119,7 +100,7 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -139,7 +120,7 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getType()
     {
@@ -159,7 +140,7 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -179,7 +160,7 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -187,7 +168,7 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -201,7 +182,7 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -225,12 +206,10 @@ abstract class NotificationTemplateDtoAbstract implements DataTransferObjectInte
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getContents()
     {
         return $this->contents;
     }
 }
-
-

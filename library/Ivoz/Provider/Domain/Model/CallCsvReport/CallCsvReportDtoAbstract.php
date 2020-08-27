@@ -1,0 +1,430 @@
+<?php
+
+namespace Ivoz\Provider\Domain\Model\CallCsvReport;
+
+use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Application\Model\DtoNormalizer;
+
+/**
+ * @codeCoverageIgnore
+ */
+abstract class CallCsvReportDtoAbstract implements DataTransferObjectInterface
+{
+    /**
+     * @var string
+     */
+    private $sentTo = '';
+
+    /**
+     * @var \DateTime | string
+     */
+    private $inDate;
+
+    /**
+     * @var \DateTime | string
+     */
+    private $outDate;
+
+    /**
+     * @var \DateTime | string
+     */
+    private $createdOn;
+
+    /**
+     * @var integer
+     */
+    private $id;
+
+    /**
+     * @var integer
+     */
+    private $csvFileSize;
+
+    /**
+     * @var string
+     */
+    private $csvMimeType;
+
+    /**
+     * @var string
+     */
+    private $csvBaseName;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
+     */
+    private $company;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
+     */
+    private $brand;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\CallCsvScheduler\CallCsvSchedulerDto | null
+     */
+    private $callCsvScheduler;
+
+
+    use DtoNormalizer;
+
+    public function __construct($id = null)
+    {
+        $this->setId($id);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function getPropertyMap(string $context = '', string $role = null)
+    {
+        if ($context === self::CONTEXT_COLLECTION) {
+            return ['id' => 'id'];
+        }
+
+        return [
+            'sentTo' => 'sentTo',
+            'inDate' => 'inDate',
+            'outDate' => 'outDate',
+            'createdOn' => 'createdOn',
+            'id' => 'id',
+            'csv' => ['fileSize','mimeType','baseName'],
+            'companyId' => 'company',
+            'brandId' => 'brand',
+            'callCsvSchedulerId' => 'callCsvScheduler'
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray($hideSensitiveData = false)
+    {
+        $response = [
+            'sentTo' => $this->getSentTo(),
+            'inDate' => $this->getInDate(),
+            'outDate' => $this->getOutDate(),
+            'createdOn' => $this->getCreatedOn(),
+            'id' => $this->getId(),
+            'csv' => [
+                'fileSize' => $this->getCsvFileSize(),
+                'mimeType' => $this->getCsvMimeType(),
+                'baseName' => $this->getCsvBaseName()
+            ],
+            'company' => $this->getCompany(),
+            'brand' => $this->getBrand(),
+            'callCsvScheduler' => $this->getCallCsvScheduler()
+        ];
+
+        if (!$hideSensitiveData) {
+            return $response;
+        }
+
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param string $sentTo
+     *
+     * @return static
+     */
+    public function setSentTo($sentTo = null)
+    {
+        $this->sentTo = $sentTo;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getSentTo()
+    {
+        return $this->sentTo;
+    }
+
+    /**
+     * @param \DateTime $inDate
+     *
+     * @return static
+     */
+    public function setInDate($inDate = null)
+    {
+        $this->inDate = $inDate;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTime | null
+     */
+    public function getInDate()
+    {
+        return $this->inDate;
+    }
+
+    /**
+     * @param \DateTime $outDate
+     *
+     * @return static
+     */
+    public function setOutDate($outDate = null)
+    {
+        $this->outDate = $outDate;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTime | null
+     */
+    public function getOutDate()
+    {
+        return $this->outDate;
+    }
+
+    /**
+     * @param \DateTime $createdOn
+     *
+     * @return static
+     */
+    public function setCreatedOn($createdOn = null)
+    {
+        $this->createdOn = $createdOn;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTime | null
+     */
+    public function getCreatedOn()
+    {
+        return $this->createdOn;
+    }
+
+    /**
+     * @param integer $id
+     *
+     * @return static
+     */
+    public function setId($id = null)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * @return integer | null
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param integer $csvFileSize
+     *
+     * @return static
+     */
+    public function setCsvFileSize($csvFileSize = null)
+    {
+        $this->csvFileSize = $csvFileSize;
+
+        return $this;
+    }
+
+    /**
+     * @return integer | null
+     */
+    public function getCsvFileSize()
+    {
+        return $this->csvFileSize;
+    }
+
+    /**
+     * @param string $csvMimeType
+     *
+     * @return static
+     */
+    public function setCsvMimeType($csvMimeType = null)
+    {
+        $this->csvMimeType = $csvMimeType;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getCsvMimeType()
+    {
+        return $this->csvMimeType;
+    }
+
+    /**
+     * @param string $csvBaseName
+     *
+     * @return static
+     */
+    public function setCsvBaseName($csvBaseName = null)
+    {
+        $this->csvBaseName = $csvBaseName;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getCsvBaseName()
+    {
+        return $this->csvBaseName;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyDto $company
+     *
+     * @return static
+     */
+    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyDto $company = null)
+    {
+        $this->company = $company;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
+     */
+    public function getCompany()
+    {
+        return $this->company;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setCompanyId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Company\CompanyDto($id)
+            : null;
+
+        return $this->setCompany($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getCompanyId()
+    {
+        if ($dto = $this->getCompany()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Brand\BrandDto $brand
+     *
+     * @return static
+     */
+    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandDto $brand = null)
+    {
+        $this->brand = $brand;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
+     */
+    public function getBrand()
+    {
+        return $this->brand;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setBrandId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Brand\BrandDto($id)
+            : null;
+
+        return $this->setBrand($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getBrandId()
+    {
+        if ($dto = $this->getBrand()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\CallCsvScheduler\CallCsvSchedulerDto $callCsvScheduler
+     *
+     * @return static
+     */
+    public function setCallCsvScheduler(\Ivoz\Provider\Domain\Model\CallCsvScheduler\CallCsvSchedulerDto $callCsvScheduler = null)
+    {
+        $this->callCsvScheduler = $callCsvScheduler;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\CallCsvScheduler\CallCsvSchedulerDto | null
+     */
+    public function getCallCsvScheduler()
+    {
+        return $this->callCsvScheduler;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setCallCsvSchedulerId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\CallCsvScheduler\CallCsvSchedulerDto($id)
+            : null;
+
+        return $this->setCallCsvScheduler($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getCallCsvSchedulerId()
+    {
+        if ($dto = $this->getCallCsvScheduler()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+}

@@ -2,40 +2,23 @@
 
 namespace Ivoz\Provider\Domain\Model\Commandlog;
 
+use Ivoz\Core\Domain\Model\LoggerEntityInterface;
 use Ivoz\Core\Domain\Model\EntityInterface;
 
-interface CommandlogInterface extends EntityInterface
+interface CommandlogInterface extends LoggerEntityInterface, EntityInterface
 {
     /**
-     * @param CommandEventInterface $event
-     * @return Commandlog
+     * @param \Ivoz\Core\Application\Event\CommandEventInterface $event
+     * @return self
      */
     public static function fromEvent(\Ivoz\Core\Application\Event\CommandEventInterface $event);
 
     /**
-     * Set requestId
-     *
-     * @param guid $requestId
-     *
-     * @return self
-     */
-    public function setRequestId($requestId);
-
-    /**
      * Get requestId
      *
-     * @return guid
+     * @return string
      */
     public function getRequestId();
-
-    /**
-     * Set class
-     *
-     * @param string $class
-     *
-     * @return self
-     */
-    public function setClass($class);
 
     /**
      * Get class
@@ -45,45 +28,25 @@ interface CommandlogInterface extends EntityInterface
     public function getClass();
 
     /**
-     * Set method
-     *
-     * @param string $method
-     *
-     * @return self
-     */
-    public function setMethod($method = null);
-
-    /**
      * Get method
      *
-     * @return string
+     * @return string | null
      */
     public function getMethod();
 
     /**
-     * Set arguments
-     *
-     * @param array $arguments
-     *
-     * @return self
-     */
-    public function setArguments($arguments = null);
-
-    /**
      * Get arguments
      *
-     * @return array
+     * @return array | null
      */
     public function getArguments();
 
     /**
-     * Set createdOn
+     * Get agent
      *
-     * @param \DateTime $createdOn
-     *
-     * @return self
+     * @return array | null
      */
-    public function setCreatedOn($createdOn);
+    public function getAgent();
 
     /**
      * Get createdOn
@@ -93,20 +56,9 @@ interface CommandlogInterface extends EntityInterface
     public function getCreatedOn();
 
     /**
-     * Set microtime
-     *
-     * @param integer $microtime
-     *
-     * @return self
-     */
-    public function setMicrotime($microtime);
-
-    /**
      * Get microtime
      *
      * @return integer
      */
     public function getMicrotime();
-
 }
-

@@ -3,8 +3,6 @@
 namespace Ivoz\Ast\Domain\Model\PsEndpoint;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -93,6 +91,26 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     private $trustIdInbound;
 
     /**
+     * @var string
+     */
+    private $t38Udptl = 'no';
+
+    /**
+     * @var string
+     */
+    private $t38UdptlEc = 'redundancy';
+
+    /**
+     * @var integer
+     */
+    private $t38UdptlMaxdatagram = 1440;
+
+    /**
+     * @var string
+     */
+    private $t38UdptlNat = 'no';
+
+    /**
      * @var integer
      */
     private $id;
@@ -106,6 +124,11 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
      * @var \Ivoz\Provider\Domain\Model\Friend\FriendDto | null
      */
     private $friend;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto | null
+     */
+    private $residentialDevice;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto | null
@@ -123,7 +146,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -146,9 +169,14 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
             'oneHundredRel' => 'oneHundredRel',
             'outboundProxy' => 'outboundProxy',
             'trustIdInbound' => 'trustIdInbound',
+            't38Udptl' => 't38Udptl',
+            't38UdptlEc' => 't38UdptlEc',
+            't38UdptlMaxdatagram' => 't38UdptlMaxdatagram',
+            't38UdptlNat' => 't38UdptlNat',
             'id' => 'id',
             'terminalId' => 'terminal',
             'friendId' => 'friend',
+            'residentialDeviceId' => 'residentialDevice',
             'retailAccountId' => 'retailAccount'
         ];
     }
@@ -158,7 +186,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'sorceryId' => $this->getSorceryId(),
             'fromDomain' => $this->getFromDomain(),
             'aors' => $this->getAors(),
@@ -175,29 +203,29 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
             'oneHundredRel' => $this->getOneHundredRel(),
             'outboundProxy' => $this->getOutboundProxy(),
             'trustIdInbound' => $this->getTrustIdInbound(),
+            't38Udptl' => $this->getT38Udptl(),
+            't38UdptlEc' => $this->getT38UdptlEc(),
+            't38UdptlMaxdatagram' => $this->getT38UdptlMaxdatagram(),
+            't38UdptlNat' => $this->getT38UdptlNat(),
             'id' => $this->getId(),
             'terminal' => $this->getTerminal(),
             'friend' => $this->getFriend(),
+            'residentialDevice' => $this->getResidentialDevice(),
             'retailAccount' => $this->getRetailAccount()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->terminal = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Terminal\\Terminal', $this->getTerminalId());
-        $this->friend = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Friend\\Friend', $this->getFriendId());
-        $this->retailAccount = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\RetailAccount\\RetailAccount', $this->getRetailAccountId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -213,7 +241,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSorceryId()
     {
@@ -233,7 +261,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromDomain()
     {
@@ -253,7 +281,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getAors()
     {
@@ -273,7 +301,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallerid()
     {
@@ -293,7 +321,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getContext()
     {
@@ -313,7 +341,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDisallow()
     {
@@ -333,7 +361,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getAllow()
     {
@@ -353,7 +381,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDirectMedia()
     {
@@ -373,7 +401,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDirectMediaMethod()
     {
@@ -393,7 +421,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getMailboxes()
     {
@@ -413,7 +441,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNamedPickupGroup()
     {
@@ -433,7 +461,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSendDiversion()
     {
@@ -453,7 +481,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSendPai()
     {
@@ -473,7 +501,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getOneHundredRel()
     {
@@ -493,7 +521,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getOutboundProxy()
     {
@@ -513,11 +541,91 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTrustIdInbound()
     {
         return $this->trustIdInbound;
+    }
+
+    /**
+     * @param string $t38Udptl
+     *
+     * @return static
+     */
+    public function setT38Udptl($t38Udptl = null)
+    {
+        $this->t38Udptl = $t38Udptl;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getT38Udptl()
+    {
+        return $this->t38Udptl;
+    }
+
+    /**
+     * @param string $t38UdptlEc
+     *
+     * @return static
+     */
+    public function setT38UdptlEc($t38UdptlEc = null)
+    {
+        $this->t38UdptlEc = $t38UdptlEc;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getT38UdptlEc()
+    {
+        return $this->t38UdptlEc;
+    }
+
+    /**
+     * @param integer $t38UdptlMaxdatagram
+     *
+     * @return static
+     */
+    public function setT38UdptlMaxdatagram($t38UdptlMaxdatagram = null)
+    {
+        $this->t38UdptlMaxdatagram = $t38UdptlMaxdatagram;
+
+        return $this;
+    }
+
+    /**
+     * @return integer | null
+     */
+    public function getT38UdptlMaxdatagram()
+    {
+        return $this->t38UdptlMaxdatagram;
+    }
+
+    /**
+     * @param string $t38UdptlNat
+     *
+     * @return static
+     */
+    public function setT38UdptlNat($t38UdptlNat = null)
+    {
+        $this->t38UdptlNat = $t38UdptlNat;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getT38UdptlNat()
+    {
+        return $this->t38UdptlNat;
     }
 
     /**
@@ -533,7 +641,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -553,7 +661,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalDto
+     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalDto | null
      */
     public function getTerminal()
     {
@@ -561,7 +669,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -575,7 +683,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getTerminalId()
     {
@@ -599,7 +707,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Friend\FriendDto
+     * @return \Ivoz\Provider\Domain\Model\Friend\FriendDto | null
      */
     public function getFriend()
     {
@@ -607,7 +715,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -621,11 +729,57 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getFriendId()
     {
         if ($dto = $this->getFriend()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto $residentialDevice
+     *
+     * @return static
+     */
+    public function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto $residentialDevice = null)
+    {
+        $this->residentialDevice = $residentialDevice;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto | null
+     */
+    public function getResidentialDevice()
+    {
+        return $this->residentialDevice;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setResidentialDeviceId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto($id)
+            : null;
+
+        return $this->setResidentialDevice($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getResidentialDeviceId()
+    {
+        if ($dto = $this->getResidentialDevice()) {
             return $dto->getId();
         }
 
@@ -645,7 +799,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto | null
      */
     public function getRetailAccount()
     {
@@ -653,7 +807,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -667,7 +821,7 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getRetailAccountId()
     {
@@ -678,5 +832,3 @@ abstract class PsEndpointDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

@@ -3,10 +3,22 @@
 namespace Ivoz\Provider\Domain\Model\ConditionalRoute;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface ConditionalRouteInterface extends LoggableEntityInterface
 {
+    const ROUTETYPE_USER = 'user';
+    const ROUTETYPE_NUMBER = 'number';
+    const ROUTETYPE_IVR = 'ivr';
+    const ROUTETYPE_HUNTGROUP = 'huntGroup';
+    const ROUTETYPE_VOICEMAIL = 'voicemail';
+    const ROUTETYPE_FRIEND = 'friend';
+    const ROUTETYPE_QUEUE = 'queue';
+    const ROUTETYPE_CONFERENCEROOM = 'conferenceRoom';
+    const ROUTETYPE_EXTENSION = 'extension';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -21,15 +33,6 @@ interface ConditionalRouteInterface extends LoggableEntityInterface
     public function getNumberValueE164();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
-
-    /**
      * Get name
      *
      * @return string
@@ -37,61 +40,25 @@ interface ConditionalRouteInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set routetype
-     *
-     * @param string $routetype
-     *
-     * @return self
-     */
-    public function setRoutetype($routetype = null);
-
-    /**
      * Get routetype
      *
-     * @return string
+     * @return string | null
      */
     public function getRoutetype();
 
     /**
-     * Set numbervalue
-     *
-     * @param string $numbervalue
-     *
-     * @return self
-     */
-    public function setNumbervalue($numbervalue = null);
-
-    /**
      * Get numbervalue
      *
-     * @return string
+     * @return string | null
      */
     public function getNumbervalue();
 
     /**
-     * Set friendvalue
-     *
-     * @param string $friendvalue
-     *
-     * @return self
-     */
-    public function setFriendvalue($friendvalue = null);
-
-    /**
      * Get friendvalue
      *
-     * @return string
+     * @return string | null
      */
     public function getFriendvalue();
-
-    /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -101,146 +68,65 @@ interface ConditionalRouteInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set ivr
-     *
-     * @param \Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr
-     *
-     * @return self
-     */
-    public function setIvr(\Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr = null);
-
-    /**
      * Get ivr
      *
-     * @return \Ivoz\Provider\Domain\Model\Ivr\IvrInterface
+     * @return \Ivoz\Provider\Domain\Model\Ivr\IvrInterface | null
      */
     public function getIvr();
 
     /**
-     * Set huntGroup
-     *
-     * @param \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup
-     *
-     * @return self
-     */
-    public function setHuntGroup(\Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup = null);
-
-    /**
      * Get huntGroup
      *
-     * @return \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface
+     * @return \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface | null
      */
     public function getHuntGroup();
 
     /**
-     * Set voicemailUser
-     *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $voicemailUser
-     *
-     * @return self
-     */
-    public function setVoicemailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $voicemailUser = null);
-
-    /**
      * Get voicemailUser
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getVoicemailUser();
 
     /**
-     * Set user
-     *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
-     *
-     * @return self
-     */
-    public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null);
-
-    /**
      * Get user
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getUser();
 
     /**
-     * Set queue
-     *
-     * @param \Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue
-     *
-     * @return self
-     */
-    public function setQueue(\Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue = null);
-
-    /**
      * Get queue
      *
-     * @return \Ivoz\Provider\Domain\Model\Queue\QueueInterface
+     * @return \Ivoz\Provider\Domain\Model\Queue\QueueInterface | null
      */
     public function getQueue();
 
     /**
-     * Set locution
-     *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $locution
-     *
-     * @return self
-     */
-    public function setLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $locution = null);
-
-    /**
      * Get locution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getLocution();
 
     /**
-     * Set conferenceRoom
-     *
-     * @param \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface $conferenceRoom
-     *
-     * @return self
-     */
-    public function setConferenceRoom(\Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface $conferenceRoom = null);
-
-    /**
      * Get conferenceRoom
      *
-     * @return \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface
+     * @return \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface | null
      */
     public function getConferenceRoom();
 
     /**
-     * Set extension
-     *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension
-     *
-     * @return self
-     */
-    public function setExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension = null);
-
-    /**
      * Get extension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getExtension();
 
     /**
-     * Set numberCountry
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry
-     *
-     * @return self
-     */
-    public function setNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry = null);
-
-    /**
      * Get numberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getNumberCountry();
 
@@ -249,7 +135,7 @@ interface ConditionalRouteInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface $condition
      *
-     * @return ConditionalRouteTrait
+     * @return static
      */
     public function addCondition(\Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface $condition);
 
@@ -263,14 +149,14 @@ interface ConditionalRouteInterface extends LoggableEntityInterface
     /**
      * Replace conditions
      *
-     * @param \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface[] $conditions
-     * @return self
+     * @param ArrayCollection $conditions of Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface
+     * @return static
      */
-    public function replaceConditions(Collection $conditions);
+    public function replaceConditions(ArrayCollection $conditions);
 
     /**
      * Get conditions
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface[]
      */
     public function getConditions(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -280,6 +166,4 @@ interface ConditionalRouteInterface extends LoggableEntityInterface
      * @return null|string
      */
     public function getTarget(string $prefix = '');
-
 }
-

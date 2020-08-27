@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\NotificationTemplateContent;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -33,6 +31,11 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     private $body;
 
     /**
+     * @var string
+     */
+    private $bodyType = 'text/plain';
+
+    /**
      * @var integer
      */
     private $id;
@@ -58,7 +61,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -69,6 +72,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
             'fromAddress' => 'fromAddress',
             'subject' => 'subject',
             'body' => 'body',
+            'bodyType' => 'bodyType',
             'id' => 'id',
             'notificationTemplateId' => 'notificationTemplate',
             'languageId' => 'language'
@@ -80,32 +84,29 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'fromName' => $this->getFromName(),
             'fromAddress' => $this->getFromAddress(),
             'subject' => $this->getSubject(),
             'body' => $this->getBody(),
+            'bodyType' => $this->getBodyType(),
             'id' => $this->getId(),
             'notificationTemplate' => $this->getNotificationTemplate(),
             'language' => $this->getLanguage()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->notificationTemplate = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\NotificationTemplate\\NotificationTemplate', $this->getNotificationTemplateId());
-        $this->language = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Language\\Language', $this->getLanguageId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -121,7 +122,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromName()
     {
@@ -141,7 +142,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromAddress()
     {
@@ -161,7 +162,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSubject()
     {
@@ -181,11 +182,31 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getBody()
     {
         return $this->body;
+    }
+
+    /**
+     * @param string $bodyType
+     *
+     * @return static
+     */
+    public function setBodyType($bodyType = null)
+    {
+        $this->bodyType = $bodyType;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getBodyType()
+    {
+        return $this->bodyType;
     }
 
     /**
@@ -201,7 +222,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -221,7 +242,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
      */
     public function getNotificationTemplate()
     {
@@ -229,7 +250,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -243,7 +264,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNotificationTemplateId()
     {
@@ -267,7 +288,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageDto
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageDto | null
      */
     public function getLanguage()
     {
@@ -275,7 +296,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -289,7 +310,7 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getLanguageId()
     {
@@ -300,5 +321,3 @@ abstract class NotificationTemplateContentDtoAbstract implements DataTransferObj
         return null;
     }
 }
-
-

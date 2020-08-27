@@ -3,18 +3,27 @@
 namespace Worker;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationRepository;
+use Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateRepository;
+use Ivoz\Cgr\Domain\Model\TpRate\TpRateRepository;
+use Ivoz\Core\Application\Service\EntityTools;
 use GearmanJob;
-use Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateDto;
-use Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface;
-use Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateRepository;
-use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
+use Ivoz\Core\Infrastructure\Domain\Service\Cgrates\ReloadService;
+use Ivoz\Provider\Domain\Model\Destination\DestinationRepository;
+use Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateRepository;
+use Ivoz\Provider\Domain\Model\DestinationRateGroup\DestinationRateGroupDto;
+use Ivoz\Provider\Domain\Model\DestinationRateGroup\DestinationRateGroupInterface;
+use Ivoz\Provider\Domain\Model\DestinationRateGroup\DestinationRateGroupRepository;
+use Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface;
 use Mmoreram\GearmanBundle\Driver\Gearman;
 use Symfony\Bridge\Monolog\Logger;
 use Symfony\Component\Serializer\Encoder\CsvEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-use Ivoz\Core\Infrastructure\Domain\Service\Redis\Client;
+use Ivoz\Core\Domain\Service\DomainEventPublisher;
+use Ivoz\Core\Application\RequestId;
+use Ivoz\Core\Application\RegisterCommandTrait;
+use Assert\Assertion;
 
 /**
  * @Gearman\Work(
@@ -26,60 +35,50 @@ use Ivoz\Core\Infrastructure\Domain\Service\Redis\Client;
  */
 class Rates
 {
-    /**
-     * @var EntityManagerInterface
-     */
-    protected $em;
+    const CHUNK_SIZE = 100;
+    const MAX_LINES = 75001;
 
-    /**
-     * @var EntityPersisterInterface
-     */
-    protected $entityPersister;
+    use RegisterCommandTrait;
 
-    /**
-     * @var Logger
-     */
-    protected $logger;
+    private $eventPublisher;
+    private $requestId;
+    private $em;
+    private $destinationRepository;
+    private $tpDestinationRepository;
+    private $destinationRateRepository;
+    private $tpRateRepository;
+    private $tpDestinationRateRepository;
+    private $entityTools;
+    private $logger;
+    private $destinationRateGroupRepository;
+    private $reloadService;
 
-    /**
-     * @var DestinationRateInterface
-     */
-    protected $destinationRateRepository;
-
-    /**
-     * @var DtoAssembler
-     */
-    protected $dtoAssembler;
-
-
-    /**
-     * @var Client
-     */
-    protected $redisClient;
-
-    /**
-     * Rates constructor.
-     * @param EntityManagerInterface $em
-     * @param DestinationRateRepository $destinationRateRepository
-     * @param DtoAssembler $dtoAssembler
-     * @param EntityPersisterInterface $entityPersister
-     * @param Logger $logger
-     * @param Client $redisClient
-     */
     public function __construct(
+        DomainEventPublisher $eventPublisher,
+        RequestId $requestId,
         EntityManagerInterface $em,
+        DestinationRepository $destinationRepository,
+        DestinationRateGroupRepository $destinationRateGroupRepository,
+        TpDestinationRepository $tpDestinationRepository,
         DestinationRateRepository $destinationRateRepository,
-        DtoAssembler $dtoAssembler,
-        EntityPersisterInterface $entityPersister,
+        TpRateRepository $tpRateRepository,
+        TpDestinationRateRepository $tpDestinationRateRepository,
+        EntityTools $entityTools,
         Logger $logger,
-        Client $redisClient
+        ReloadService $reloadService
     ) {
+        $this->eventPublisher = $eventPublisher;
+        $this->requestId = $requestId;
         $this->em = $em;
+        $this->destinationRepository = $destinationRepository;
+        $this->tpDestinationRepository = $tpDestinationRepository;
+        $this->destinationRateGroupRepository = $destinationRateGroupRepository;
         $this->destinationRateRepository = $destinationRateRepository;
-        $this->dtoAssembler = $dtoAssembler;
-        $this->entityPersister = $entityPersister;
+        $this->tpDestinationRateRepository = $tpDestinationRateRepository;
+        $this->tpRateRepository = $tpRateRepository;
+        $this->entityTools = $entityTools;
         $this->logger = $logger;
-        $this->redisClient = $redisClient;
+        $this->reloadService = $reloadService;
     }
 
     /**
@@ -90,40 +89,52 @@ class Rates
      *
      * @param GearmanJob $serializedJob Serialized object with job parameters
      * @return boolean
+     * @throws \Exception
      */
     public function import(GearmanJob $serializedJob)
     {
         // Thanks Gearmand, you've done your job
         $serializedJob->sendComplete("DONE");
+        $this->registerCommand('Worker', 'rates');
 
         $job = igbinary_unserialize($serializedJob->workload());
         $params = $job->getParams();
 
-        /** @var DestinationRateInterface $destinationRate */
-        $destinationRate = $this->destinationRateRepository->find(
+        /** @var DestinationRateGroupInterface | null $destinationRateGroup */
+        $destinationRateGroup = $this->destinationRateGroupRepository->find(
             $params['id']
         );
 
-        if (!$destinationRate) {
+        if (!$destinationRateGroup) {
             $this->logger->error('Unknown destination rate with id ' . $params['id']);
-            throw new \Exception();
+            throw new \Exception('Unknown destination rate');
         }
 
-        $destinationRateId = $destinationRate->getId();
-        $brandId = $destinationRate->getBrand()->getId();
+        $destinationRateGroupId = $destinationRateGroup->getId();
+        $brand = $destinationRateGroup->getBrand();
+        $brandId = $brand->getId();
 
-        /** @var DestinationRateDto $destinationRateDto */
-        $destinationRateDto = $this->dtoAssembler->toDto(
-            $destinationRate
-        );
+        $roundingMethod = $destinationRateGroup->getRoundingMethod();
 
-        $destinationRateDto->setStatus('inProgress');
+        /** @var DestinationRateGroupDto $destinationRateGroupDto */
+        $destinationRateGroupDto = $this
+            ->entityTools
+            ->entityToDto(
+                $destinationRateGroup
+            );
+
+        $destinationRateGroupDto->setStatus('inProgress');
         $this
-            ->entityPersister
-            ->persistDto($destinationRateDto, $destinationRate, true);
+            ->entityTools
+            ->persistDto(
+                $destinationRateGroupDto,
+                $destinationRateGroup,
+                true
+            );
+
         $this->logger->debug('Importer in progress');
 
-        $importerArguments = $destinationRate
+        $importerArguments = $destinationRateGroup
             ->getFile()
             ->getImporterArguments();
 
@@ -132,8 +143,9 @@ class Rates
             $importerArguments['enclosure'] ?? '"',
             $importerArguments['scape'] ?? '\\'
         );
+
         $serializer = new Serializer([new ObjectNormalizer()], [$csvEncoder]);
-        $csvContents = file_get_contents($destinationRateDto->getFilePath());
+        $csvContents = file_get_contents($destinationRateGroupDto->getFilePath());
         if ($importerArguments['ignoreFirst']) {
             $csvContents = preg_replace('/^.+\n/', '', $csvContents);
         }
@@ -145,105 +157,274 @@ class Rates
             $csvContents,
             'csv'
         );
-        $tpDestinationRates = [];
+        $destinationRates = [];
+        $destinations = [];
 
         if (current($csvLines) && !is_array(current($csvLines))) {
             // We require an array of arrays
             $csvLines = [$csvLines];
         }
 
-        // Parse every CSV line
-        foreach ($csvLines as $line) {
-
-            $line["Per minute charge"]  = sprintf("%.4f", $line["rateCost"]);
-            $line["Connection charge"]  = sprintf("%.4f", $line["connectionCharge"]);
-
-            $tpDestinationRates[] =
-                sprintf('("%s", "%s", "%s", "%s", "%ss", %s)',
-                    $line['destinationPrefix'],
-                    $line['destinationName'],
-                    $line["connectionCharge"],
-                    $line["rateCost"],
-                    $line["rateIncrement"],
-                    sprintf('(SELECT id FROM DestinationRates WHERE id = %d LIMIT 1)', $destinationRateId)
+        try {
+            Assertion::lessOrEqualThan(
+                count($csvLines),
+                self::MAX_LINES,
+                'File cannot exceed ' . self::MAX_LINES . ' lines'
             );
-        }
 
-        if (!$tpDestinationRates) {
-            echo "No lines parsed from CSV File: " . $params['filePath'];
-            $destinationRateDto->setStatus('error');
+            // Parse every CSV line
+            $lineNum = $importerArguments['ignoreFirst']
+                ? 1
+                : 0;
+
+            $parsedPrefixes = [];
+
+            foreach ($csvLines as $k => $line) {
+                $lineNum++;
+
+                // Ignore empty lines
+                $isEmptyRow =
+                    count($line) === 1
+                    && empty(trim($line['destinationName']));
+
+                if ($isEmptyRow) {
+                    unset($csvLines[$k]);
+                    continue;
+                }
+
+                // Trim spaces from every column
+                foreach ($line as $key => $column) {
+                    $line[$key] = trim($column);
+                    $csvLines[$k][$key] = $line[$key];
+                }
+
+                // Validate columns number
+                Assertion::count(
+                    $line,
+                    5,
+                    'Five columns were expected on line ' . $lineNum
+                );
+
+                // Validate destinationName
+                Assertion::notEmpty(
+                    $line['destinationName'],
+                    'Empty destination name was found on line ' . $lineNum
+                );
+
+                // Validate destinationPrefix
+                Assertion::regex(
+                    $line['destinationPrefix'],
+                    '/^\\+[0-9]+$/',
+                    'Destination prefix does not match expected format on line ' . $lineNum
+                );
+
+                $prefixAlreadyUsed = in_array(
+                    $line['destinationPrefix'],
+                    $parsedPrefixes
+                );
+
+                Assertion::false(
+                    $prefixAlreadyUsed,
+                    'Duplicated prefix on line '. $lineNum
+                );
+
+                // Validate & set format to rateCost
+                Assertion::numeric(
+                    $line['rateCost'],
+                    'Numeric rateCost was expected on line ' . $lineNum
+                );
+                Assertion::greaterOrEqualThan(
+                    $line['rateCost'],
+                    0,
+                    'rateCost was expected to be >= zero on line ' . $lineNum
+                );
+                Assertion::true(
+                    $line['rateCost'] == floatval($line['rateCost']),
+                    'Float rateCost was expected on line ' . $lineNum
+                );
+                $csvLines[$k]['rateCost'] = floatval($line['rateCost']);
+
+                // Validate & set format to connectionCharge
+                Assertion::numeric(
+                    $line['connectionCharge'],
+                    'Numeric connectionCharge was expected on line ' . $lineNum
+                );
+                Assertion::greaterOrEqualThan(
+                    $line['connectionCharge'],
+                    0,
+                    'connectionCharge was expected to be >= zero on line ' . $lineNum
+                );
+                Assertion::true(
+                    $line['connectionCharge'] == floatval($line['connectionCharge']),
+                    'Float connectionCharge was expected on line ' . $lineNum
+                );
+                $csvLines[$k]['connectionCharge'] = floatval($line['connectionCharge']);
+
+                // Validate & set format to rateIncrement
+                Assertion::numeric(
+                    $line['rateIncrement'],
+                    'Numeric rateIncrement was expected on line ' . $lineNum
+                );
+                Assertion::greaterThan(
+                    $line['rateIncrement'],
+                    0,
+                    'rateIncrement was expected to be greater than zero on line ' . $lineNum
+                );
+                Assertion::integerish(
+                    $line['rateIncrement'],
+                    'Integer rateIncrement was expected on line ' . $lineNum
+                );
+                $csvLines[$k]['rateIncrement'] = intval($line['rateIncrement']);
+
+                $destinationName = utf8_encode($line['destinationName']);
+                $destinations[] = sprintf(
+                    '("%s", "%s", "%s", "%s", "%s", "%d" )',
+                    $line['destinationPrefix'],
+                    $destinationName,
+                    $destinationName,
+                    $destinationName,
+                    $destinationName,
+                    $brandId
+                );
+
+                $parsedPrefixes[] = $line['destinationPrefix'];
+            }
+
+            if (!$destinations) {
+                throw new \Exception(
+                    "No lines parsed from CSV File: " . $params['filePath']
+                );
+            }
+        } catch (\Exception $e) {
+            $this->logger->error(
+                $e->getMessage()
+            );
+
+            $destinationRateGroupDto
+                ->setStatus('error');
+
             $this
-                ->entityPersister
-                ->persistDto($destinationRateDto, $destinationRate, true);
+                ->entityTools
+                ->persistDto(
+                    $destinationRateGroupDto,
+                    $destinationRateGroup,
+                    true
+                );
+
             exit(1);
         }
+
+        $disableDestinations = true;
 
         try {
             $this->em->getConnection()->beginTransaction();
 
-            ////////////////////////////
-            /// tp_destination_rates
-            ////////////////////////////
-            $this->logger->debug('About to insert tp_destination_rates');
-            $tpDestinationRateChunks = array_chunk($tpDestinationRates, 100);
-            foreach ($tpDestinationRateChunks as $tpDestinationRates) {
-
-                $tpDestinationRateInsert = 'REPLACE INTO tp_destination_rates (prefix, prefix_name, connect_fee, rate, rate_increment, destinationRateId) VALUES ' . implode(",", $tpDestinationRates);
-                $this->em->getConnection()->executeQuery($tpDestinationRateInsert);
+            /**
+             * Create any missing Destinations
+             */
+            $this->logger->debug('About to insert Destinations');
+            $destinationChunks = array_chunk($destinations, self::CHUNK_SIZE);
+            foreach ($destinationChunks as $destination) {
+                $this
+                    ->destinationRepository
+                    ->insertIgnoreFromArray($destination);
             }
 
-            $this->logger->debug('About to update tp_destination_rates');
-            $tpDestinationRateUpdateTags = "UPDATE tp_destination_rates SET
-                              tag = CONCAT('b" . $brandId . "dr', destinationRateId),
-                              rates_tag = CONCAT('b" . $brandId . "dr', destinationRateId, 'rt', id),
-                              destinations_tag = CONCAT('b" . $brandId . "dr', destinationRateId, 'dst', id)";
-            $this->em->getConnection()->executeQuery($tpDestinationRateUpdateTags);
-
-            ////////////////////////////
-            /// tp_destinations
-            ////////////////////////////
+            /**
+             * Create any missing tp_destinations from Destination table
+             */
             $this->logger->debug('About to insert tp_destinations');
-            $tpDestinationInsert = "REPLACE INTO tp_destinations
-                          (tag, prefix, name, tpDestinationRateId)
-                        SELECT destinations_tag, prefix, prefix_name, id
-                          FROM tp_destination_rates
-                          WHERE destinationRateId = (SELECT id FROM DestinationRates WHERE id = '$destinationRateId')";
-            $this->em->getConnection()->executeQuery($tpDestinationInsert);
+            $this
+                ->tpDestinationRepository
+                ->syncWithBusiness();
 
-            ////////////////////////////
-            /// tp_rates
-            ////////////////////////////
+            /**
+             *  Update DestinationRates with each CSV row
+             */
+            $destinationPrefixes = $this
+                ->destinationRepository
+                ->getPrefixArrayByBrandId($brandId);
+
+            foreach ($csvLines as $line) {
+                $prefix = $line['destinationPrefix'];
+
+                $destinationRates[] =
+                    sprintf(
+                        '("%s", "%s", "%ss", %s, %d)',
+                        $line["rateCost"],
+                        $line["connectionCharge"],
+                        $line["rateIncrement"],
+                        $destinationPrefixes[$prefix],
+                        $destinationRateGroupId
+                    );
+            }
+
+            $this->logger->debug('About to insert DestinationRates');
+            $tpDestinationRateChunks = array_chunk($destinationRates, self::CHUNK_SIZE);
+            foreach ($tpDestinationRateChunks as $destinationRates) {
+                $affectedRows = $this
+                    ->destinationRateRepository
+                    ->insertIgnoreFromArray($destinationRates);
+
+                // Reload CGRateS destinations only if new prefixes have been added
+                if ($affectedRows > 0) {
+                    $disableDestinations = false;
+                }
+            }
+
+            /**
+             * Update tp_rates with each DestinationRates row
+             */
             $this->logger->debug('About to insert tp_rates');
-            $tpRatesInsert = "REPLACE INTO tp_rates
-                          (tag, rate, connect_fee, rate_increment, group_interval_start, tpDestinationRateId)
-                        SELECT rates_tag, rate, connect_fee, rate_increment, group_interval_start, id
-                          FROM tp_destination_rates
-                          WHERE destinationRateId = (SELECT id FROM DestinationRates WHERE id = '$destinationRateId' LIMIT 1)";
-            $this->em->getConnection()->executeQuery($tpRatesInsert);
+            $this
+                ->tpRateRepository
+                ->syncWithBusiness(
+                    $destinationRateGroupId
+                );
+
+            /**
+             * Update tp_destination_rates with each DestinationRates row
+             */
+            $this
+                ->tpDestinationRateRepository
+                ->syncWithBussines($destinationRateGroupId, $roundingMethod);
+
+            $destinationRateGroupDto->setStatus('imported');
+            $this
+                ->entityTools
+                ->persistDto(
+                    $destinationRateGroupDto,
+                    $destinationRateGroup,
+                    true
+                );
 
             $this->em->getConnection()->commit();
-
-            $destinationRateDto->setStatus('imported');
-            $this
-                ->entityPersister
-                ->persistDto($destinationRateDto, $destinationRate, true);
-
-            $this->redisClient->scheduleFullReload();
-            $this->logger->debug('Importer finished successfuly');
-
         } catch (\Exception $exception) {
-
             $this->logger->error('Importer error. Rollback');
             $this->em->getConnection()->rollback();
 
-            $destinationRateDto->setStatus('error');
+            $destinationRateGroupDto->setStatus('error');
             $this
-                ->entityPersister
-                ->persistDto($destinationRateDto, $destinationRate, true);
+                ->entityTools
+                ->persistDto(
+                    $destinationRateGroupDto,
+                    $destinationRateGroup,
+                    true
+                );
 
             $this->em->close();
 
             throw $exception;
+        }
+
+        try {
+            $this->reloadService->execute(
+                $brand->getCgrTenant(),
+                $disableDestinations
+            );
+            $this->logger->debug('Importer finished successfuly');
+        } catch (\Exception $e) {
+            $this->logger->error('Service reload failed');
         }
 
         return true;

@@ -3,8 +3,9 @@
 namespace Ivoz\Ast\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointRepository;
 use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpoint;
+use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface;
+use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -17,8 +18,77 @@ class PsEndpointDoctrineRepository extends ServiceEntityRepository implements Ps
 {
     public function __construct(RegistryInterface $registry)
     {
-      parent::__construct($registry, PsEndpoint::class);
+        parent::__construct($registry, PsEndpoint::class);
     }
 
-}
+    /**
+     * @inheritdoc
+     * @see PsEndpointRepository::findOneByFriendId
+     */
+    public function findOneByFriendId($id)
+    {
+        /** @var PsEndpointInterface $response */
+        $response = $this->findOneBy([
+            "friend" => $id
+        ]);
 
+        return $response;
+    }
+
+    /**
+     * @inheritdoc
+     * @see PsEndpointRepository::findOneByResidentialDeviceId
+     */
+    public function findOneByResidentialDeviceId($id)
+    {
+        /** @var PsEndpointInterface $response */
+        $response = $this->findOneBy([
+            'residentialDevice' => $id
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * @inheritdoc
+     * @see PsEndpointRepository::findOneByRetailAccountId
+     */
+    public function findOneByRetailAccountId($id)
+    {
+        /** @var PsEndpointInterface $response */
+        $response = $this->findOneBy([
+            'retailAccount' => $id
+        ]);
+
+        return $response;
+    }
+
+
+    /**
+     * @inheritdoc
+     * @see PsEndpointRepository::findOneByTerminalId
+     */
+    public function findOneByTerminalId($id)
+    {
+        /** @var PsEndpointInterface $response */
+        $response = $this->findOneBy([
+            'terminal' => $id
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * @inheritdoc
+     * @see PsEndpointRepository::findOneBySorceryId
+     */
+    public function findOneBySorceryId($sorceryId)
+    {
+        /** @var PsEndpointInterface $response */
+        $response = $this->findOneBy([
+            'sorceryId' => $sorceryId
+        ]);
+
+        return $response;
+    }
+}

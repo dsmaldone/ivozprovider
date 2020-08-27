@@ -14,24 +14,29 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class BalanceMovementAbstract
 {
     /**
-     * @var string
+     * @var float | null
      */
     protected $amount = 0;
 
     /**
-     * @var string
+     * @var float | null
      */
     protected $balance = 0;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | null
      */
     protected $createdOn;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     protected $company;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
+     */
+    protected $carrier;
 
 
     use ChangelogTrait;
@@ -41,14 +46,14 @@ abstract class BalanceMovementAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "BalanceMovement",
             $this->getId()
         );
@@ -72,7 +77,8 @@ abstract class BalanceMovementAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param BalanceMovementInterface|null $entity
      * @param int $depth
      * @return BalanceMovementDto|null
      */
@@ -92,19 +98,22 @@ abstract class BalanceMovementAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var BalanceMovementDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param BalanceMovementDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto BalanceMovementDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, BalanceMovementDto::class);
 
         $self = new static();
@@ -113,39 +122,40 @@ abstract class BalanceMovementAbstract
             ->setAmount($dto->getAmount())
             ->setBalance($dto->getBalance())
             ->setCreatedOn($dto->getCreatedOn())
-            ->setCompany($dto->getCompany())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param BalanceMovementDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto BalanceMovementDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, BalanceMovementDto::class);
 
         $this
             ->setAmount($dto->getAmount())
             ->setBalance($dto->getBalance())
             ->setCreatedOn($dto->getCreatedOn())
-            ->setCompany($dto->getCompany());
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return BalanceMovementDto
      */
@@ -155,7 +165,8 @@ abstract class BalanceMovementAbstract
             ->setAmount(self::getAmount())
             ->setBalance(self::getBalance())
             ->setCreatedOn(self::getCreatedOn())
-            ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth));
+            ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
+            ->setCarrier(\Ivoz\Provider\Domain\Model\Carrier\Carrier::entityToDto(self::getCarrier(), $depth));
     }
 
     /**
@@ -167,26 +178,24 @@ abstract class BalanceMovementAbstract
             'amount' => self::getAmount(),
             'balance' => self::getBalance(),
             'createdOn' => self::getCreatedOn(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null
+            'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
+            'carrierId' => self::getCarrier() ? self::getCarrier()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set amount
      *
-     * @param string $amount
+     * @param float $amount | null
      *
-     * @return self
+     * @return static
      */
-    public function setAmount($amount = null)
+    protected function setAmount($amount = null)
     {
         if (!is_null($amount)) {
-            if (!is_null($amount)) {
-                Assertion::numeric($amount);
-            }
+            Assertion::numeric($amount);
+            $amount = (float) $amount;
         }
 
         $this->amount = $amount;
@@ -197,7 +206,7 @@ abstract class BalanceMovementAbstract
     /**
      * Get amount
      *
-     * @return string
+     * @return float | null
      */
     public function getAmount()
     {
@@ -207,16 +216,15 @@ abstract class BalanceMovementAbstract
     /**
      * Set balance
      *
-     * @param string $balance
+     * @param float $balance | null
      *
-     * @return self
+     * @return static
      */
-    public function setBalance($balance = null)
+    protected function setBalance($balance = null)
     {
         if (!is_null($balance)) {
-            if (!is_null($balance)) {
-                Assertion::numeric($balance);
-            }
+            Assertion::numeric($balance);
+            $balance = (float) $balance;
         }
 
         $this->balance = $balance;
@@ -227,7 +235,7 @@ abstract class BalanceMovementAbstract
     /**
      * Get balance
      *
-     * @return string
+     * @return float | null
      */
     public function getBalance()
     {
@@ -237,17 +245,21 @@ abstract class BalanceMovementAbstract
     /**
      * Set createdOn
      *
-     * @param \DateTime $createdOn
+     * @param \DateTime $createdOn | null
      *
-     * @return self
+     * @return static
      */
-    public function setCreatedOn($createdOn = null)
+    protected function setCreatedOn($createdOn = null)
     {
         if (!is_null($createdOn)) {
-        $createdOn = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
-            $createdOn,
-            'CURRENT_TIMESTAMP'
-        );
+            $createdOn = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
+                $createdOn,
+                'CURRENT_TIMESTAMP'
+            );
+
+            if ($this->createdOn == $createdOn) {
+                return $this;
+            }
         }
 
         $this->createdOn = $createdOn;
@@ -258,21 +270,21 @@ abstract class BalanceMovementAbstract
     /**
      * Get createdOn
      *
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedOn()
     {
-        return $this->createdOn;
+        return !is_null($this->createdOn) ? clone $this->createdOn : null;
     }
 
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
     {
         $this->company = $company;
 
@@ -282,15 +294,36 @@ abstract class BalanceMovementAbstract
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany()
     {
         return $this->company;
     }
 
+    /**
+     * Set carrier
+     *
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier | null
+     *
+     * @return static
+     */
+    protected function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier = null)
+    {
+        $this->carrier = $carrier;
 
+        return $this;
+    }
+
+    /**
+     * Get carrier
+     *
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
+     */
+    public function getCarrier()
+    {
+        return $this->carrier;
+    }
 
     // @codeCoverageIgnoreEnd
 }
-

@@ -18,7 +18,7 @@ class HuntGroupStatusAction
     protected $routerAction;
 
     /**
-     * @var HuntGroupInterface
+     * @var HuntGroupInterface|null
      */
     protected $huntgroup;
 
@@ -31,8 +31,7 @@ class HuntGroupStatusAction
     public function __construct(
         Wrapper $agi,
         RouterAction $routerAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->routerAction = $routerAction;
     }
@@ -59,8 +58,9 @@ class HuntGroupStatusAction
 
         // User answered the call. Job's done.
         $dialStatus = $this->agi->getVariable("DIALSTATUS");
-        if ($dialStatus == "ANSWER")
+        if ($dialStatus == "ANSWER") {
             return;
+        }
 
         // Check pending calls
         $huntGroupEndpoints = explode(';', $this->agi->getVariable("HG_ENDPOINTLIST"));
@@ -71,7 +71,7 @@ class HuntGroupStatusAction
         $timeout = array_shift($huntGroupTimeouts);
 
         // Round Robin strategy infinite loop
-        if ($huntGroup->getStrategy() == HuntGroupAction::RoundRobin) {
+        if ($huntGroup->getStrategy() == HuntGroupInterface::STRATEGY_ROUNDROBIN) {
             // Push again the called user to the end of the list
             if ($dialStatus == "NOANSWER") {
                 // Push again the interface to the back of the list
@@ -82,17 +82,16 @@ class HuntGroupStatusAction
 
         // No more users to be called
         if (empty($huntGroupEndpoints)) {
-
             $this->agi->verbose("Processing Hungroup %s no answer handler.", $huntGroup);
 
             // Play NoAnswer Locution
-            $this->agi->playback($huntGroup->getNoAnswerLocution());
+            $this->agi->playbackLocution($huntGroup->getNoAnswerLocution());
 
             // Route to destination
             $this->routerAction
                 ->setRouteType($huntGroup->getNoAnswerTargetType())
                 ->setRouteExtension($huntGroup->getNoAnswerExtension())
-                ->setRouteVoicemail($huntGroup->getNoAnswerVoiceMailUser())
+                ->setRouteVoicemailUser($huntGroup->getNoAnswerVoiceMailUser())
                 ->setRouteExternal($huntGroup->getNoAnswerNumberValueE164())
                 ->route();
 
@@ -100,8 +99,8 @@ class HuntGroupStatusAction
         }
 
         // Update pending extensions
-        $this->agi->setVariable("HG_ENDPOINTLIST", join($huntGroupEndpoints,';'));
-        $this->agi->setVariable("HG_TIMEOUTLIST", join($huntGroupTimeouts,';'));
+        $this->agi->setVariable("HG_ENDPOINTLIST", join($huntGroupEndpoints, ';'));
+        $this->agi->setVariable("HG_TIMEOUTLIST", join($huntGroupTimeouts, ';'));
 
         // Call next!
         $this->agi->redirect('call-huntgroup');

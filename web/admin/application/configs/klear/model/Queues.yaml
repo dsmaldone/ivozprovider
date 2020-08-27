@@ -4,7 +4,7 @@ production:
   entity: Ivoz\Provider\Domain\Model\Queue\Queue
   fields:
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       required: true
       source:
@@ -134,7 +134,7 @@ production:
         data: mapper
         config:
           entity: \Ivoz\Provider\Domain\Model\User\User
-          filterclass: IvozProvider_Klear_Filter_Voicemail
+          filterClass: IvozProvider_Klear_Filter_Voicemail
           fieldName:
             fields:
               - name
@@ -301,7 +301,7 @@ production:
       defaultValue: 5
       source:
         control: Spinner
-        min: 0
+        min: 1
       info:
         type: box
         position: left
@@ -341,6 +341,23 @@ production:
         icon: help
         text: _("When one member is part of multiples queues, calls from queues with higher weight will be attended first")
         label: _("Need help?")
+    preventMissedCalls:
+      title: _('Prevent missed calls')
+      type: select
+      defaultValue: 1
+      source:
+        data: inline
+        values:
+          '0':
+            title: _("No")
+          '1':
+            title: _("Yes")
+      info:
+        type: box
+        position: left
+        icon: help
+        label: _("Need help?")
+        text: _("When 'Yes', calls will never generate a missed call. When 'No', missed calls will be prevented only for RingAll queues if someone answers.")
 staging:
   _extends: production
 testing:

@@ -5,7 +5,6 @@ namespace Helpers;
 use Assert\Assertion;
 use Doctrine\ORM\EntityManagerInterface;
 use Ivoz\Provider\Domain\Model\Domain\Domain;
-use Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface;
 use Ivoz\Provider\Domain\Model\Terminal\Terminal;
 
 class EndpointResolver
@@ -21,9 +20,9 @@ class EndpointResolver
     }
 
     /**
-     * @param $endpointName
+     * @param string $endpointName
      * @return \Ivoz\Provider\Domain\Model\User\UserInterface
-     * @throws \Assert\AssertionFailedException
+     * @throws \InvalidArgumentException
      */
     public function getUserFromEndpoint($endpointName)
     {
@@ -63,7 +62,7 @@ class EndpointResolver
     }
 
     /**
-     * @param $endpointName
+     * @param string $endpointName
      * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface
      */
     public function getEndpointFromName($endpointName)
@@ -72,27 +71,22 @@ class EndpointResolver
         $endpointRepository = $this->em->getRepository('Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpoint');
 
         /** @var \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $endpoint */
-        $endpoint = $endpointRepository->findOneBy([
-            "sorceryId" => $endpointName
-        ]);
+        $endpoint = $endpointRepository->findOneBySorceryId($endpointName);
 
         return $endpoint;
     }
 
     /**
-     * @param $endpointNum
-     * @param $endpointDomain
+     * @param string $endpointNum
+     * @param string $endpointDomain
      * @return string
-     * @throws \Assert\AssertionFailedException
+     * @throws \InvalidArgumentException
      */
     public function getEndpointNameFromContact($endpointNum, $endpointDomain)
     {
         /** @var \Ivoz\Provider\Domain\Model\Domain\DomainRepository $domainRepository */
         $domainRepository = $this->em->getRepository(Domain::class);
-        /** @var \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain */
-        $domain = $domainRepository->findOneBy([
-            'domain' => $endpointDomain
-        ]);
+        $domain = $domainRepository->findOneByDomain($endpointDomain);
 
         Assertion::notNull(
             $domain,
@@ -102,10 +96,10 @@ class EndpointResolver
         /** @var \Ivoz\Provider\Domain\Model\Terminal\TerminalRepository $terminalRepository */
         $terminalRepository = $this->em->getRepository(Terminal::class);
         /** @var \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal */
-        $terminal = $terminalRepository->findOneBy([
-            'name' => $endpointNum,
-            'domain' => $domain->getId()
-        ]);
+        $terminal = $terminalRepository->findOneByNameAndDomain(
+            $endpointNum,
+            $domain
+        );
 
         Assertion::notNull(
             $terminal,
@@ -124,9 +118,9 @@ class EndpointResolver
     }
 
     /**
-     * @param $endpointName
+     * @param string $endpointName
      * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface|null
-     * @throws \Assert\AssertionFailedException
+     * @throws \InvalidArgumentException
      */
     public function getFriendFromEndpoint($endpointName)
     {
@@ -150,9 +144,35 @@ class EndpointResolver
     }
 
     /**
-     * @param $endpointName
-     * @return RetailAccountInterface|null
-     * @throws \Assert\AssertionFailedException
+     * @param string $endpointName
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
+     * @throws \InvalidArgumentException
+     */
+    public function getResidentialFromEndpoint($endpointName)
+    {
+        /** @var \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $endpoint */
+        $endpoint = $this->getEndpointFromName($endpointName);
+
+        Assertion::notNull(
+            $endpoint,
+            sprintf('No endpoint found for "%s".', $endpointName)
+        );
+
+        /** @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residential */
+        $residential = $endpoint->getResidentialDevice();
+
+        Assertion::notNull(
+            $residential,
+            sprintf('Endpoint "%s" has no residential associated.', $endpointName)
+        );
+
+        return $residential;
+    }
+
+    /**
+     * @param string $endpointName
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+     * @throws \InvalidArgumentException
      */
     public function getRetailFromEndpoint($endpointName)
     {
@@ -164,15 +184,14 @@ class EndpointResolver
             sprintf('No endpoint found for "%s".', $endpointName)
         );
 
-        /** @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retail */
-        $retail = $endpoint->getRetailAccount();
+        /** @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount */
+        $retailAccount = $endpoint->getRetailAccount();
 
         Assertion::notNull(
-            $retail,
-            sprintf('Endpoint "%s" has no retail associated.', $endpointName)
+            $retailAccount,
+            sprintf('Endpoint "%s" has no retail account associated.', $endpointName)
         );
 
-        return $retail;
+        return $retailAccount;
     }
-
 }

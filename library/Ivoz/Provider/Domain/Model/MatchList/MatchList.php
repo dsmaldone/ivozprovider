@@ -1,6 +1,7 @@
 <?php
 
 namespace Ivoz\Provider\Domain\Model\MatchList;
+
 use Ivoz\Provider\Domain\Model\MatchListPattern\MatchListPatternInterface;
 
 /**
@@ -33,7 +34,7 @@ class MatchList extends MatchListAbstract implements MatchListInterface
      * Check if the given number matches the list rules
      *
      * @param string $number in E164 form
-     * @return true if number matches, false otherwise
+     * @return bool true if number matches, false otherwise
      */
     public function numberMatches($number)
     {
@@ -46,7 +47,7 @@ class MatchList extends MatchListAbstract implements MatchListInterface
         foreach ($patterns as $pattern) {
             switch ($pattern->getType()) {
                 case 'number':
-                    if ($pattern->getNumberE164() == $number) {
+                    if ($pattern->getNumberE164() === $number) {
                         return true;
                     }
                     break;
@@ -63,4 +64,3 @@ class MatchList extends MatchListAbstract implements MatchListInterface
         return false;
     }
 }
-

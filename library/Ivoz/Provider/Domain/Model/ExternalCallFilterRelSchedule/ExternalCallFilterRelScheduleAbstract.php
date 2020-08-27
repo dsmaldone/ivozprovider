@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class ExternalCallFilterRelScheduleAbstract
 {
     /**
-     * @var \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface
+     * @var \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface | null
      */
     protected $filter;
 
@@ -31,14 +31,14 @@ abstract class ExternalCallFilterRelScheduleAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "ExternalCallFilterRelSchedule",
             $this->getId()
         );
@@ -62,7 +62,8 @@ abstract class ExternalCallFilterRelScheduleAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param ExternalCallFilterRelScheduleInterface|null $entity
      * @param int $depth
      * @return ExternalCallFilterRelScheduleDto|null
      */
@@ -82,56 +83,58 @@ abstract class ExternalCallFilterRelScheduleAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var ExternalCallFilterRelScheduleDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ExternalCallFilterRelScheduleDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ExternalCallFilterRelScheduleDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ExternalCallFilterRelScheduleDto::class);
 
         $self = new static();
 
         $self
-            ->setFilter($dto->getFilter())
-            ->setSchedule($dto->getSchedule())
+            ->setFilter($fkTransformer->transform($dto->getFilter()))
+            ->setSchedule($fkTransformer->transform($dto->getSchedule()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ExternalCallFilterRelScheduleDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ExternalCallFilterRelScheduleDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ExternalCallFilterRelScheduleDto::class);
 
         $this
-            ->setFilter($dto->getFilter())
-            ->setSchedule($dto->getSchedule());
+            ->setFilter($fkTransformer->transform($dto->getFilter()))
+            ->setSchedule($fkTransformer->transform($dto->getSchedule()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ExternalCallFilterRelScheduleDto
      */
@@ -149,19 +152,17 @@ abstract class ExternalCallFilterRelScheduleAbstract
     {
         return [
             'filterId' => self::getFilter() ? self::getFilter()->getId() : null,
-            'scheduleId' => self::getSchedule() ? self::getSchedule()->getId() : null
+            'scheduleId' => self::getSchedule()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set filter
      *
-     * @param \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $filter
+     * @param \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $filter | null
      *
-     * @return self
+     * @return static
      */
     public function setFilter(\Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $filter = null)
     {
@@ -173,7 +174,7 @@ abstract class ExternalCallFilterRelScheduleAbstract
     /**
      * Get filter
      *
-     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface
+     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface | null
      */
     public function getFilter()
     {
@@ -185,9 +186,9 @@ abstract class ExternalCallFilterRelScheduleAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Schedule\ScheduleInterface $schedule
      *
-     * @return self
+     * @return static
      */
-    public function setSchedule(\Ivoz\Provider\Domain\Model\Schedule\ScheduleInterface $schedule)
+    protected function setSchedule(\Ivoz\Provider\Domain\Model\Schedule\ScheduleInterface $schedule)
     {
         $this->schedule = $schedule;
 
@@ -204,8 +205,5 @@ abstract class ExternalCallFilterRelScheduleAbstract
         return $this->schedule;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\ConditionalRoute;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,7 +18,7 @@ trait ConditionalRouteTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $conditions;
 
@@ -33,20 +32,29 @@ trait ConditionalRouteTrait
         $this->conditions = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param ConditionalRouteDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ConditionalRouteDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getConditions()) {
-            $self->replaceConditions($dto->getConditions());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getConditions())) {
+            $self->replaceConditions(
+                $fkTransformer->transformCollection(
+                    $dto->getConditions()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -56,22 +64,30 @@ trait ConditionalRouteTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param ConditionalRouteDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ConditionalRouteDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getConditions()) {
-            $this->replaceConditions($dto->getConditions());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getConditions())) {
+            $this->replaceConditions(
+                $fkTransformer->transformCollection(
+                    $dto->getConditions()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ConditionalRouteDto
      */
@@ -91,14 +107,12 @@ trait ConditionalRouteTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add condition
      *
      * @param \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface $condition
      *
-     * @return ConditionalRouteTrait
+     * @return static
      */
     public function addCondition(\Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface $condition)
     {
@@ -120,10 +134,10 @@ trait ConditionalRouteTrait
     /**
      * Replace conditions
      *
-     * @param \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface[] $conditions
-     * @return self
+     * @param ArrayCollection $conditions of Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface
+     * @return static
      */
-    public function replaceConditions(Collection $conditions)
+    public function replaceConditions(ArrayCollection $conditions)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -153,7 +167,7 @@ trait ConditionalRouteTrait
 
     /**
      * Get conditions
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface[]
      */
     public function getConditions(Criteria $criteria = null)
@@ -164,7 +178,4 @@ trait ConditionalRouteTrait
 
         return $this->conditions->toArray();
     }
-
-
 }
-

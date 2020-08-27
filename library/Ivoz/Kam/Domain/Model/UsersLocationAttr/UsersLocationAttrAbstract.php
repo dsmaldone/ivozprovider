@@ -24,7 +24,7 @@ abstract class UsersLocationAttrAbstract
     protected $username = '';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $domain;
 
@@ -36,7 +36,7 @@ abstract class UsersLocationAttrAbstract
     /**
      * @var integer
      */
-    protected $atype = '0';
+    protected $atype = 0;
 
     /**
      * @var string
@@ -75,7 +75,8 @@ abstract class UsersLocationAttrAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "UsersLocationAttr",
             $this->getId()
         );
@@ -99,7 +100,8 @@ abstract class UsersLocationAttrAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param UsersLocationAttrInterface|null $entity
      * @param int $depth
      * @return UsersLocationAttrDto|null
      */
@@ -119,19 +121,22 @@ abstract class UsersLocationAttrAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var UsersLocationAttrDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersLocationAttrDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersLocationAttrDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersLocationAttrDto::class);
 
         $self = new static(
@@ -140,27 +145,27 @@ abstract class UsersLocationAttrAbstract
             $dto->getAname(),
             $dto->getAtype(),
             $dto->getAvalue(),
-            $dto->getLastModified());
+            $dto->getLastModified()
+        );
 
         $self
             ->setDomain($dto->getDomain())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersLocationAttrDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersLocationAttrDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersLocationAttrDto::class);
 
         $this
@@ -174,11 +179,11 @@ abstract class UsersLocationAttrAbstract
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return UsersLocationAttrDto
      */
@@ -209,8 +214,6 @@ abstract class UsersLocationAttrAbstract
             'last_modified' => self::getLastModified()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -218,9 +221,9 @@ abstract class UsersLocationAttrAbstract
      *
      * @param string $ruid
      *
-     * @return self
+     * @return static
      */
-    public function setRuid($ruid)
+    protected function setRuid($ruid)
     {
         Assertion::notNull($ruid, 'ruid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($ruid, 64, 'ruid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -245,9 +248,9 @@ abstract class UsersLocationAttrAbstract
      *
      * @param string $username
      *
-     * @return self
+     * @return static
      */
-    public function setUsername($username)
+    protected function setUsername($username)
     {
         Assertion::notNull($username, 'username value "%s" is null, but non null value was expected.');
         Assertion::maxLength($username, 64, 'username value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -270,11 +273,11 @@ abstract class UsersLocationAttrAbstract
     /**
      * Set domain
      *
-     * @param string $domain
+     * @param string $domain | null
      *
-     * @return self
+     * @return static
      */
-    public function setDomain($domain = null)
+    protected function setDomain($domain = null)
     {
         if (!is_null($domain)) {
             Assertion::maxLength($domain, 190, 'domain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -288,7 +291,7 @@ abstract class UsersLocationAttrAbstract
     /**
      * Get domain
      *
-     * @return string
+     * @return string | null
      */
     public function getDomain()
     {
@@ -300,9 +303,9 @@ abstract class UsersLocationAttrAbstract
      *
      * @param string $aname
      *
-     * @return self
+     * @return static
      */
-    public function setAname($aname)
+    protected function setAname($aname)
     {
         Assertion::notNull($aname, 'aname value "%s" is null, but non null value was expected.');
         Assertion::maxLength($aname, 64, 'aname value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -327,14 +330,14 @@ abstract class UsersLocationAttrAbstract
      *
      * @param integer $atype
      *
-     * @return self
+     * @return static
      */
-    public function setAtype($atype)
+    protected function setAtype($atype)
     {
         Assertion::notNull($atype, 'atype value "%s" is null, but non null value was expected.');
         Assertion::integerish($atype, 'atype value "%s" is not an integer or a number castable to integer.');
 
-        $this->atype = $atype;
+        $this->atype = (int) $atype;
 
         return $this;
     }
@@ -354,9 +357,9 @@ abstract class UsersLocationAttrAbstract
      *
      * @param string $avalue
      *
-     * @return self
+     * @return static
      */
-    public function setAvalue($avalue)
+    protected function setAvalue($avalue)
     {
         Assertion::notNull($avalue, 'avalue value "%s" is null, but non null value was expected.');
         Assertion::maxLength($avalue, 255, 'avalue value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -381,15 +384,19 @@ abstract class UsersLocationAttrAbstract
      *
      * @param \DateTime $lastModified
      *
-     * @return self
+     * @return static
      */
-    public function setLastModified($lastModified)
+    protected function setLastModified($lastModified)
     {
         Assertion::notNull($lastModified, 'lastModified value "%s" is null, but non null value was expected.');
         $lastModified = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $lastModified,
             '1900-01-01 00:00:01'
         );
+
+        if ($this->lastModified == $lastModified) {
+            return $this;
+        }
 
         $this->lastModified = $lastModified;
 
@@ -403,11 +410,8 @@ abstract class UsersLocationAttrAbstract
      */
     public function getLastModified()
     {
-        return $this->lastModified;
+        return clone $this->lastModified;
     }
-
-
 
     // @codeCoverageIgnoreEnd
 }
-

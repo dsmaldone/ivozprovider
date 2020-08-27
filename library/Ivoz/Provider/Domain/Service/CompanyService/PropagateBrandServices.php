@@ -2,11 +2,12 @@
 
 namespace Ivoz\Provider\Domain\Service\CompanyService;
 
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Provider\Domain\Model\BrandService\BrandService;
 use Ivoz\Provider\Domain\Model\BrandService\BrandServiceRepository;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
 use Ivoz\Provider\Domain\Model\CompanyService\CompanyService;
+use Ivoz\Provider\Domain\Model\Service\Service;
 use Ivoz\Provider\Domain\Service\Company\CompanyLifecycleEventHandlerInterface;
 
 /**
@@ -15,9 +16,9 @@ use Ivoz\Provider\Domain\Service\Company\CompanyLifecycleEventHandlerInterface;
 class PropagateBrandServices implements CompanyLifecycleEventHandlerInterface
 {
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
      * @var BrandServiceRepository
@@ -25,10 +26,10 @@ class PropagateBrandServices implements CompanyLifecycleEventHandlerInterface
     protected $brandServiceRepository;
 
     public function __construct(
-        EntityPersisterInterface $entityPersister,
+        EntityTools $entityTools,
         BrandServiceRepository $brandServiceRepository
     ) {
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
         $this->brandServiceRepository = $brandServiceRepository;
     }
 
@@ -40,17 +41,26 @@ class PropagateBrandServices implements CompanyLifecycleEventHandlerInterface
     }
 
     /**
-     * @throws \Exception
+     * @param CompanyInterface $company
+     *
+     * @return void
      */
-    public function execute(CompanyInterface $entity, $isNew)
+    public function execute(CompanyInterface $company)
     {
+        $isNew = $company->isNew();
         if (!$isNew) {
             return;
         }
 
-        $services = $this->brandServiceRepository->findBy([
-            'brand' => $entity->getBrand()->getId()
-        ]);
+        // Only propagate vPBX services
+        $companyType = $company->getType();
+        if ($companyType != CompanyInterface::TYPE_VPBX) {
+            return;
+        }
+
+        $services = $this->brandServiceRepository->findByBrandId(
+            $company->getBrand()->getId()
+        );
 
         /**
          * @var BrandService $service
@@ -58,14 +68,30 @@ class PropagateBrandServices implements CompanyLifecycleEventHandlerInterface
         foreach ($services as $service) {
             $companyServiceDto = CompanyService::createDto();
 
+
             $serviceId = $service->getService()->getId();
+            $serviceIden = $service->getService()->getIden();
+
+            // Only propagate vPBX services
+            if (!in_array($serviceIden, Service::VPBX_AVAILABLE_SERVICES, true)) {
+                continue;
+            }
+
             $companyServiceDto
                 ->setServiceId($serviceId)
                 ->setCode($service->getCode())
-                ->setCompanyId($entity->getId());
+                ->setCompanyId($company->getId());
 
-            $companyService = $this->entityPersister->persistDto($companyServiceDto);
-            $entity->addCompanyService($companyService);
+            $companyService = $this->entityTools->persistDto($companyServiceDto);
+
+            $company
+                ->addCompanyService($companyService);
         }
+
+        $this->entityTools
+            ->dispatchQueuedOperations();
+
+        $this->entityTools
+            ->persist($company);
     }
 }

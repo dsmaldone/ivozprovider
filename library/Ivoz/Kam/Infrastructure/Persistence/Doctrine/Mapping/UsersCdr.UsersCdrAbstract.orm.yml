@@ -1,33 +1,28 @@
 Ivoz\Kam\Domain\Model\UsersCdr\UsersCdrAbstract:
   type: mappedSuperclass
+  uniqueConstraints:
+    usersCdr_callid_direction:
+      columns:
+      - callid
+      - direction
   indexes:
-    usersCdr_start_time_idx:
-      columns:
-        - start_time
-    usersCdr_end_time_idx:
-      columns:
-        - end_time
-    usersCdr_callid_idx:
-      columns:
-        - callid
-    usersCdr_xcallid_idx:
-      columns:
-        - xcallid
     usersCdr_brandId:
       columns:
         - brandId
-    usersCdr_companyId:
+    usersCdr_companyId_hidden_startTime:
       columns:
         - companyId
+        - hidden
+        - start_time
     usersCdr_userId:
       columns:
         - userId
     usersCdr_friendId:
       columns:
         - friendId
-    usersCdr_retailAccountId:
+    usersCdr_residentialDeviceId:
       columns:
-        - retailAccountId
+        - residentialDeviceId
   fields:
     startTime:
       type: datetime
@@ -47,7 +42,7 @@ Ivoz\Kam\Domain\Model\UsersCdr\UsersCdrAbstract:
       precision: 10
       scale: 3
       options:
-        default: '0.000'
+        default: 0.0
     direction:
       type: string
       nullable: true
@@ -103,6 +98,11 @@ Ivoz\Kam\Domain\Model\UsersCdr\UsersCdrAbstract:
       length: 255
       options:
         fixed: false
+    hidden:
+      type: boolean
+      nullable: false
+      options:
+        default: 0
   manyToOne:
     brand:
       targetEntity: \Ivoz\Provider\Domain\Model\Brand\BrandInterface
@@ -113,7 +113,7 @@ Ivoz\Kam\Domain\Model\UsersCdr\UsersCdrAbstract:
       joinColumns:
         brandId:
           referencedColumnName: id
-          onDelete: cascade
+          onDelete: set null
       orphanRemoval: false
     company:
       targetEntity: \Ivoz\Provider\Domain\Model\Company\CompanyInterface
@@ -124,7 +124,7 @@ Ivoz\Kam\Domain\Model\UsersCdr\UsersCdrAbstract:
       joinColumns:
         companyId:
           referencedColumnName: id
-          onDelete: cascade
+          onDelete: set null
       orphanRemoval: false
     user:
       targetEntity: \Ivoz\Provider\Domain\Model\User\UserInterface
@@ -145,6 +145,17 @@ Ivoz\Kam\Domain\Model\UsersCdr\UsersCdrAbstract:
       inversedBy: null
       joinColumns:
         friendId:
+          referencedColumnName: id
+          onDelete: set null
+      orphanRemoval: false
+    residentialDevice:
+      targetEntity: \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        residentialDeviceId:
           referencedColumnName: id
           onDelete: set null
       orphanRemoval: false

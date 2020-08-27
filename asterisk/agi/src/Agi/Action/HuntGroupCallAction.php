@@ -13,7 +13,7 @@ class HuntGroupCallAction
     protected $agi;
 
     /**
-     * @var HuntGroupInterface
+     * @var HuntGroupInterface|null
      */
     protected $huntgroup;
 
@@ -24,8 +24,7 @@ class HuntGroupCallAction
      */
     public function __construct(
         Wrapper $agi
-    )
-    {
+    ) {
         $this->agi = $agi;
     }
 
@@ -58,16 +57,11 @@ class HuntGroupCallAction
         $timeout = array_shift($huntGroupTimeouts);
 
         // Configure Dial options
-        $options = "ig";
+        $options = "";
 
         // Cancelled calls may be marked as 'answered elsewhere'
         if ($huntGroup->getPreventMissedCalls()) {
             $options .= "c";
-        }
-
-        // For record asterisk builtin feature code
-        if ($huntGroup->getCompany()->getOnDemandRecord() == 2) {
-            $options .= "xX";
         }
 
         // Call the PSJIP endpoint
@@ -75,5 +69,4 @@ class HuntGroupCallAction
         $this->agi->setVariable("DIAL_TIMEOUT", $timeout);
         $this->agi->setVariable("DIAL_OPTS", $options);
     }
-
 }

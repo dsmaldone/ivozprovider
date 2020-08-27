@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\User;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -35,22 +33,22 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     /**
      * @var boolean
      */
-    private $doNotDisturb = '0';
+    private $doNotDisturb = false;
 
     /**
      * @var boolean
      */
-    private $isBoss = '0';
+    private $isBoss = false;
 
     /**
      * @var boolean
      */
-    private $active = '0';
+    private $active = false;
 
     /**
      * @var integer
      */
-    private $maxCalls = '0';
+    private $maxCalls = 0;
 
     /**
      * @var string
@@ -60,27 +58,22 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     /**
      * @var boolean
      */
-    private $voicemailEnabled = '1';
+    private $voicemailEnabled = true;
 
     /**
      * @var boolean
      */
-    private $voicemailSendMail = '0';
+    private $voicemailSendMail = false;
 
     /**
      * @var boolean
      */
-    private $voicemailAttachSound = '1';
-
-    /**
-     * @var string
-     */
-    private $tokenKey;
+    private $voicemailAttachSound = true;
 
     /**
      * @var boolean
      */
-    private $gsQRCode = '0';
+    private $gsQRCode = false;
 
     /**
      * @var integer
@@ -173,7 +166,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -192,7 +185,6 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
             'voicemailEnabled' => 'voicemailEnabled',
             'voicemailSendMail' => 'voicemailSendMail',
             'voicemailAttachSound' => 'voicemailAttachSound',
-            'tokenKey' => 'tokenKey',
             'gsQRCode' => 'gsQRCode',
             'id' => 'id',
             'companyId' => 'company',
@@ -215,7 +207,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'lastname' => $this->getLastname(),
             'email' => $this->getEmail(),
@@ -228,7 +220,6 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
             'voicemailEnabled' => $this->getVoicemailEnabled(),
             'voicemailSendMail' => $this->getVoicemailSendMail(),
             'voicemailAttachSound' => $this->getVoicemailAttachSound(),
-            'tokenKey' => $this->getTokenKey(),
             'gsQRCode' => $this->getGsQRCode(),
             'id' => $this->getId(),
             'company' => $this->getCompany(),
@@ -247,77 +238,19 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
             'queueMembers' => $this->getQueueMembers(),
             'callForwardSettings' => $this->getCallForwardSettings()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->callAcl = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\CallAcl\\CallAcl', $this->getCallAclId());
-        $this->bossAssistant = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\User\\User', $this->getBossAssistantId());
-        $this->bossAssistantWhiteList = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\MatchList\\MatchList', $this->getBossAssistantWhiteListId());
-        $this->transformationRuleSet = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\TransformationRuleSet\\TransformationRuleSet', $this->getTransformationRuleSetId());
-        $this->language = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Language\\Language', $this->getLanguageId());
-        $this->terminal = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Terminal\\Terminal', $this->getTerminalId());
-        $this->extension = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Extension\\Extension', $this->getExtensionId());
-        $this->timezone = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Timezone\\Timezone', $this->getTimezoneId());
-        $this->outgoingDdi = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Ddi\\Ddi', $this->getOutgoingDdiId());
-        $this->outgoingDdiRule = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\OutgoingDdiRule\\OutgoingDdiRule', $this->getOutgoingDdiRuleId());
-        $this->voicemailLocution = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Locution\\Locution', $this->getVoicemailLocutionId());
-        if (!is_null($this->pickUpRelUsers)) {
-            $items = $this->getPickUpRelUsers();
-            $this->pickUpRelUsers = [];
-            foreach ($items as $item) {
-                $this->pickUpRelUsers[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\PickUpRelUser\\PickUpRelUser',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-        if (!is_null($this->queueMembers)) {
-            $items = $this->getQueueMembers();
-            $this->queueMembers = [];
-            foreach ($items as $item) {
-                $this->queueMembers[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\QueueMember\\QueueMember',
-                    $item->getId() ?? $item
-                );
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
             }
+            $response[$sensitiveField] = '*****';
         }
 
-        if (!is_null($this->callForwardSettings)) {
-            $items = $this->getCallForwardSettings();
-            $this->callForwardSettings = [];
-            foreach ($items as $item) {
-                $this->callForwardSettings[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\CallForwardSetting\\CallForwardSetting',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->pickUpRelUsers = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\PickUpRelUser\\PickUpRelUser',
-            $this->pickUpRelUsers
-        );
-        $this->queueMembers = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\QueueMember\\QueueMember',
-            $this->queueMembers
-        );
-        $this->callForwardSettings = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\CallForwardSetting\\CallForwardSetting',
-            $this->callForwardSettings
-        );
+        return $response;
     }
 
     /**
@@ -333,7 +266,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -353,7 +286,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getLastname()
     {
@@ -373,7 +306,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEmail()
     {
@@ -393,7 +326,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPass()
     {
@@ -413,7 +346,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getDoNotDisturb()
     {
@@ -433,7 +366,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getIsBoss()
     {
@@ -453,7 +386,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getActive()
     {
@@ -473,7 +406,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getMaxCalls()
     {
@@ -493,7 +426,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getExternalIpCalls()
     {
@@ -513,7 +446,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getVoicemailEnabled()
     {
@@ -533,7 +466,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getVoicemailSendMail()
     {
@@ -553,31 +486,11 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getVoicemailAttachSound()
     {
         return $this->voicemailAttachSound;
-    }
-
-    /**
-     * @param string $tokenKey
-     *
-     * @return static
-     */
-    public function setTokenKey($tokenKey = null)
-    {
-        $this->tokenKey = $tokenKey;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTokenKey()
-    {
-        return $this->tokenKey;
     }
 
     /**
@@ -593,7 +506,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getGsQRCode()
     {
@@ -613,7 +526,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -633,7 +546,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -641,7 +554,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -655,7 +568,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -679,7 +592,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclDto
+     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclDto | null
      */
     public function getCallAcl()
     {
@@ -687,7 +600,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -701,7 +614,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCallAclId()
     {
@@ -725,7 +638,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\User\UserDto
+     * @return \Ivoz\Provider\Domain\Model\User\UserDto | null
      */
     public function getBossAssistant()
     {
@@ -733,7 +646,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -747,7 +660,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBossAssistantId()
     {
@@ -771,7 +684,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListDto
+     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListDto | null
      */
     public function getBossAssistantWhiteList()
     {
@@ -779,7 +692,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -793,7 +706,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBossAssistantWhiteListId()
     {
@@ -817,7 +730,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetDto
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetDto | null
      */
     public function getTransformationRuleSet()
     {
@@ -825,7 +738,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -839,7 +752,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getTransformationRuleSetId()
     {
@@ -863,7 +776,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageDto
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageDto | null
      */
     public function getLanguage()
     {
@@ -871,7 +784,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -885,7 +798,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getLanguageId()
     {
@@ -909,7 +822,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalDto
+     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalDto | null
      */
     public function getTerminal()
     {
@@ -917,7 +830,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -931,7 +844,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getTerminalId()
     {
@@ -955,7 +868,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto | null
      */
     public function getExtension()
     {
@@ -963,7 +876,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -977,7 +890,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getExtensionId()
     {
@@ -1001,7 +914,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneDto
+     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneDto | null
      */
     public function getTimezone()
     {
@@ -1009,7 +922,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -1023,7 +936,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getTimezoneId()
     {
@@ -1047,7 +960,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto | null
      */
     public function getOutgoingDdi()
     {
@@ -1055,7 +968,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -1069,7 +982,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getOutgoingDdiId()
     {
@@ -1093,7 +1006,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleDto
+     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleDto | null
      */
     public function getOutgoingDdiRule()
     {
@@ -1101,7 +1014,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -1115,7 +1028,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getOutgoingDdiRuleId()
     {
@@ -1139,7 +1052,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto | null
      */
     public function getVoicemailLocution()
     {
@@ -1147,7 +1060,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -1161,7 +1074,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getVoicemailLocutionId()
     {
@@ -1185,7 +1098,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getPickUpRelUsers()
     {
@@ -1205,7 +1118,7 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getQueueMembers()
     {
@@ -1225,12 +1138,10 @@ abstract class UserDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getCallForwardSettings()
     {
         return $this->callForwardSettings;
     }
 }
-
-

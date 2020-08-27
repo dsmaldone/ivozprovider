@@ -2,14 +2,23 @@
 
 namespace Ivoz\Kam\Domain\Model\Rtpengine;
 
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
-
-
 class RtpengineDto extends RtpengineDtoAbstract
 {
+    /**
+     * @inheritdoc
+     */
+    public static function getPropertyMap(string $context = '', string $role = null)
+    {
+        if ($context === self::CONTEXT_COLLECTION) {
+            return [
+                'url' => 'url',
+                'weight' => 'weight',
+                'disabled' => 'disabled',
+                'description' => 'description',
+                'id' => 'id'
+            ];
+        }
 
+        return parent::getPropertyMap(...func_get_args());
+    }
 }
-
-

@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\UsersPua;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -118,7 +116,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -152,7 +150,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'presUri' => $this->getPresUri(),
             'presId' => $this->getPresId(),
             'event' => $this->getEvent(),
@@ -173,22 +171,19 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
             'extraHeaders' => $this->getExtraHeaders(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -204,7 +199,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPresUri()
     {
@@ -224,7 +219,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPresId()
     {
@@ -244,7 +239,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getEvent()
     {
@@ -264,7 +259,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getExpires()
     {
@@ -284,7 +279,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getDesiredExpires()
     {
@@ -304,7 +299,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getFlag()
     {
@@ -324,7 +319,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEtag()
     {
@@ -344,7 +339,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTupleId()
     {
@@ -364,7 +359,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getWatcherUri()
     {
@@ -384,7 +379,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallId()
     {
@@ -404,7 +399,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getToTag()
     {
@@ -424,7 +419,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromTag()
     {
@@ -444,7 +439,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getCseq()
     {
@@ -464,7 +459,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRecordRoute()
     {
@@ -484,7 +479,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getContact()
     {
@@ -504,7 +499,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRemoteContact()
     {
@@ -524,7 +519,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getVersion()
     {
@@ -544,7 +539,7 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getExtraHeaders()
     {
@@ -564,12 +559,10 @@ abstract class UsersPuaDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

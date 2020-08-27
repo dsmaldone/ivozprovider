@@ -6,14 +6,11 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 
 interface TrunksCdrInterface extends EntityInterface
 {
-    /**
-     * Set startTime
-     *
-     * @param \DateTime $startTime
-     *
-     * @return self
-     */
-    public function setStartTime($startTime);
+    const DIRECTION_INBOUND = 'inbound';
+    const DIRECTION_OUTBOUND = 'outbound';
+
+
+    public function isOutboundCall();
 
     /**
      * Get startTime
@@ -23,29 +20,11 @@ interface TrunksCdrInterface extends EntityInterface
     public function getStartTime();
 
     /**
-     * Set endTime
-     *
-     * @param \DateTime $endTime
-     *
-     * @return self
-     */
-    public function setEndTime($endTime);
-
-    /**
      * Get endTime
      *
      * @return \DateTime
      */
     public function getEndTime();
-
-    /**
-     * Set duration
-     *
-     * @param float $duration
-     *
-     * @return self
-     */
-    public function setDuration($duration);
 
     /**
      * Get duration
@@ -55,308 +34,149 @@ interface TrunksCdrInterface extends EntityInterface
     public function getDuration();
 
     /**
-     * Set caller
-     *
-     * @param string $caller
-     *
-     * @return self
-     */
-    public function setCaller($caller = null);
-
-    /**
      * Get caller
      *
-     * @return string
+     * @return string | null
      */
     public function getCaller();
 
     /**
-     * Set callee
-     *
-     * @param string $callee
-     *
-     * @return self
-     */
-    public function setCallee($callee = null);
-
-    /**
      * Get callee
      *
-     * @return string
+     * @return string | null
      */
     public function getCallee();
 
     /**
-     * Set referee
-     *
-     * @param string $referee
-     *
-     * @return self
-     */
-    public function setReferee($referee = null);
-
-    /**
-     * Get referee
-     *
-     * @return string
-     */
-    public function getReferee();
-
-    /**
-     * Set referrer
-     *
-     * @param string $referrer
-     *
-     * @return self
-     */
-    public function setReferrer($referrer = null);
-
-    /**
-     * Get referrer
-     *
-     * @return string
-     */
-    public function getReferrer();
-
-    /**
-     * Set callid
-     *
-     * @param string $callid
-     *
-     * @return self
-     */
-    public function setCallid($callid = null);
-
-    /**
      * Get callid
      *
-     * @return string
+     * @return string | null
      */
     public function getCallid();
 
     /**
-     * Set callidHash
-     *
-     * @param string $callidHash
-     *
-     * @return self
-     */
-    public function setCallidHash($callidHash = null);
-
-    /**
      * Get callidHash
      *
-     * @return string
+     * @return string | null
      */
     public function getCallidHash();
 
     /**
-     * Set xcallid
-     *
-     * @param string $xcallid
-     *
-     * @return self
-     */
-    public function setXcallid($xcallid = null);
-
-    /**
      * Get xcallid
      *
-     * @return string
+     * @return string | null
      */
     public function getXcallid();
 
     /**
-     * Set diversion
-     *
-     * @param string $diversion
-     *
-     * @return self
-     */
-    public function setDiversion($diversion = null);
-
-    /**
      * Get diversion
      *
-     * @return string
+     * @return string | null
      */
     public function getDiversion();
 
     /**
-     * Set bounced
-     *
-     * @param boolean $bounced
-     *
-     * @return self
-     */
-    public function setBounced($bounced = null);
-
-    /**
      * Get bounced
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getBounced();
 
     /**
-     * Set price
+     * Get parsed
      *
-     * @param string $price
-     *
-     * @return self
+     * @return boolean | null
      */
-    public function setPrice($price = null);
+    public function getParsed();
 
     /**
-     * Get price
+     * Get parserScheduledAt
      *
-     * @return string
+     * @return \DateTime
      */
-    public function getPrice();
-
-    /**
-     * Set priceDetails
-     *
-     * @param string $priceDetails
-     *
-     * @return self
-     */
-    public function setPriceDetails($priceDetails = null);
-
-    /**
-     * Get priceDetails
-     *
-     * @return string
-     */
-    public function getPriceDetails();
-
-    /**
-     * Set direction
-     *
-     * @param string $direction
-     *
-     * @return self
-     */
-    public function setDirection($direction = null);
+    public function getParserScheduledAt();
 
     /**
      * Get direction
      *
-     * @return string
+     * @return string | null
      */
     public function getDirection();
 
     /**
-     * Set cgrid
-     *
-     * @param string $cgrid
-     *
-     * @return self
-     */
-    public function setCgrid($cgrid = null);
-
-    /**
      * Get cgrid
      *
-     * @return string
+     * @return string | null
      */
     public function getCgrid();
 
     /**
-     * Set invoice
-     *
-     * @param \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface $invoice
-     *
-     * @return self
-     */
-    public function setInvoice(\Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface $invoice = null);
-
-    /**
-     * Get invoice
-     *
-     * @return \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface
-     */
-    public function getInvoice();
-
-    /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null);
-
-    /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand();
 
     /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
-
-    /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany();
 
     /**
-     * Set peeringContract
+     * Get carrier
      *
-     * @param \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
      */
-    public function setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract = null);
+    public function getCarrier();
 
     /**
-     * Get peeringContract
+     * Get retailAccount
      *
-     * @return \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
-    public function getPeeringContract();
+    public function getRetailAccount();
 
     /**
-     * Set tpDestination
+     * Get residentialDevice
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface $tpDestination
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
      */
-    public function setTpDestination(\Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface $tpDestination = null);
+    public function getResidentialDevice();
 
     /**
-     * Get tpDestination
+     * Get user
      *
-     * @return \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
-    public function getTpDestination();
+    public function getUser();
 
     /**
-     * Set destinationRate
+     * Get friend
      *
-     * @param \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface $destinationRate
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface | null
      */
-    public function setDestinationRate(\Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface $destinationRate = null);
+    public function getFriend();
 
     /**
-     * Get destinationRate
+     * Get fax
      *
-     * @return \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface
+     * @return \Ivoz\Provider\Domain\Model\Fax\FaxInterface | null
      */
-    public function getDestinationRate();
+    public function getFax();
 
+    /**
+     * Get ddi
+     *
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
+     */
+    public function getDdi();
+
+    /**
+     * Get ddiProvider
+     *
+     * @return \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface | null
+     */
+    public function getDdiProvider();
 }
-

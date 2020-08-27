@@ -4,10 +4,6 @@ Ivoz\Cgr\Domain\Model\TpRatingPlan\TpRatingPlanAbstract:
     tpRatingPlan_tpid:
       columns:
         - tpid
-    tpRatingPlan_tpid_rpl:
-      columns:
-        - tpid
-        - tag
   uniqueConstraints:
     tpid_rplid_destrates_timings_weight:
       columns:
@@ -15,6 +11,7 @@ Ivoz\Cgr\Domain\Model\TpRatingPlan\TpRatingPlanAbstract:
         - tag
         - destrates_tag
         - timing_tag
+        - weight
   fields:
     tpid:
       type: string
@@ -58,40 +55,16 @@ Ivoz\Cgr\Domain\Model\TpRatingPlan\TpRatingPlanAbstract:
       options:
         default: CURRENT_TIMESTAMP
       column: created_at
-  manyToOne:
+  oneToOne:
     ratingPlan:
-      targetEntity: \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface
+      targetEntity: \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanInterface
       cascade: {  }
       fetch: LAZY
       mappedBy: null
-      inversedBy: null
+      inversedBy: tpRatingPlan
       joinColumns:
         ratingPlanId:
           nullable: false
           referencedColumnName: id
           onDelete: cascade
-      orphanRemoval: false
-    destinationRate:
-      targetEntity: \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface
-      cascade: {  }
-      fetch: LAZY
-      mappedBy: null
-      inversedBy: null
-      joinColumns:
-        destinationRateId:
-          nullable: false
-          referencedColumnName: id
-          onDelete: cascade
-      orphanRemoval: false
-    timing:
-      targetEntity: \Ivoz\Cgr\Domain\Model\TpTiming\TpTiming
-      cascade: {  }
-      fetch: LAZY
-      mappedBy: null
-      inversedBy: null
-      joinColumns:
-        timingId:
-          nullable: true
-          referencedColumnName: id
-          onDelete: set null
       orphanRemoval: false

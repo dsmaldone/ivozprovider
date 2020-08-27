@@ -1,5 +1,7 @@
 Ivoz\Provider\Domain\Model\ExternalCallFilterBlackList\ExternalCallFilterBlackList:
+  repositoryClass: Ivoz\Provider\Infrastructure\Persistence\Doctrine\ExternalCallFilterBlackListDoctrineRepository
   type: entity
+  changeTrackingPolicy: DEFERRED_EXPLICIT
   table: ExternalCallFilterBlackLists
   id:
     id:

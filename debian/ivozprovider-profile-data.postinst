@@ -37,18 +37,14 @@ function setup_mysql_access()
 {
     # Allow root access from all hosts
     db_get ivozprovider/mysql_password          || true
-    /usr/bin/mysql --user=root --password="$RET" -e "GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY '$RET'";
-    /usr/bin/mysql --user=root --password="$RET" -e "FLUSH PRIVILEGES;"
+    export MYSQL_PWD=$RET
+    /usr/bin/mysql --user=root -e "GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY '$RET'";
+    /usr/bin/mysql --user=root -e "FLUSH PRIVILEGES;"
 }
 
 function setup_mysql_replication()
 {
-    # Configure this node server-id
-    db_get ivozprovider/mysql_server_id         || true
-    if [ $RET -gt 0 ]; then
-        sed -r -i "s/(server-id       =) .*/\1 $RET/"       /etc/mysql/conf.d/ivozprovider-replication.cnf
-        sed -r -i "s/(bind-address	=) .*/\1 0.0.0.0/"      /etc/mysql/mysql.conf.d/mysqld.cnf
-    fi
+    sed -r -i "s/(bind-address	=) .*/\1 0.0.0.0/"      /etc/mysql/mysql.conf.d/mysqld.cnf
 }
 
 #######################################################################################################################

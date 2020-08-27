@@ -6,6 +6,8 @@ use Agi\Action\HuntGroupCallAction;
 use Agi\Wrapper;
 use Doctrine\ORM\EntityManagerInterface;
 use Ivoz\Provider\Domain\Model\HuntGroup\HuntGroup;
+use Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface;
+use Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupRepository;
 use RouteHandlerAbstract;
 
 class HuntGroups extends RouteHandlerAbstract
@@ -36,8 +38,7 @@ class HuntGroups extends RouteHandlerAbstract
         Wrapper $agi,
         EntityManagerInterface $em,
         HuntGroupCallAction $huntGroupCallAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->em = $em;
         $this->huntGroupCallAction = $huntGroupCallAction;
@@ -45,13 +46,13 @@ class HuntGroups extends RouteHandlerAbstract
 
     public function process()
     {
-        /** @var \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupRepository $huntgroupRepository */
+        /** @var HuntGroupRepository $huntgroupRepository */
         $huntgroupRepository = $this->em->getRepository(HuntGroup::class);
 
         // Get conference Id from extension
         $huntgroupId = $this->agi->getVariable("HG_ID");
 
-        /** @var \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntgroup */
+        /** @var HuntGroupInterface $huntgroup */
         $huntgroup = $huntgroupRepository->find($huntgroupId);
 
         // Configure next call

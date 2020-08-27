@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\Rtpengine;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -25,15 +23,15 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $weight = '1';
+    private $weight = 1;
 
     /**
      * @var boolean
      */
-    private $disabled = '0';
+    private $disabled = false;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $stamp = '2000-01-01 00:00:00';
 
@@ -63,7 +61,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -86,7 +84,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'setid' => $this->getSetid(),
             'url' => $this->getUrl(),
             'weight' => $this->getWeight(),
@@ -96,22 +94,19 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
             'id' => $this->getId(),
             'mediaRelaySet' => $this->getMediaRelaySet()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->mediaRelaySet = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\MediaRelaySet\\MediaRelaySet', $this->getMediaRelaySetId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -127,7 +122,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getSetid()
     {
@@ -147,7 +142,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getUrl()
     {
@@ -167,7 +162,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getWeight()
     {
@@ -187,7 +182,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getDisabled()
     {
@@ -207,7 +202,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getStamp()
     {
@@ -227,7 +222,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -247,7 +242,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -267,7 +262,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetDto
+     * @return \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySetDto | null
      */
     public function getMediaRelaySet()
     {
@@ -275,7 +270,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -289,7 +284,7 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getMediaRelaySetId()
     {
@@ -300,5 +295,3 @@ abstract class RtpengineDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

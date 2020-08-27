@@ -2,18 +2,16 @@
 
 namespace Ivoz\Provider\Application\Service\FaxesInOut;
 
+use Assert\Assertion;
+use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Application\Service\Assembler\CustomDtoAssemblerInterface;
 use Ivoz\Core\Application\Service\StoragePathResolverCollection;
 use Ivoz\Core\Domain\Model\EntityInterface;
-use Ivoz\Core\Application\Service\Assembler\CustomDtoAssemblerInterface;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutDto;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutInterface;
-use Assert\Assertion;
 
 class FaxesInOutDtoAssembler implements CustomDtoAssemblerInterface
 {
-    /**
-     * @var StoragePathResolverCollection
-     */
     protected $storagePathResolver;
 
     public function __construct(
@@ -23,29 +21,28 @@ class FaxesInOutDtoAssembler implements CustomDtoAssemblerInterface
     }
 
     /**
-     * @param FaxesInOutInterface $entity
-     * @param integer $depth
-     * @return FaxesInOutDTO
+     * @param FaxesInOutInterface $faxesInOut
+     * @throws \Exception
      */
-    public function toDto(EntityInterface $entity, $depth = 0)
+    public function toDto(EntityInterface $faxesInOut, int $depth = 0, string $context = null): DataTransferObjectInterface
     {
-        Assertion::isInstanceOf($entity, FaxesInOutInterface::class);
+        Assertion::isInstanceOf($faxesInOut, FaxesInOutInterface::class);
 
-        /** @var FaxesInOutDTO $dto */
-        $dto = $entity->toDto($depth);
-        $id = $entity->getId();
+        /** @var FaxesInOutDto $dto */
+        $dto = $faxesInOut->toDto($depth);
+        $id = $faxesInOut->getId();
 
         if (!$id) {
             return $dto;
         }
 
-        if ($entity->getFile()->getFileSize()) {
+        if ($faxesInOut->getFile()->getFileSize()) {
             $pathResolver = $this
                 ->storagePathResolver
                 ->getPathResolver('file');
 
             $dto->setFilePath(
-                $pathResolver->getFilePath($entity)
+                $pathResolver->getFilePath($faxesInOut)
             );
         }
 

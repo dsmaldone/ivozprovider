@@ -42,7 +42,7 @@ class Invoice
     protected $country;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $registryData;
 
@@ -68,6 +68,22 @@ class Invoice
         $this->setRegistryData($registryData);
     }
 
+    /**
+     * Equals
+     */
+    public function equals(self $invoice)
+    {
+        return
+            $this->getNif() === $invoice->getNif() &&
+            $this->getPostalAddress() === $invoice->getPostalAddress() &&
+            $this->getPostalCode() === $invoice->getPostalCode() &&
+            $this->getTown() === $invoice->getTown() &&
+            $this->getProvince() === $invoice->getProvince() &&
+            $this->getCountry() === $invoice->getCountry() &&
+            $this->getRegistryData() === $invoice->getRegistryData();
+    }
+
+
     // @codeCoverageIgnoreStart
 
     /**
@@ -75,7 +91,7 @@ class Invoice
      *
      * @param string $nif
      *
-     * @return self
+     * @return static
      */
     protected function setNif($nif)
     {
@@ -102,7 +118,7 @@ class Invoice
      *
      * @param string $postalAddress
      *
-     * @return self
+     * @return static
      */
     protected function setPostalAddress($postalAddress)
     {
@@ -129,7 +145,7 @@ class Invoice
      *
      * @param string $postalCode
      *
-     * @return self
+     * @return static
      */
     protected function setPostalCode($postalCode)
     {
@@ -156,7 +172,7 @@ class Invoice
      *
      * @param string $town
      *
-     * @return self
+     * @return static
      */
     protected function setTown($town)
     {
@@ -183,7 +199,7 @@ class Invoice
      *
      * @param string $province
      *
-     * @return self
+     * @return static
      */
     protected function setProvince($province)
     {
@@ -210,7 +226,7 @@ class Invoice
      *
      * @param string $country
      *
-     * @return self
+     * @return static
      */
     protected function setCountry($country)
     {
@@ -235,9 +251,9 @@ class Invoice
     /**
      * Set registryData
      *
-     * @param string $registryData
+     * @param string $registryData | null
      *
-     * @return self
+     * @return static
      */
     protected function setRegistryData($registryData = null)
     {
@@ -253,15 +269,12 @@ class Invoice
     /**
      * Get registryData
      *
-     * @return string
+     * @return string | null
      */
     public function getRegistryData()
     {
         return $this->registryData;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

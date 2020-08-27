@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Calendar;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -32,6 +30,11 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
      */
     private $holidayDates = null;
 
+    /**
+     * @var \Ivoz\Provider\Domain\Model\CalendarPeriod\CalendarPeriodDto[] | null
+     */
+    private $calendarPeriods = null;
+
 
     use DtoNormalizer;
 
@@ -43,7 +46,7 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -61,42 +64,26 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'id' => $this->getId(),
             'company' => $this->getCompany(),
-            'holidayDates' => $this->getHolidayDates()
+            'holidayDates' => $this->getHolidayDates(),
+            'calendarPeriods' => $this->getCalendarPeriods()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        if (!is_null($this->holidayDates)) {
-            $items = $this->getHolidayDates();
-            $this->holidayDates = [];
-            foreach ($items as $item) {
-                $this->holidayDates[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\HolidayDate\\HolidayDate',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->holidayDates = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\HolidayDate\\HolidayDate',
-            $this->holidayDates
-        );
+        return $response;
     }
 
     /**
@@ -112,7 +99,7 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -132,7 +119,7 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -152,7 +139,7 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -160,7 +147,7 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -174,7 +161,7 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -198,12 +185,30 @@ abstract class CalendarDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getHolidayDates()
     {
         return $this->holidayDates;
     }
+
+    /**
+     * @param array $calendarPeriods
+     *
+     * @return static
+     */
+    public function setCalendarPeriods($calendarPeriods = null)
+    {
+        $this->calendarPeriods = $calendarPeriods;
+
+        return $this;
+    }
+
+    /**
+     * @return array | null
+     */
+    public function getCalendarPeriods()
+    {
+        return $this->calendarPeriods;
+    }
 }
-
-

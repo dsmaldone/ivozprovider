@@ -19,7 +19,7 @@ Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingAbstract:
       column: callForwardType
     targetType:
       type: string
-      nullable: false
+      nullable: true
       length: 25
       options:
         fixed: false
@@ -37,7 +37,7 @@ Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingAbstract:
       nullable: false
       options:
         unsigned: false
-        default: '10'
+        default: 10
       column: noAnswerTimeout
     enabled:
       type: boolean
@@ -55,7 +55,7 @@ Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingAbstract:
       joinColumns:
         userId:
           referencedColumnName: id
-          nullable: false
+          nullable: true
           onDelete: cascade
       orphanRemoval: false
     extension:
@@ -68,6 +68,7 @@ Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingAbstract:
         extensionId:
           referencedColumnName: id
           onDelete: cascade
+          nullable: true
       orphanRemoval: false
     voiceMailUser:
       targetEntity: \Ivoz\Provider\Domain\Model\User\UserInterface
@@ -79,6 +80,7 @@ Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingAbstract:
         voiceMailUserId:
           referencedColumnName: id
           onDelete: cascade
+          nullable: true
       orphanRemoval: false
     numberCountry:
       targetEntity: \Ivoz\Provider\Domain\Model\Country\CountryInterface
@@ -90,4 +92,28 @@ Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingAbstract:
         numberCountryId:
           referencedColumnName: id
           onDelete: set null
+      orphanRemoval: false
+    residentialDevice:
+      targetEntity: \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: callForwardSettings
+      joinColumns:
+        residentialDeviceId:
+          referencedColumnName: id
+          nullable: true
+          onDelete: cascade
+      orphanRemoval: false
+    retailAccount:
+      targetEntity: \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: callForwardSettings
+      joinColumns:
+        retailAccountId:
+          referencedColumnName: id
+          nullable: true
+          onDelete: cascade
       orphanRemoval: false

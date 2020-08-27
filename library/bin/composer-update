@@ -1,36 +1,49 @@
 #!/bin/bash
 
-pushd /opt/irontec/ivozprovider/library
-    rm -fr composer.lock vendor
-    composer install $*
-popd
+if [ "$1" == "--full" ]; then
+    pushd /opt/irontec/ivozprovider/library
+        composer update $*
+    popd
+fi
 
 pushd /opt/irontec/ivozprovider/asterisk/agi
-    rm -fr composer.lock vendor
-    composer install $*
+    composer update $*
 popd
 
 pushd /opt/irontec/ivozprovider/microservices/recordings
-    rm -fr composer.lock vendor
-    composer install $*
+    composer update $*
 popd
 
 pushd /opt/irontec/ivozprovider/microservices/workers
-    rm -fr composer.lock vendor
-    composer install $*
+    composer update $*
 popd
 
 pushd /opt/irontec/ivozprovider/microservices/balances
-    rm -fr composer.lock vendor
-    composer install $*
+    composer update $*
 popd
 
-pushd /opt/irontec/ivozprovider/scheme
-    rm -fr composer.lock vendor
-    composer install $*
+pushd /opt/irontec/ivozprovider/microservices/scheduler
+    composer update $*
 popd
 
-pushd /opt/irontec/ivozprovider/web/rest
-    rm -fr composer.lock vendor
-    composer install $*
+pushd /opt/irontec/ivozprovider/microservices/realtime
+    composer update $*
 popd
+
+pushd /opt/irontec/ivozprovider/schema
+    composer update $*
+popd
+
+pushd /opt/irontec/ivozprovider/web/rest/platform
+    composer update $*
+popd
+
+pushd /opt/irontec/ivozprovider/web/rest/brand
+    composer update $*
+popd
+
+pushd /opt/irontec/ivozprovider/web/rest/client
+    composer update $*
+popd
+
+

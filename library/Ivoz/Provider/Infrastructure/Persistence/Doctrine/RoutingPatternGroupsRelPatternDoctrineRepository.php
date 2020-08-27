@@ -3,8 +3,8 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternRepository;
 use Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPattern;
+use Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -19,5 +19,4 @@ class RoutingPatternGroupsRelPatternDoctrineRepository extends ServiceEntityRepo
     {
         parent::__construct($registry, RoutingPatternGroupsRelPattern::class);
     }
-
 }

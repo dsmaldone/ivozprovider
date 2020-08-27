@@ -5,7 +5,6 @@ namespace Agi\Action;
 use Agi\Wrapper;
 use Ivoz\Provider\Domain\Model\Queue\QueueInterface;
 
-
 class QueueFullAction
 {
     /**
@@ -19,7 +18,7 @@ class QueueFullAction
     protected $routerAction;
 
     /**
-     * @var QueueInterface
+     * @var QueueInterface|null
      */
     protected $queue;
 
@@ -32,8 +31,7 @@ class QueueFullAction
     public function __construct(
         Wrapper $agi,
         RouterAction $routerAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->routerAction = $routerAction;
     }
@@ -61,13 +59,13 @@ class QueueFullAction
         $this->agi->notice("Processing Full queue handler");
 
         // Play timeout locution
-        $this->agi->playback($queue->getFullLocution());
+        $this->agi->playbackLocution($queue->getFullLocution());
 
         // Route to the timeout destination
         $this->routerAction
             ->setRouteType($queue->getFullTargetType())
             ->setRouteExtension($queue->getFullExtension())
-            ->setRouteVoicemail($queue->getFullVoiceMailUser())
+            ->setRouteVoicemailUser($queue->getFullVoiceMailUser())
             ->setRouteExternal($queue->getFullNumberValueE164())
             ->route();
     }

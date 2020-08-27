@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\BalanceMovement;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -13,17 +11,17 @@ use Ivoz\Core\Application\Model\DtoNormalizer;
 abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
 {
     /**
-     * @var string
+     * @var float
      */
     private $amount = 0;
 
     /**
-     * @var string
+     * @var float
      */
     private $balance = 0;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $createdOn = 'CURRENT_TIMESTAMP';
 
@@ -37,6 +35,11 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
      */
     private $company;
 
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierDto | null
+     */
+    private $carrier;
+
 
     use DtoNormalizer;
 
@@ -48,7 +51,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -59,7 +62,8 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
             'balance' => 'balance',
             'createdOn' => 'createdOn',
             'id' => 'id',
-            'companyId' => 'company'
+            'companyId' => 'company',
+            'carrierId' => 'carrier'
         ];
     }
 
@@ -68,33 +72,31 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'amount' => $this->getAmount(),
             'balance' => $this->getBalance(),
             'createdOn' => $this->getCreatedOn(),
             'id' => $this->getId(),
-            'company' => $this->getCompany()
+            'company' => $this->getCompany(),
+            'carrier' => $this->getCarrier()
         ];
+
+        if (!$hideSensitiveData) {
+            return $response;
+        }
+
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
+
+        return $response;
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
-    }
-
-    /**
-     * @param string $amount
+     * @param float $amount
      *
      * @return static
      */
@@ -106,7 +108,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return float | null
      */
     public function getAmount()
     {
@@ -114,7 +116,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param string $balance
+     * @param float $balance
      *
      * @return static
      */
@@ -126,7 +128,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return float | null
      */
     public function getBalance()
     {
@@ -146,7 +148,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedOn()
     {
@@ -166,7 +168,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -186,7 +188,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -194,7 +196,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -208,7 +210,7 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -218,6 +220,50 @@ abstract class BalanceMovementDtoAbstract implements DataTransferObjectInterface
 
         return null;
     }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierDto $carrier
+     *
+     * @return static
+     */
+    public function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierDto $carrier = null)
+    {
+        $this->carrier = $carrier;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierDto | null
+     */
+    public function getCarrier()
+    {
+        return $this->carrier;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setCarrierId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Carrier\CarrierDto($id)
+            : null;
+
+        return $this->setCarrier($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getCarrierId()
+    {
+        if ($dto = $this->getCarrier()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
 }
-
-

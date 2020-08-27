@@ -17,15 +17,19 @@ class ProviderPickUpGroup extends Fixture implements DependentFixtureInterface
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(PickUpGroup::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
 
         /** @var PickUpGroup $item1 */
-        $item1 = $this->createEntityInstanceWithPublicMethods(PickUpGroup::class);
-        $item1->setName('pick up group');
-        $item1->setCompany(
-            $this->getReference('_reference_ProviderCompany1')
-        );
+        $item1 = $this->createEntityInstance(PickUpGroup::class);
+        (function () use ($fixture) {
+            $this->setName('pick up group');
+            $this->setCompany(
+                $fixture->getReference('_reference_ProviderCompany1')
+            );
+        })->call($item1);
+
         $this->addReference('_reference_ProviderPickUpGroup1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);

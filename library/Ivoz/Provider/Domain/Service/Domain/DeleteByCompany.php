@@ -2,7 +2,8 @@
 
 namespace Ivoz\Provider\Domain\Service\Domain;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Provider\Domain\Model\Company\CompanyDto;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
 use Ivoz\Provider\Domain\Service\Company\CompanyLifecycleEventHandlerInterface;
 
@@ -12,36 +13,51 @@ use Ivoz\Provider\Domain\Service\Company\CompanyLifecycleEventHandlerInterface;
  */
 class DeleteByCompany implements CompanyLifecycleEventHandlerInterface
 {
-    /**
-     * @var EntityManagerInterface
-     */
-    protected $em;
+    const POST_REMOVE_PRIORITY = 10;
 
-    /**
-     * DeleteByCompany constructor.
-     * @param EntityManagerInterface $em
-     */
+    protected $entityTools;
+
     public function __construct(
-        EntityManagerInterface $em
+        EntityTools $entityTools
     ) {
-        $this->em = $em;
+        $this->entityTools = $entityTools;
     }
-
 
     public static function getSubscribedEvents()
     {
         return [
-            self::EVENT_POST_REMOVE => 10
+            self::EVENT_POST_REMOVE => self::POST_REMOVE_PRIORITY
         ];
     }
 
-    public function execute(CompanyInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(CompanyInterface $company)
     {
-        $domain = $entity->getDomain();
-
-        if ($domain) {
-            $this->em->remove($domain);
-            $entity->setDomain(null);
+        if ($company->getType() !== CompanyInterface::TYPE_VPBX) {
+            return;
         }
+
+        $domain = $company->getDomain();
+        if (!$domain) {
+            return;
+        }
+
+        /** @var CompanyDto $companyDto */
+        $companyDto = $this
+            ->entityTools
+            ->entityToDto($company);
+
+        $companyDto->setDomain(null);
+
+        $this
+            ->entityTools
+            ->updateEntityByDto(
+                $company,
+                $companyDto
+            );
+
+        $this->entityTools->remove($domain);
     }
 }

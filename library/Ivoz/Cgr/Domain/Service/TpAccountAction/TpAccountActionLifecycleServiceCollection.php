@@ -12,8 +12,14 @@ class TpAccountActionLifecycleServiceCollection implements LifecycleServiceColle
 {
     use LifecycleServiceCollectionTrait;
 
-    protected function addService(TpAccountActionLifecycleEventHandlerInterface $service)
+    public static $bindedBaseServices = [
+    ];
+
+    /**
+     * @return void
+     */
+    protected function addService(string $event, TpAccountActionLifecycleEventHandlerInterface $service)
     {
-        $this->services[] = $service;
+        $this->services[$event][] = $service;
     }
 }

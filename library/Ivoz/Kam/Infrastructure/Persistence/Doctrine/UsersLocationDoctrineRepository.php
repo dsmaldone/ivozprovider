@@ -3,8 +3,10 @@
 namespace Ivoz\Kam\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Kam\Domain\Model\UsersLocation\UsersLocationRepository;
+use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 use Ivoz\Kam\Domain\Model\UsersLocation\UsersLocation;
+use Ivoz\Kam\Domain\Model\UsersLocation\UsersLocationInterface;
+use Ivoz\Kam\Domain\Model\UsersLocation\UsersLocationRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -18,5 +20,115 @@ class UsersLocationDoctrineRepository extends ServiceEntityRepository implements
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, UsersLocation::class);
+    }
+
+    /**
+     * @param string $domain
+     * @param string $username
+     * @return UsersLocationInterface | null
+     */
+    public function findOneByDomainUser(string $domain, string $username)
+    {
+        /** @var UsersLocationInterface $response */
+        $response = $this->findOneBy([
+            'username' => $username,
+            'domain' => $domain
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * @return UsersLocationInterface[]
+     * @throws \Doctrine\ORM\Query\QueryException
+     */
+    public function findByUsernameAndDomain(string $username, string $domain): array
+    {
+        $now = new \DateTime();
+        $qb = $this->createQueryBuilder('self');
+        $qb
+            ->select('self')
+            ->addCriteria(
+                CriteriaHelper::fromArray([
+                    [ 'domain', 'eq', $domain ],
+                    [ 'username', 'eq', $username ],
+                    [ 'expires', 'gte', $now->getTimestamp() ]
+                ])
+            );
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @param string[] $domains
+     * @return UsersLocationInterface[]
+     */
+    public function findByDomains(array $domains): array
+    {
+        $qb = $this->createQueryBuilder('self');
+        $qb
+            ->select('self')
+            ->addCriteria(
+                CriteriaHelper::fromArray([
+                    [ 'domain', 'in', $domains ],
+                ])
+            );
+
+        /** @var UsersLocationInterface[] $results **/
+        $results = $qb->getQuery()->getResult();
+
+        return $this->filterByExpires(
+            $results
+        );
+    }
+
+    /**
+     * @param string[] $names
+     * @param string $domain
+     * @return UsersLocationInterface[]
+     */
+    public function findByNamesInDomain(array $names, string $domain): array
+    {
+        $qb = $this->createQueryBuilder('self');
+        $qb
+            ->select('self')
+            ->addCriteria(
+                CriteriaHelper::fromArray([
+                    [ 'domain', 'eq', $domain ],
+                    [ 'username', 'in', $names ],
+                ])
+            );
+
+        /** @var UsersLocationInterface[] $results **/
+        $results = $qb->getQuery()->getResult();
+
+        return $this->filterByExpires(
+            $results
+        );
+    }
+
+    /**
+     * @param UsersLocationInterface[] $results
+     * @return UsersLocationInterface[]
+     */
+    private function filterByExpires($results)
+    {
+        $response = [];
+        foreach ($results as $result) {
+            $key = $result->getUsername() . '@' . $result->getDomain();
+            if (!array_key_exists($key, $response)) {
+                $response[$key] = $result;
+                continue;
+            }
+
+            $lowerExpires = $result->getExpires() <= $response[$key]->getExpires();
+            if ($lowerExpires) {
+                continue;
+            }
+
+            $response[$key] = $result;
+        }
+
+        return array_values($response);
     }
 }

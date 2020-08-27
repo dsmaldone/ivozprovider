@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\BalanceNotification;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -18,12 +16,12 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     private $toAddress;
 
     /**
-     * @var string
+     * @var float
      */
     private $threshold = 0;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $lastSent;
 
@@ -36,6 +34,11 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
      * @var \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     private $company;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierDto | null
+     */
+    private $carrier;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
@@ -53,7 +56,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -65,6 +68,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
             'lastSent' => 'lastSent',
             'id' => 'id',
             'companyId' => 'company',
+            'carrierId' => 'carrier',
             'notificationTemplateId' => 'notificationTemplate'
         ];
     }
@@ -74,31 +78,28 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'toAddress' => $this->getToAddress(),
             'threshold' => $this->getThreshold(),
             'lastSent' => $this->getLastSent(),
             'id' => $this->getId(),
             'company' => $this->getCompany(),
+            'carrier' => $this->getCarrier(),
             'notificationTemplate' => $this->getNotificationTemplate()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->notificationTemplate = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\NotificationTemplate\\NotificationTemplate', $this->getNotificationTemplateId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -114,7 +115,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getToAddress()
     {
@@ -122,7 +123,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @param string $threshold
+     * @param float $threshold
      *
      * @return static
      */
@@ -134,7 +135,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @return string
+     * @return float | null
      */
     public function getThreshold()
     {
@@ -154,7 +155,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getLastSent()
     {
@@ -174,7 +175,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -194,7 +195,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -202,7 +203,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -216,11 +217,57 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
         if ($dto = $this->getCompany()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierDto $carrier
+     *
+     * @return static
+     */
+    public function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierDto $carrier = null)
+    {
+        $this->carrier = $carrier;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierDto | null
+     */
+    public function getCarrier()
+    {
+        return $this->carrier;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setCarrierId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Carrier\CarrierDto($id)
+            : null;
+
+        return $this->setCarrier($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getCarrierId()
+    {
+        if ($dto = $this->getCarrier()) {
             return $dto->getId();
         }
 
@@ -240,7 +287,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
      */
     public function getNotificationTemplate()
     {
@@ -248,7 +295,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -262,7 +309,7 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNotificationTemplateId()
     {
@@ -273,5 +320,3 @@ abstract class BalanceNotificationDtoAbstract implements DataTransferObjectInter
         return null;
     }
 }
-
-

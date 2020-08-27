@@ -7,6 +7,7 @@ use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Ivoz\Kam\Domain\Model\TrunksUacreg\TrunksUacreg;
+use Ivoz\Kam\Domain\Model\TrunksUacreg\TrunksUacregInterface;
 
 class KamTrunksUacreg extends Fixture implements DependentFixtureInterface
 {
@@ -17,23 +18,27 @@ class KamTrunksUacreg extends Fixture implements DependentFixtureInterface
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(TrunksUacreg::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
-    
-        $item1 = $this->createEntityInstanceWithPublicMethods(TrunksUacreg::class);
-        $item1->setLUuid("946002021");
-        $item1->setRUsername("testUser");
-        $item1->setRDomain("testDomain");
-        $item1->setAuthUsername("testUser");
-        $item1->setAuthPassword("testPasswd");
-        $item1->setAuthProxy("sip:127.0.0.1");
-        $item1->setExpires(3600);
-        $item1->setFlags(0);
-        $item1->setRegDelay(0);
-        $item1->setMultiddi(false);
-        $item1->setBrand($this->getReference('_reference_ProviderBrand1'));
-        $item1->setPeeringContract($this->getReference('_reference_ProviderPeeringContract1'));
-        $this->addReference('_reference_ProviderRetailAccountKamDomainModelTrunksUacregTrunksUacreg1', $item1);
+
+        /** @var TrunksUacregInterface $item1 */
+        $item1 = $this->createEntityInstance(TrunksUacreg::class);
+        (function () use ($fixture) {
+            $this->setLUuid("DDIRegistrationContactUsername");
+            $this->setRUsername("DDIRegistrationUsername");
+            $this->setRDomain("DDIRegistrationDomain");
+            $this->setAuthUsername("DDIRegistrationAuthUsername");
+            $this->setAuthPassword("DDIRegistrationAuthPassword");
+            $this->setAuthProxy("sip:DDIRegistrationAuthProxy");
+            $this->setExpires(2000);
+            $this->setFlags(0);
+            $this->setRegDelay(0);
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setDdiProviderRegistration($fixture->getReference('_reference_ProviderDdiProviderRegistration1'));
+        })->call($item1);
+
+        $this->addReference('_reference_KamTrunksUacreg1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);
 
@@ -45,7 +50,7 @@ class KamTrunksUacreg extends Fixture implements DependentFixtureInterface
     {
         return array(
             ProviderBrand::class,
-            ProviderPeeringContract::class
+            ProviderDdiProviderRegistration::class
         );
     }
 }

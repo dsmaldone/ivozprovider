@@ -2,73 +2,60 @@
 
 namespace spec\Ivoz\Provider\Domain\Service\CompanyService;
 
-use Doctrine\ORM\EntityManagerInterface;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Provider\Domain\Model\Brand\Brand;
 use Ivoz\Provider\Domain\Model\Brand\BrandInterface;
 use Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface;
-use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
+use Ivoz\Provider\Domain\Model\Company\Company;
 use Ivoz\Provider\Domain\Model\Company\CompanyRepository;
-use Ivoz\Provider\Domain\Model\CompanyService\CompanyServiceInterface;
+use Ivoz\Provider\Domain\Model\CompanyService\CompanyService;
 use Ivoz\Provider\Domain\Model\CompanyService\CompanyServiceRepository;
-use Ivoz\Provider\Domain\Model\Service\ServiceInterface;
+use Ivoz\Provider\Domain\Model\Service\Service;
 use Ivoz\Provider\Domain\Service\CompanyService\RemoveByBrandService;
 use PhpSpec\ObjectBehavior;
+use spec\HelperTrait;
 
 class RemoveByBrandServiceSpec extends ObjectBehavior
 {
-    /**
-     * @var EntityManagerInterface
-     */
-    protected $em;
+    use HelperTrait;
 
-    /**
-     * @var EntityPersisterInterface
-     */
-    protected $entityPersister;
-
-    /**
-     * @var CompanyRepository
-     */
+    protected $entityTools;
     protected $companyRepository;
-
-    /**
-     * @var CompanyServiceRepository
-     */
     protected $companyServiceRepository;
-
-    /**
-     * @var BrandServiceInterface
-     */
-    protected $entity;
+    protected $brandService;
 
     function let(
-        EntityManagerInterface $em,
-        EntityPersisterInterface $entityPersister,
+        EntityTools $entityTools,
         CompanyRepository $companyRepository,
         CompanyServiceRepository $companyServiceRepository,
-        BrandServiceInterface $entity,
+        BrandServiceInterface $brandService,
         BrandInterface $brand
     ) {
-        $this->em = $em;
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
         $this->companyRepository = $companyRepository;
         $this->companyServiceRepository = $companyServiceRepository;
-        $this->entity = $entity;
-
-        $brand
-            ->getId()
-            ->willReturn(1);
-
-        $this
-            ->entity
-            ->getBrand()
-            ->willReturn($brand);
+        $this->brandService = $brandService;
 
         $this->beConstructedWith(
-            $this->em,
+            $this->entityTools,
             $this->companyRepository,
             $this->companyServiceRepository
         );
+    }
+
+    protected function prepareExecution()
+    {
+        $brand = $this->getInstance(
+            Brand::class,
+            [
+                'id' => 1
+            ]
+        );
+
+        $this
+            ->brandService
+            ->getBrand()
+            ->willReturn($brand);
     }
 
     function it_is_initializable()
@@ -78,56 +65,70 @@ class RemoveByBrandServiceSpec extends ObjectBehavior
 
     function it_retrieves_every_company_of_this_brand()
     {
+        $this->prepareExecution();
+
         $this
             ->companyRepository
-            ->findBy(['brand' => 1])
+            ->findIdsByBrandId(1)
             ->willReturn([])
             ->shouldBeCalled();
 
-        $this->execute($this->entity, false);
+        $this->execute($this->brandService);
     }
 
-    function it_removes_matching_company_services(
-        CompanyInterface $company,
-        ServiceInterface $service,
-        CompanyServiceInterface $companyService
-    ) {
+    function it_removes_matching_company_services()
+    {
+        $this->prepareExecution();
 
-        $company
-            ->getId()
-            ->willReturn(1)
-            ->shouldBeCalled();
+        $companyId = 10;
+        $company = $this->getInstance(
+            Company::class,
+            [
+                'id' => $companyId
+            ]
+        );
+
+        $serviceId = 11;
+        $service = $this->getInstance(
+            Service::class,
+            [
+                'id' => $serviceId
+            ]
+        );
+
+        $companyService = $this->getInstance(
+            CompanyService::class,
+            []
+        );
 
         $this
-            ->entity
+            ->brandService
             ->getService()
             ->willReturn($service)
             ->shouldBeCalled();
 
-        $service
-            ->getId()
-            ->willReturn(1)
-            ->shouldBeCalled();
-
         $this
             ->companyRepository
-            ->findBy(['brand' => 1])
-            ->willReturn([$company])
+            ->findIdsByBrandId(1)
+            ->willReturn([$companyId])
             ->shouldBeCalled();
 
         $this
             ->companyServiceRepository
-            ->findOneBy([
-                'company' => 1,
-                'service' => 1
-            ])
-            ->willReturn($companyService);
+            ->findCompanyService(
+                $companyId,
+                $serviceId
+            )
+            ->willReturn($companyService)
+            ->shouldBeCalled();
 
         $this
-            ->em
+            ->entityTools
             ->remove($companyService)
             ->shouldBeCalled();
 
-        $this->execute($this->entity, false);
+        $this->execute(
+            $this->brandService
+        );
     }
 }

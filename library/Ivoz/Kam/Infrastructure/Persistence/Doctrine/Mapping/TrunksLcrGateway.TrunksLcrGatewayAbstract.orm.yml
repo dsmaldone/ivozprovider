@@ -4,17 +4,13 @@ Ivoz\Kam\Domain\Model\TrunksLcrGateway\TrunksLcrGatewayAbstract:
     lcrGateway_lcr_id:
       columns:
         - lcr_id
-  uniqueConstraints:
-    peerServerIdUnique:
-      columns:
-        - peerServerId
   fields:
     lcrId:
       type: integer
       nullable: false
       options:
         unsigned: true
-        default: '1'
+        default: 1
       column: lcr_id
     gwName:
       type: string
@@ -80,12 +76,12 @@ Ivoz\Kam\Domain\Model\TrunksLcrGateway\TrunksLcrGatewayAbstract:
       options:
         unsigned: true
   oneToOne:
-    peerServer:
-      targetEntity: \Ivoz\Provider\Domain\Model\PeerServer\PeerServerInterface
+    carrierServer:
+      targetEntity: \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerInterface
       inversedBy: lcrGateway
       fetch: LAZY
       joinColumn:
-        name: peerServerId
+        name: carrierServerId
         referencedColumnName: id
-        nullable: false
+        nullable: true
         onDelete: cascade

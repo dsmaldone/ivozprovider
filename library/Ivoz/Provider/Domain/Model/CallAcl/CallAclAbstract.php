@@ -45,7 +45,8 @@ abstract class CallAclAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "CallAcl",
             $this->getId()
         );
@@ -69,7 +70,8 @@ abstract class CallAclAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param CallAclInterface|null $entity
      * @param int $depth
      * @return CallAclDto|null
      */
@@ -89,58 +91,61 @@ abstract class CallAclAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var CallAclDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CallAclDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CallAclDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CallAclDto::class);
 
         $self = new static(
             $dto->getName(),
-            $dto->getDefaultPolicy());
+            $dto->getDefaultPolicy()
+        );
 
         $self
-            ->setCompany($dto->getCompany())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CallAclDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CallAclDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CallAclDto::class);
 
         $this
             ->setName($dto->getName())
             ->setDefaultPolicy($dto->getDefaultPolicy())
-            ->setCompany($dto->getCompany());
+            ->setCompany($fkTransformer->transform($dto->getCompany()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return CallAclDto
      */
@@ -160,11 +165,9 @@ abstract class CallAclAbstract
         return [
             'name' => self::getName(),
             'defaultPolicy' => self::getDefaultPolicy(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null
+            'companyId' => self::getCompany()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -172,9 +175,9 @@ abstract class CallAclAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 50, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -199,16 +202,16 @@ abstract class CallAclAbstract
      *
      * @param string $defaultPolicy
      *
-     * @return self
+     * @return static
      */
-    public function setDefaultPolicy($defaultPolicy)
+    protected function setDefaultPolicy($defaultPolicy)
     {
         Assertion::notNull($defaultPolicy, 'defaultPolicy value "%s" is null, but non null value was expected.');
         Assertion::maxLength($defaultPolicy, 10, 'defaultPolicy value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($defaultPolicy, array (
-          0 => 'allow',
-          1 => 'deny',
-        ), 'defaultPolicyvalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($defaultPolicy, [
+            CallAclInterface::DEFAULTPOLICY_ALLOW,
+            CallAclInterface::DEFAULTPOLICY_DENY
+        ], 'defaultPolicyvalue "%s" is not an element of the valid values: %s');
 
         $this->defaultPolicy = $defaultPolicy;
 
@@ -230,9 +233,9 @@ abstract class CallAclAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -249,8 +252,5 @@ abstract class CallAclAbstract
         return $this->company;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

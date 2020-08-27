@@ -13,29 +13,11 @@ interface TrunksLcrRuleTargetInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set lcrId
-     *
-     * @param integer $lcrId
-     *
-     * @return self
-     */
-    public function setLcrId($lcrId);
-
-    /**
      * Get lcrId
      *
      * @return integer
      */
     public function getLcrId();
-
-    /**
-     * Set priority
-     *
-     * @param integer $priority
-     *
-     * @return self
-     */
-    public function setPriority($priority);
 
     /**
      * Get priority
@@ -45,15 +27,6 @@ interface TrunksLcrRuleTargetInterface extends LoggableEntityInterface
     public function getPriority();
 
     /**
-     * Set weight
-     *
-     * @param integer $weight
-     *
-     * @return self
-     */
-    public function setWeight($weight);
-
-    /**
      * Get weight
      *
      * @return integer
@@ -61,29 +34,11 @@ interface TrunksLcrRuleTargetInterface extends LoggableEntityInterface
     public function getWeight();
 
     /**
-     * Set rule
-     *
-     * @param \Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface $rule
-     *
-     * @return self
-     */
-    public function setRule(\Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface $rule);
-
-    /**
      * Get rule
      *
      * @return \Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface
      */
     public function getRule();
-
-    /**
-     * Set gw
-     *
-     * @param \Ivoz\Kam\Domain\Model\TrunksLcrGateway\TrunksLcrGatewayInterface $gw
-     *
-     * @return self
-     */
-    public function setGw(\Ivoz\Kam\Domain\Model\TrunksLcrGateway\TrunksLcrGatewayInterface $gw);
 
     /**
      * Get gw
@@ -97,7 +52,7 @@ interface TrunksLcrRuleTargetInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting
      *
-     * @return self
+     * @return static
      */
     public function setOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting);
 
@@ -107,6 +62,4 @@ interface TrunksLcrRuleTargetInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface
      */
     public function getOutgoingRouting();
-
 }
-

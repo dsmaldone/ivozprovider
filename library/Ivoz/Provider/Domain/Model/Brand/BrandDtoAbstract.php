@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Brand;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -35,7 +33,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $maxCalls = '0';
+    private $maxCalls = 0;
 
     /**
      * @var integer
@@ -108,6 +106,31 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     private $defaultTimezone;
 
     /**
+     * @var \Ivoz\Provider\Domain\Model\Currency\CurrencyDto | null
+     */
+    private $currency;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
+     */
+    private $voicemailNotificationTemplate;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
+     */
+    private $faxNotificationTemplate;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
+     */
+    private $invoiceNotificationTemplate;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
+     */
+    private $callCsvNotificationTemplate;
+
+    /**
      * @var \Ivoz\Provider\Domain\Model\Company\CompanyDto[] | null
      */
     private $companies = null;
@@ -118,7 +141,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     private $services = null;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlDto[] | null
+     * @var \Ivoz\Provider\Domain\Model\WebPortal\WebPortalDto[] | null
      */
     private $urls = null;
 
@@ -128,9 +151,14 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     private $relFeatures = null;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto[] | null
+     * @var \Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandDto[] | null
      */
-    private $retailAccounts = null;
+    private $relProxyTrunks = null;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto[] | null
+     */
+    private $residentialDevices = null;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldDto[] | null
@@ -158,7 +186,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -175,7 +203,12 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
             'invoice' => ['nif','postalAddress','postalCode','town','province','country','registryData'],
             'domainId' => 'domain',
             'languageId' => 'language',
-            'defaultTimezoneId' => 'defaultTimezone'
+            'defaultTimezoneId' => 'defaultTimezone',
+            'currencyId' => 'currency',
+            'voicemailNotificationTemplateId' => 'voicemailNotificationTemplate',
+            'faxNotificationTemplateId' => 'faxNotificationTemplate',
+            'invoiceNotificationTemplateId' => 'invoiceNotificationTemplate',
+            'callCsvNotificationTemplateId' => 'callCsvNotificationTemplate'
         ];
     }
 
@@ -184,7 +217,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'domainUsers' => $this->getDomainUsers(),
             'recordingsLimitMB' => $this->getRecordingsLimitMB(),
@@ -208,152 +241,34 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
             'domain' => $this->getDomain(),
             'language' => $this->getLanguage(),
             'defaultTimezone' => $this->getDefaultTimezone(),
+            'currency' => $this->getCurrency(),
+            'voicemailNotificationTemplate' => $this->getVoicemailNotificationTemplate(),
+            'faxNotificationTemplate' => $this->getFaxNotificationTemplate(),
+            'invoiceNotificationTemplate' => $this->getInvoiceNotificationTemplate(),
+            'callCsvNotificationTemplate' => $this->getCallCsvNotificationTemplate(),
             'companies' => $this->getCompanies(),
             'services' => $this->getServices(),
             'urls' => $this->getUrls(),
             'relFeatures' => $this->getRelFeatures(),
-            'retailAccounts' => $this->getRetailAccounts(),
+            'relProxyTrunks' => $this->getRelProxyTrunks(),
+            'residentialDevices' => $this->getResidentialDevices(),
             'musicsOnHold' => $this->getMusicsOnHold(),
             'matchLists' => $this->getMatchLists(),
             'outgoingRoutings' => $this->getOutgoingRoutings()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->domain = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Domain\\Domain', $this->getDomainId());
-        $this->language = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Language\\Language', $this->getLanguageId());
-        $this->defaultTimezone = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Timezone\\Timezone', $this->getDefaultTimezoneId());
-        if (!is_null($this->companies)) {
-            $items = $this->getCompanies();
-            $this->companies = [];
-            foreach ($items as $item) {
-                $this->companies[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\Company\\Company',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-        if (!is_null($this->services)) {
-            $items = $this->getServices();
-            $this->services = [];
-            foreach ($items as $item) {
-                $this->services[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\BrandService\\BrandService',
-                    $item->getId() ?? $item
-                );
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
             }
+            $response[$sensitiveField] = '*****';
         }
 
-        if (!is_null($this->urls)) {
-            $items = $this->getUrls();
-            $this->urls = [];
-            foreach ($items as $item) {
-                $this->urls[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\BrandUrl\\BrandUrl',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-        if (!is_null($this->relFeatures)) {
-            $items = $this->getRelFeatures();
-            $this->relFeatures = [];
-            foreach ($items as $item) {
-                $this->relFeatures[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\FeaturesRelBrand\\FeaturesRelBrand',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-        if (!is_null($this->retailAccounts)) {
-            $items = $this->getRetailAccounts();
-            $this->retailAccounts = [];
-            foreach ($items as $item) {
-                $this->retailAccounts[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\RetailAccount\\RetailAccount',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-        if (!is_null($this->musicsOnHold)) {
-            $items = $this->getMusicsOnHold();
-            $this->musicsOnHold = [];
-            foreach ($items as $item) {
-                $this->musicsOnHold[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\MusicOnHold\\MusicOnHold',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-        if (!is_null($this->matchLists)) {
-            $items = $this->getMatchLists();
-            $this->matchLists = [];
-            foreach ($items as $item) {
-                $this->matchLists[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\MatchList\\MatchList',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-        if (!is_null($this->outgoingRoutings)) {
-            $items = $this->getOutgoingRoutings();
-            $this->outgoingRoutings = [];
-            foreach ($items as $item) {
-                $this->outgoingRoutings[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\OutgoingRouting\\OutgoingRouting',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->companies = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\Company\\Company',
-            $this->companies
-        );
-        $this->services = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\BrandService\\BrandService',
-            $this->services
-        );
-        $this->urls = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\BrandUrl\\BrandUrl',
-            $this->urls
-        );
-        $this->relFeatures = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\FeaturesRelBrand\\FeaturesRelBrand',
-            $this->relFeatures
-        );
-        $this->retailAccounts = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\RetailAccount\\RetailAccount',
-            $this->retailAccounts
-        );
-        $this->musicsOnHold = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\MusicOnHold\\MusicOnHold',
-            $this->musicsOnHold
-        );
-        $this->matchLists = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\MatchList\\MatchList',
-            $this->matchLists
-        );
-        $this->outgoingRoutings = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\OutgoingRouting\\OutgoingRouting',
-            $this->outgoingRoutings
-        );
+        return $response;
     }
 
     /**
@@ -369,7 +284,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -389,7 +304,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDomainUsers()
     {
@@ -409,7 +324,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getRecordingsLimitMB()
     {
@@ -429,7 +344,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRecordingsLimitEmail()
     {
@@ -449,7 +364,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getMaxCalls()
     {
@@ -469,7 +384,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -489,7 +404,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getLogoFileSize()
     {
@@ -509,7 +424,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getLogoMimeType()
     {
@@ -529,7 +444,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getLogoBaseName()
     {
@@ -549,7 +464,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInvoiceNif()
     {
@@ -569,7 +484,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInvoicePostalAddress()
     {
@@ -589,7 +504,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInvoicePostalCode()
     {
@@ -609,7 +524,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInvoiceTown()
     {
@@ -629,7 +544,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInvoiceProvince()
     {
@@ -649,7 +564,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInvoiceCountry()
     {
@@ -669,7 +584,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getInvoiceRegistryData()
     {
@@ -689,7 +604,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Domain\DomainDto
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainDto | null
      */
     public function getDomain()
     {
@@ -697,7 +612,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -711,7 +626,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getDomainId()
     {
@@ -735,7 +650,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageDto
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageDto | null
      */
     public function getLanguage()
     {
@@ -743,7 +658,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -757,7 +672,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getLanguageId()
     {
@@ -781,7 +696,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneDto
+     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneDto | null
      */
     public function getDefaultTimezone()
     {
@@ -789,7 +704,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -803,11 +718,241 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getDefaultTimezoneId()
     {
         if ($dto = $this->getDefaultTimezone()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Currency\CurrencyDto $currency
+     *
+     * @return static
+     */
+    public function setCurrency(\Ivoz\Provider\Domain\Model\Currency\CurrencyDto $currency = null)
+    {
+        $this->currency = $currency;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Currency\CurrencyDto | null
+     */
+    public function getCurrency()
+    {
+        return $this->currency;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setCurrencyId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Currency\CurrencyDto($id)
+            : null;
+
+        return $this->setCurrency($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getCurrencyId()
+    {
+        if ($dto = $this->getCurrency()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto $voicemailNotificationTemplate
+     *
+     * @return static
+     */
+    public function setVoicemailNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto $voicemailNotificationTemplate = null)
+    {
+        $this->voicemailNotificationTemplate = $voicemailNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
+     */
+    public function getVoicemailNotificationTemplate()
+    {
+        return $this->voicemailNotificationTemplate;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setVoicemailNotificationTemplateId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto($id)
+            : null;
+
+        return $this->setVoicemailNotificationTemplate($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getVoicemailNotificationTemplateId()
+    {
+        if ($dto = $this->getVoicemailNotificationTemplate()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto $faxNotificationTemplate
+     *
+     * @return static
+     */
+    public function setFaxNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto $faxNotificationTemplate = null)
+    {
+        $this->faxNotificationTemplate = $faxNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
+     */
+    public function getFaxNotificationTemplate()
+    {
+        return $this->faxNotificationTemplate;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setFaxNotificationTemplateId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto($id)
+            : null;
+
+        return $this->setFaxNotificationTemplate($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getFaxNotificationTemplateId()
+    {
+        if ($dto = $this->getFaxNotificationTemplate()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto $invoiceNotificationTemplate
+     *
+     * @return static
+     */
+    public function setInvoiceNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto $invoiceNotificationTemplate = null)
+    {
+        $this->invoiceNotificationTemplate = $invoiceNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
+     */
+    public function getInvoiceNotificationTemplate()
+    {
+        return $this->invoiceNotificationTemplate;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setInvoiceNotificationTemplateId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto($id)
+            : null;
+
+        return $this->setInvoiceNotificationTemplate($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getInvoiceNotificationTemplateId()
+    {
+        if ($dto = $this->getInvoiceNotificationTemplate()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto $callCsvNotificationTemplate
+     *
+     * @return static
+     */
+    public function setCallCsvNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto $callCsvNotificationTemplate = null)
+    {
+        $this->callCsvNotificationTemplate = $callCsvNotificationTemplate;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto | null
+     */
+    public function getCallCsvNotificationTemplate()
+    {
+        return $this->callCsvNotificationTemplate;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setCallCsvNotificationTemplateId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateDto($id)
+            : null;
+
+        return $this->setCallCsvNotificationTemplate($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getCallCsvNotificationTemplateId()
+    {
+        if ($dto = $this->getCallCsvNotificationTemplate()) {
             return $dto->getId();
         }
 
@@ -827,7 +972,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getCompanies()
     {
@@ -847,7 +992,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getServices()
     {
@@ -867,7 +1012,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getUrls()
     {
@@ -887,7 +1032,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getRelFeatures()
     {
@@ -895,23 +1040,43 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param array $retailAccounts
+     * @param array $relProxyTrunks
      *
      * @return static
      */
-    public function setRetailAccounts($retailAccounts = null)
+    public function setRelProxyTrunks($relProxyTrunks = null)
     {
-        $this->retailAccounts = $retailAccounts;
+        $this->relProxyTrunks = $relProxyTrunks;
 
         return $this;
     }
 
     /**
-     * @return array
+     * @return array | null
      */
-    public function getRetailAccounts()
+    public function getRelProxyTrunks()
     {
-        return $this->retailAccounts;
+        return $this->relProxyTrunks;
+    }
+
+    /**
+     * @param array $residentialDevices
+     *
+     * @return static
+     */
+    public function setResidentialDevices($residentialDevices = null)
+    {
+        $this->residentialDevices = $residentialDevices;
+
+        return $this;
+    }
+
+    /**
+     * @return array | null
+     */
+    public function getResidentialDevices()
+    {
+        return $this->residentialDevices;
     }
 
     /**
@@ -927,7 +1092,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getMusicsOnHold()
     {
@@ -947,7 +1112,7 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getMatchLists()
     {
@@ -967,12 +1132,10 @@ abstract class BrandDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getOutgoingRoutings()
     {
         return $this->outgoingRoutings;
     }
 }
-
-

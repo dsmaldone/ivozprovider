@@ -3,8 +3,6 @@
 namespace Ivoz\Cgr\Domain\Model\TpRate;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -23,12 +21,12 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     private $tag;
 
     /**
-     * @var string
+     * @var float
      */
     private $connectFee;
 
     /**
-     * @var string
+     * @var float
      */
     private $rateCost;
 
@@ -48,7 +46,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     private $groupIntervalStart = '0s';
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $createdAt = 'CURRENT_TIMESTAMP';
 
@@ -58,9 +56,9 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     private $id;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateDto | null
+     * @var \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateDto | null
      */
-    private $tpDestinationRate;
+    private $destinationRate;
 
 
     use DtoNormalizer;
@@ -73,7 +71,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -89,7 +87,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
             'groupIntervalStart' => 'groupIntervalStart',
             'createdAt' => 'createdAt',
             'id' => 'id',
-            'tpDestinationRateId' => 'tpDestinationRate'
+            'destinationRateId' => 'destinationRate'
         ];
     }
 
@@ -98,7 +96,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'tpid' => $this->getTpid(),
             'tag' => $this->getTag(),
             'connectFee' => $this->getConnectFee(),
@@ -108,24 +106,21 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
             'groupIntervalStart' => $this->getGroupIntervalStart(),
             'createdAt' => $this->getCreatedAt(),
             'id' => $this->getId(),
-            'tpDestinationRate' => $this->getTpDestinationRate()
+            'destinationRate' => $this->getDestinationRate()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->tpDestinationRate = $transformer->transform('Ivoz\\Cgr\\Domain\\Model\\TpDestinationRate\\TpDestinationRate', $this->getTpDestinationRateId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -141,7 +136,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTpid()
     {
@@ -161,7 +156,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -169,7 +164,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param string $connectFee
+     * @param float $connectFee
      *
      * @return static
      */
@@ -181,7 +176,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return float | null
      */
     public function getConnectFee()
     {
@@ -189,7 +184,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param string $rateCost
+     * @param float $rateCost
      *
      * @return static
      */
@@ -201,7 +196,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return float | null
      */
     public function getRateCost()
     {
@@ -221,7 +216,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRateUnit()
     {
@@ -241,7 +236,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRateIncrement()
     {
@@ -261,7 +256,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getGroupIntervalStart()
     {
@@ -281,7 +276,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedAt()
     {
@@ -301,7 +296,7 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -309,50 +304,48 @@ abstract class TpRateDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateDto $tpDestinationRate
+     * @param \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateDto $destinationRate
      *
      * @return static
      */
-    public function setTpDestinationRate(\Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateDto $tpDestinationRate = null)
+    public function setDestinationRate(\Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateDto $destinationRate = null)
     {
-        $this->tpDestinationRate = $tpDestinationRate;
+        $this->destinationRate = $destinationRate;
 
         return $this;
     }
 
     /**
-     * @return \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateDto
+     * @return \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateDto | null
      */
-    public function getTpDestinationRate()
+    public function getDestinationRate()
     {
-        return $this->tpDestinationRate;
+        return $this->destinationRate;
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
-    public function setTpDestinationRateId($id)
+    public function setDestinationRateId($id)
     {
         $value = !is_null($id)
-            ? new \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateDto($id)
+            ? new \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateDto($id)
             : null;
 
-        return $this->setTpDestinationRate($value);
+        return $this->setDestinationRate($value);
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
-    public function getTpDestinationRateId()
+    public function getDestinationRateId()
     {
-        if ($dto = $this->getTpDestinationRate()) {
+        if ($dto = $this->getDestinationRate()) {
             return $dto->getId();
         }
 
         return null;
     }
 }
-
-

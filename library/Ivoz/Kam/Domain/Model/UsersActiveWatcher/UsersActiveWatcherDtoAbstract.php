@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\UsersActiveWatcher;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -90,7 +88,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     /**
      * @var integer
      */
-    private $status = '2';
+    private $status = 2;
 
     /**
      * @var string
@@ -100,7 +98,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     /**
      * @var integer
      */
-    private $version = '0';
+    private $version = 0;
 
     /**
      * @var string
@@ -135,7 +133,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     /**
      * @var integer
      */
-    private $flags = '0';
+    private $flags = 0;
 
     /**
      * @var string
@@ -158,7 +156,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -200,7 +198,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'presentityUri' => $this->getPresentityUri(),
             'watcherUsername' => $this->getWatcherUsername(),
             'watcherDomain' => $this->getWatcherDomain(),
@@ -229,22 +227,19 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
             'userAgent' => $this->getUserAgent(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -260,7 +255,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPresentityUri()
     {
@@ -280,7 +275,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getWatcherUsername()
     {
@@ -300,7 +295,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getWatcherDomain()
     {
@@ -320,7 +315,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getToUser()
     {
@@ -340,7 +335,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getToDomain()
     {
@@ -360,7 +355,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEvent()
     {
@@ -380,7 +375,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEventId()
     {
@@ -400,7 +395,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getToTag()
     {
@@ -420,7 +415,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromTag()
     {
@@ -440,7 +435,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getCallid()
     {
@@ -460,7 +455,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getLocalCseq()
     {
@@ -480,7 +475,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getRemoteCseq()
     {
@@ -500,7 +495,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getContact()
     {
@@ -520,7 +515,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRecordRoute()
     {
@@ -540,7 +535,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getExpires()
     {
@@ -560,7 +555,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getStatus()
     {
@@ -580,7 +575,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getReason()
     {
@@ -600,7 +595,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getVersion()
     {
@@ -620,7 +615,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSocketInfo()
     {
@@ -640,7 +635,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getLocalContact()
     {
@@ -660,7 +655,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromUser()
     {
@@ -680,7 +675,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromDomain()
     {
@@ -700,7 +695,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getUpdated()
     {
@@ -720,7 +715,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getUpdatedWinfo()
     {
@@ -740,7 +735,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getFlags()
     {
@@ -760,7 +755,7 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getUserAgent()
     {
@@ -780,12 +775,10 @@ abstract class UsersActiveWatcherDtoAbstract implements DataTransferObjectInterf
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

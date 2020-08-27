@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Domain;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -38,9 +36,9 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     private $friends = null;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountDto[] | null
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceDto[] | null
      */
-    private $retailAccounts = null;
+    private $residentialDevices = null;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\Terminal\TerminalDto[] | null
@@ -58,7 +56,7 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -77,74 +75,28 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'domain' => $this->getDomain(),
             'pointsTo' => $this->getPointsTo(),
             'description' => $this->getDescription(),
             'id' => $this->getId(),
             'friends' => $this->getFriends(),
-            'retailAccounts' => $this->getRetailAccounts(),
+            'residentialDevices' => $this->getResidentialDevices(),
             'terminals' => $this->getTerminals()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        if (!is_null($this->friends)) {
-            $items = $this->getFriends();
-            $this->friends = [];
-            foreach ($items as $item) {
-                $this->friends[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\Friend\\Friend',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-        if (!is_null($this->retailAccounts)) {
-            $items = $this->getRetailAccounts();
-            $this->retailAccounts = [];
-            foreach ($items as $item) {
-                $this->retailAccounts[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\RetailAccount\\RetailAccount',
-                    $item->getId() ?? $item
-                );
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
             }
+            $response[$sensitiveField] = '*****';
         }
 
-        if (!is_null($this->terminals)) {
-            $items = $this->getTerminals();
-            $this->terminals = [];
-            foreach ($items as $item) {
-                $this->terminals[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\Terminal\\Terminal',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->friends = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\Friend\\Friend',
-            $this->friends
-        );
-        $this->retailAccounts = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\RetailAccount\\RetailAccount',
-            $this->retailAccounts
-        );
-        $this->terminals = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\Terminal\\Terminal',
-            $this->terminals
-        );
+        return $response;
     }
 
     /**
@@ -160,7 +112,7 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDomain()
     {
@@ -180,7 +132,7 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPointsTo()
     {
@@ -200,7 +152,7 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -220,7 +172,7 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -240,7 +192,7 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getFriends()
     {
@@ -248,23 +200,23 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param array $retailAccounts
+     * @param array $residentialDevices
      *
      * @return static
      */
-    public function setRetailAccounts($retailAccounts = null)
+    public function setResidentialDevices($residentialDevices = null)
     {
-        $this->retailAccounts = $retailAccounts;
+        $this->residentialDevices = $residentialDevices;
 
         return $this;
     }
 
     /**
-     * @return array
+     * @return array | null
      */
-    public function getRetailAccounts()
+    public function getResidentialDevices()
     {
-        return $this->retailAccounts;
+        return $this->residentialDevices;
     }
 
     /**
@@ -280,12 +232,10 @@ abstract class DomainDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getTerminals()
     {
         return $this->terminals;
     }
 }
-
-

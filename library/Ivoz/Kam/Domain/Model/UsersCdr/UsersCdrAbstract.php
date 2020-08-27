@@ -28,75 +28,85 @@ abstract class UsersCdrAbstract
     /**
      * @var float
      */
-    protected $duration = '0.000';
+    protected $duration = 0.0;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $direction;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $caller;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $callee;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $diversion;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $referee;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $referrer;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $callid;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $callidHash;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $xcallid;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @var boolean
+     */
+    protected $hidden = false;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     protected $brand;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     protected $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     protected $user;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Friend\FriendInterface
+     * @var \Ivoz\Provider\Domain\Model\Friend\FriendInterface | null
      */
     protected $friend;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
+     */
+    protected $residentialDevice;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
     protected $retailAccount;
 
@@ -106,18 +116,20 @@ abstract class UsersCdrAbstract
     /**
      * Constructor
      */
-    protected function __construct($startTime, $endTime, $duration)
+    protected function __construct($startTime, $endTime, $duration, $hidden)
     {
         $this->setStartTime($startTime);
         $this->setEndTime($endTime);
         $this->setDuration($duration);
+        $this->setHidden($hidden);
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "UsersCdr",
             $this->getId()
         );
@@ -141,7 +153,8 @@ abstract class UsersCdrAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param UsersCdrInterface|null $entity
      * @param int $depth
      * @return UsersCdrDto|null
      */
@@ -161,25 +174,30 @@ abstract class UsersCdrAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var UsersCdrDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersCdrDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersCdrDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersCdrDto::class);
 
         $self = new static(
             $dto->getStartTime(),
             $dto->getEndTime(),
-            $dto->getDuration());
+            $dto->getDuration(),
+            $dto->getHidden()
+        );
 
         $self
             ->setDirection($dto->getDirection())
@@ -191,28 +209,28 @@ abstract class UsersCdrAbstract
             ->setCallid($dto->getCallid())
             ->setCallidHash($dto->getCallidHash())
             ->setXcallid($dto->getXcallid())
-            ->setBrand($dto->getBrand())
-            ->setCompany($dto->getCompany())
-            ->setUser($dto->getUser())
-            ->setFriend($dto->getFriend())
-            ->setRetailAccount($dto->getRetailAccount())
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setUser($fkTransformer->transform($dto->getUser()))
+            ->setFriend($fkTransformer->transform($dto->getFriend()))
+            ->setResidentialDevice($fkTransformer->transform($dto->getResidentialDevice()))
+            ->setRetailAccount($fkTransformer->transform($dto->getRetailAccount()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UsersCdrDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UsersCdrDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UsersCdrDto::class);
 
         $this
@@ -228,19 +246,21 @@ abstract class UsersCdrAbstract
             ->setCallid($dto->getCallid())
             ->setCallidHash($dto->getCallidHash())
             ->setXcallid($dto->getXcallid())
-            ->setBrand($dto->getBrand())
-            ->setCompany($dto->getCompany())
-            ->setUser($dto->getUser())
-            ->setFriend($dto->getFriend())
-            ->setRetailAccount($dto->getRetailAccount());
+            ->setHidden($dto->getHidden())
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setUser($fkTransformer->transform($dto->getUser()))
+            ->setFriend($fkTransformer->transform($dto->getFriend()))
+            ->setResidentialDevice($fkTransformer->transform($dto->getResidentialDevice()))
+            ->setRetailAccount($fkTransformer->transform($dto->getRetailAccount()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return UsersCdrDto
      */
@@ -259,10 +279,12 @@ abstract class UsersCdrAbstract
             ->setCallid(self::getCallid())
             ->setCallidHash(self::getCallidHash())
             ->setXcallid(self::getXcallid())
+            ->setHidden(self::getHidden())
             ->setBrand(\Ivoz\Provider\Domain\Model\Brand\Brand::entityToDto(self::getBrand(), $depth))
             ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
             ->setUser(\Ivoz\Provider\Domain\Model\User\User::entityToDto(self::getUser(), $depth))
             ->setFriend(\Ivoz\Provider\Domain\Model\Friend\Friend::entityToDto(self::getFriend(), $depth))
+            ->setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDevice::entityToDto(self::getResidentialDevice(), $depth))
             ->setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccount::entityToDto(self::getRetailAccount(), $depth));
     }
 
@@ -284,15 +306,15 @@ abstract class UsersCdrAbstract
             'callid' => self::getCallid(),
             'callidHash' => self::getCallidHash(),
             'xcallid' => self::getXcallid(),
+            'hidden' => self::getHidden(),
             'brandId' => self::getBrand() ? self::getBrand()->getId() : null,
             'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
             'userId' => self::getUser() ? self::getUser()->getId() : null,
             'friendId' => self::getFriend() ? self::getFriend()->getId() : null,
+            'residentialDeviceId' => self::getResidentialDevice() ? self::getResidentialDevice()->getId() : null,
             'retailAccountId' => self::getRetailAccount() ? self::getRetailAccount()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -300,15 +322,19 @@ abstract class UsersCdrAbstract
      *
      * @param \DateTime $startTime
      *
-     * @return self
+     * @return static
      */
-    public function setStartTime($startTime)
+    protected function setStartTime($startTime)
     {
         Assertion::notNull($startTime, 'startTime value "%s" is null, but non null value was expected.');
         $startTime = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $startTime,
             '2000-01-01 00:00:00'
         );
+
+        if ($this->startTime == $startTime) {
+            return $this;
+        }
 
         $this->startTime = $startTime;
 
@@ -322,7 +348,7 @@ abstract class UsersCdrAbstract
      */
     public function getStartTime()
     {
-        return $this->startTime;
+        return clone $this->startTime;
     }
 
     /**
@@ -330,15 +356,19 @@ abstract class UsersCdrAbstract
      *
      * @param \DateTime $endTime
      *
-     * @return self
+     * @return static
      */
-    public function setEndTime($endTime)
+    protected function setEndTime($endTime)
     {
         Assertion::notNull($endTime, 'endTime value "%s" is null, but non null value was expected.');
         $endTime = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $endTime,
             '2000-01-01 00:00:00'
         );
+
+        if ($this->endTime == $endTime) {
+            return $this;
+        }
 
         $this->endTime = $endTime;
 
@@ -352,7 +382,7 @@ abstract class UsersCdrAbstract
      */
     public function getEndTime()
     {
-        return $this->endTime;
+        return clone $this->endTime;
     }
 
     /**
@@ -360,14 +390,14 @@ abstract class UsersCdrAbstract
      *
      * @param float $duration
      *
-     * @return self
+     * @return static
      */
-    public function setDuration($duration)
+    protected function setDuration($duration)
     {
         Assertion::notNull($duration, 'duration value "%s" is null, but non null value was expected.');
         Assertion::numeric($duration);
 
-        $this->duration = $duration;
+        $this->duration = (float) $duration;
 
         return $this;
     }
@@ -385,15 +415,12 @@ abstract class UsersCdrAbstract
     /**
      * Set direction
      *
-     * @param string $direction
+     * @param string $direction | null
      *
-     * @return self
+     * @return static
      */
-    public function setDirection($direction = null)
+    protected function setDirection($direction = null)
     {
-        if (!is_null($direction)) {
-        }
-
         $this->direction = $direction;
 
         return $this;
@@ -402,7 +429,7 @@ abstract class UsersCdrAbstract
     /**
      * Get direction
      *
-     * @return string
+     * @return string | null
      */
     public function getDirection()
     {
@@ -412,11 +439,11 @@ abstract class UsersCdrAbstract
     /**
      * Set caller
      *
-     * @param string $caller
+     * @param string $caller | null
      *
-     * @return self
+     * @return static
      */
-    public function setCaller($caller = null)
+    protected function setCaller($caller = null)
     {
         if (!is_null($caller)) {
             Assertion::maxLength($caller, 128, 'caller value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -430,7 +457,7 @@ abstract class UsersCdrAbstract
     /**
      * Get caller
      *
-     * @return string
+     * @return string | null
      */
     public function getCaller()
     {
@@ -440,11 +467,11 @@ abstract class UsersCdrAbstract
     /**
      * Set callee
      *
-     * @param string $callee
+     * @param string $callee | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallee($callee = null)
+    protected function setCallee($callee = null)
     {
         if (!is_null($callee)) {
             Assertion::maxLength($callee, 128, 'callee value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -458,7 +485,7 @@ abstract class UsersCdrAbstract
     /**
      * Get callee
      *
-     * @return string
+     * @return string | null
      */
     public function getCallee()
     {
@@ -468,11 +495,11 @@ abstract class UsersCdrAbstract
     /**
      * Set diversion
      *
-     * @param string $diversion
+     * @param string $diversion | null
      *
-     * @return self
+     * @return static
      */
-    public function setDiversion($diversion = null)
+    protected function setDiversion($diversion = null)
     {
         if (!is_null($diversion)) {
             Assertion::maxLength($diversion, 64, 'diversion value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -486,7 +513,7 @@ abstract class UsersCdrAbstract
     /**
      * Get diversion
      *
-     * @return string
+     * @return string | null
      */
     public function getDiversion()
     {
@@ -496,11 +523,11 @@ abstract class UsersCdrAbstract
     /**
      * Set referee
      *
-     * @param string $referee
+     * @param string $referee | null
      *
-     * @return self
+     * @return static
      */
-    public function setReferee($referee = null)
+    protected function setReferee($referee = null)
     {
         if (!is_null($referee)) {
             Assertion::maxLength($referee, 128, 'referee value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -514,7 +541,7 @@ abstract class UsersCdrAbstract
     /**
      * Get referee
      *
-     * @return string
+     * @return string | null
      */
     public function getReferee()
     {
@@ -524,11 +551,11 @@ abstract class UsersCdrAbstract
     /**
      * Set referrer
      *
-     * @param string $referrer
+     * @param string $referrer | null
      *
-     * @return self
+     * @return static
      */
-    public function setReferrer($referrer = null)
+    protected function setReferrer($referrer = null)
     {
         if (!is_null($referrer)) {
             Assertion::maxLength($referrer, 128, 'referrer value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -542,7 +569,7 @@ abstract class UsersCdrAbstract
     /**
      * Get referrer
      *
-     * @return string
+     * @return string | null
      */
     public function getReferrer()
     {
@@ -552,11 +579,11 @@ abstract class UsersCdrAbstract
     /**
      * Set callid
      *
-     * @param string $callid
+     * @param string $callid | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallid($callid = null)
+    protected function setCallid($callid = null)
     {
         if (!is_null($callid)) {
             Assertion::maxLength($callid, 255, 'callid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -570,7 +597,7 @@ abstract class UsersCdrAbstract
     /**
      * Get callid
      *
-     * @return string
+     * @return string | null
      */
     public function getCallid()
     {
@@ -580,11 +607,11 @@ abstract class UsersCdrAbstract
     /**
      * Set callidHash
      *
-     * @param string $callidHash
+     * @param string $callidHash | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallidHash($callidHash = null)
+    protected function setCallidHash($callidHash = null)
     {
         if (!is_null($callidHash)) {
             Assertion::maxLength($callidHash, 128, 'callidHash value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -598,7 +625,7 @@ abstract class UsersCdrAbstract
     /**
      * Get callidHash
      *
-     * @return string
+     * @return string | null
      */
     public function getCallidHash()
     {
@@ -608,11 +635,11 @@ abstract class UsersCdrAbstract
     /**
      * Set xcallid
      *
-     * @param string $xcallid
+     * @param string $xcallid | null
      *
-     * @return self
+     * @return static
      */
-    public function setXcallid($xcallid = null)
+    protected function setXcallid($xcallid = null)
     {
         if (!is_null($xcallid)) {
             Assertion::maxLength($xcallid, 255, 'xcallid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -626,7 +653,7 @@ abstract class UsersCdrAbstract
     /**
      * Get xcallid
      *
-     * @return string
+     * @return string | null
      */
     public function getXcallid()
     {
@@ -634,13 +661,41 @@ abstract class UsersCdrAbstract
     }
 
     /**
+     * Set hidden
+     *
+     * @param boolean $hidden
+     *
+     * @return static
+     */
+    protected function setHidden($hidden)
+    {
+        Assertion::notNull($hidden, 'hidden value "%s" is null, but non null value was expected.');
+        Assertion::between(intval($hidden), 0, 1, 'hidden provided "%s" is not a valid boolean value.');
+        $hidden = (bool) $hidden;
+
+        $this->hidden = $hidden;
+
+        return $this;
+    }
+
+    /**
+     * Get hidden
+     *
+     * @return boolean
+     */
+    public function getHidden()
+    {
+        return $this->hidden;
+    }
+
+    /**
      * Set brand
      *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
+     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand | null
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null)
+    protected function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null)
     {
         $this->brand = $brand;
 
@@ -650,7 +705,7 @@ abstract class UsersCdrAbstract
     /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand()
     {
@@ -660,11 +715,11 @@ abstract class UsersCdrAbstract
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
     {
         $this->company = $company;
 
@@ -674,7 +729,7 @@ abstract class UsersCdrAbstract
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany()
     {
@@ -684,11 +739,11 @@ abstract class UsersCdrAbstract
     /**
      * Set user
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user | null
      *
-     * @return self
+     * @return static
      */
-    public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null)
+    protected function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null)
     {
         $this->user = $user;
 
@@ -698,7 +753,7 @@ abstract class UsersCdrAbstract
     /**
      * Get user
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getUser()
     {
@@ -708,11 +763,11 @@ abstract class UsersCdrAbstract
     /**
      * Set friend
      *
-     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend
+     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend | null
      *
-     * @return self
+     * @return static
      */
-    public function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend = null)
+    protected function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend = null)
     {
         $this->friend = $friend;
 
@@ -722,7 +777,7 @@ abstract class UsersCdrAbstract
     /**
      * Get friend
      *
-     * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface
+     * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface | null
      */
     public function getFriend()
     {
@@ -730,13 +785,37 @@ abstract class UsersCdrAbstract
     }
 
     /**
+     * Set residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice | null
+     *
+     * @return static
+     */
+    protected function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice = null)
+    {
+        $this->residentialDevice = $residentialDevice;
+
+        return $this;
+    }
+
+    /**
+     * Get residentialDevice
+     *
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
+     */
+    public function getResidentialDevice()
+    {
+        return $this->residentialDevice;
+    }
+
+    /**
      * Set retailAccount
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount | null
      *
-     * @return self
+     * @return static
      */
-    public function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount = null)
+    protected function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount = null)
     {
         $this->retailAccount = $retailAccount;
 
@@ -746,15 +825,12 @@ abstract class UsersCdrAbstract
     /**
      * Get retailAccount
      *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
     public function getRetailAccount()
     {
         return $this->retailAccount;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

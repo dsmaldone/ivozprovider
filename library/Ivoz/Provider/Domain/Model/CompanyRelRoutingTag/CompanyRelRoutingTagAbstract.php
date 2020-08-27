@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class CompanyRelRoutingTagAbstract
 {
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     protected $company;
 
@@ -31,14 +31,14 @@ abstract class CompanyRelRoutingTagAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "CompanyRelRoutingTag",
             $this->getId()
         );
@@ -62,7 +62,8 @@ abstract class CompanyRelRoutingTagAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param CompanyRelRoutingTagInterface|null $entity
      * @param int $depth
      * @return CompanyRelRoutingTagDto|null
      */
@@ -82,56 +83,58 @@ abstract class CompanyRelRoutingTagAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var CompanyRelRoutingTagDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CompanyRelRoutingTagDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CompanyRelRoutingTagDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CompanyRelRoutingTagDto::class);
 
         $self = new static();
 
         $self
-            ->setCompany($dto->getCompany())
-            ->setRoutingTag($dto->getRoutingTag())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setRoutingTag($fkTransformer->transform($dto->getRoutingTag()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param CompanyRelRoutingTagDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CompanyRelRoutingTagDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, CompanyRelRoutingTagDto::class);
 
         $this
-            ->setCompany($dto->getCompany())
-            ->setRoutingTag($dto->getRoutingTag());
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setRoutingTag($fkTransformer->transform($dto->getRoutingTag()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return CompanyRelRoutingTagDto
      */
@@ -149,19 +152,17 @@ abstract class CompanyRelRoutingTagAbstract
     {
         return [
             'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
-            'routingTagId' => self::getRoutingTag() ? self::getRoutingTag()->getId() : null
+            'routingTagId' => self::getRoutingTag()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
     public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
     {
@@ -173,7 +174,7 @@ abstract class CompanyRelRoutingTagAbstract
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany()
     {
@@ -185,9 +186,9 @@ abstract class CompanyRelRoutingTagAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface $routingTag
      *
-     * @return self
+     * @return static
      */
-    public function setRoutingTag(\Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface $routingTag = null)
+    public function setRoutingTag(\Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface $routingTag)
     {
         $this->routingTag = $routingTag;
 
@@ -204,8 +205,5 @@ abstract class CompanyRelRoutingTagAbstract
         return $this->routingTag;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

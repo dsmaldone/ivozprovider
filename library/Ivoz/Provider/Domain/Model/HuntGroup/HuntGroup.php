@@ -2,10 +2,8 @@
 
 namespace Ivoz\Provider\Domain\Model\HuntGroup;
 
-use Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface;
-use Ivoz\Provider\Domain\Model\User\User;
 use Doctrine\Common\Collections\Criteria;
-use Ivoz\Provider\Domain\Model\User\UserInterface;
+use Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUserInterface;
 use Ivoz\Provider\Domain\Traits\RoutableTrait;
 
 /**
@@ -38,27 +36,17 @@ class HuntGroup extends HuntGroupAbstract implements HuntGroupInterface
     protected function sanitizeValues()
     {
         $this->sanitizeRouteValues('NoAnswer');
-    }
 
-    /**
-     * Set ringAllTimeout
-     *
-     * @param integer $ringAllTimeout
-     *
-     * @return self
-     */
-    public function setRingAllTimeout($ringAllTimeout)
-    {
-        if (!$ringAllTimeout) {
-            $ringAllTimeout = 0;
+        $isRingAll = $this->getStrategy() === HuntGroupInterface::STRATEGY_RINGALL;
+        $nullTimeout = is_null($this->getRingAllTimeout());
+        if ($isRingAll && $nullTimeout) {
+            throw new \DomainException('Empty ring all timeout');
         }
-        return parent::setRingAllTimeout($ringAllTimeout);
     }
-
 
     /**
      * Get this Hungroup related users
-     * @return UserInterface[]
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface[]
      */
     public function getHuntGroupUsersArray()
     {
@@ -69,7 +57,7 @@ class HuntGroup extends HuntGroupAbstract implements HuntGroupInterface
             Criteria::create()->orderBy(['priority' => Criteria::ASC])
         );
 
-        foreach($huntGroupRelUsers as $huntGroupRelUser) {
+        foreach ($huntGroupRelUsers as $huntGroupRelUser) {
             $user = $huntGroupRelUser->getUser();
             if (empty($user)) {
                 continue;
@@ -104,4 +92,3 @@ class HuntGroup extends HuntGroupAbstract implements HuntGroupInterface
             $this->getNoAnswerNumberValue();
     }
 }
-

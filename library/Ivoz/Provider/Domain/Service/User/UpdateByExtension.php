@@ -2,9 +2,12 @@
 
 namespace Ivoz\Provider\Domain\Service\User;
 
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Provider\Domain\Model\Extension\ExtensionDto;
 use Ivoz\Provider\Domain\Model\Extension\ExtensionInterface;
 use Ivoz\Provider\Domain\Model\User\User;
+use Ivoz\Provider\Domain\Model\User\UserDto;
+use Ivoz\Provider\Domain\Model\User\UserInterface;
 use Ivoz\Provider\Domain\Model\User\UserRepository;
 use Ivoz\Provider\Domain\Service\Extension\ExtensionLifecycleEventHandlerInterface;
 
@@ -21,16 +24,16 @@ class UpdateByExtension implements ExtensionLifecycleEventHandlerInterface
     protected $userRepository;
 
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     public function __construct(
         UserRepository $userRepository,
-        EntityPersisterInterface $entityPersister
+        EntityTools $entityTools
     ) {
         $this->userRepository = $userRepository;
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
     }
 
     public static function getSubscribedEvents()
@@ -42,49 +45,84 @@ class UpdateByExtension implements ExtensionLifecycleEventHandlerInterface
 
     /**
      * @throws \Exception
+     *
+     * @return void
      */
-    public function execute(ExtensionInterface $entity, $isNew)
+    public function execute(ExtensionInterface $extension)
     {
-        $changedUserId = $entity->hasChanged('userId');
+        $changedUserId = $extension->hasChanged('userId');
 
         if (!$changedUserId) {
             return;
         }
 
-        $currentValue = $entity->getUser()
-            ? $entity->getUser()->getId()
+        $currentValue = $extension->getUser()
+            ? $extension->getUser()->getId()
             : null;
 
-        $originalValue = $entity->getInitialValue('userId');
+        $originalValue = $extension->getInitialValue('userId');
 
         // If this extension was pointing to a user and number has changed
         if ($originalValue && ($originalValue != $currentValue)) {
             /**
-             * @var User $prevUser
+             * @var UserInterface | null $prevUser
              */
-            $prevUser = $this->userRepository->findOneBy([
-                'id' => $originalValue
-            ]);
+            $prevUser = $this->userRepository->find($originalValue);
 
-            $prevUser->setExtension(null);
+            if (!$prevUser) {
+                // User has been removed
+                return;
+            }
+
+            /** @var UserDto $prevUserDto */
+            $prevUserDto = $this
+                ->entityTools
+                ->entityToDto(
+                    $prevUser
+                );
+
+            $prevUserDto
+                ->setExtension(null);
+
+            $this->entityTools
+                ->persistDto(
+                    $prevUserDto,
+                    $prevUser,
+                    false
+                );
         }
 
-        $routeType = $entity->getRouteType();
+        $routeType = $extension->getRouteType();
 
         // If there is a new user and new user has no extension
         if ($routeType === 'user') {
-            /**
-             * @var User $user
-             */
-            $user = $entity->getUser();
+            $user = $extension->getUser();
             $userExtension = $user->getExtension();
 
             if ($user && !$userExtension) {
                 // Set this as its screen extension
-                $user->setExtension($entity);
+                /** @var UserDto $userDto */
+                $userDto = $this
+                    ->entityTools
+                    ->entityToDto($user);
+
+                /** @var ExtensionDto  $extensionDto */
+                $extensionDto = $this
+                    ->entityTools
+                    ->entityToDto(
+                        $extension
+                    );
+
+                $userDto
+                    ->setExtension($extensionDto);
+
                 $this
-                    ->entityPersister
-                    ->persist($user);
+                    ->entityTools
+                    ->persistDto(
+                        $userDto,
+                        $user,
+                        false
+                    );
             }
         }
     }

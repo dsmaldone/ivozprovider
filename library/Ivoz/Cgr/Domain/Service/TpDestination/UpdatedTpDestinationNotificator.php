@@ -3,19 +3,24 @@
 namespace Ivoz\Cgr\Domain\Service\TpDestination;
 
 use Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface;
-use Ivoz\Core\Infrastructure\Domain\Service\Redis\Client as RedisClient;
+use Ivoz\Cgr\Domain\Service\CgratesReloadNotificator;
 
-class UpdatedTpDestinationNotificator implements TpDestinationLifecycleEventHandlerInterface
+class UpdatedTpDestinationNotificator extends CgratesReloadNotificator implements TpDestinationLifecycleEventHandlerInterface
 {
-    private $client;
-
-    public function __construct(RedisClient $client)
+    /**
+     * Reload CGRates Configuration
+     *
+     * @param TpDestinationInterface $tpDestination
+     *
+     * @return void
+     */
+    public function execute(TpDestinationInterface $tpDestination)
     {
-        $this->client = $client;
-    }
+        $isNotNew = !$tpDestination->isNew();
 
-    public function execute(TpDestinationInterface $entity)
-    {
-        $this->client->scheduleFullReload();
+        $this->reload(
+            $tpDestination->getTpid(),
+            $isNotNew
+        );
     }
 }

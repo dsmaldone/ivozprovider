@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\UsersWatcher;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -63,7 +61,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -86,7 +84,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'presentityUri' => $this->getPresentityUri(),
             'watcherUsername' => $this->getWatcherUsername(),
             'watcherDomain' => $this->getWatcherDomain(),
@@ -96,22 +94,19 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
             'insertedTime' => $this->getInsertedTime(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -127,7 +122,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPresentityUri()
     {
@@ -147,7 +142,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getWatcherUsername()
     {
@@ -167,7 +162,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getWatcherDomain()
     {
@@ -187,7 +182,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEvent()
     {
@@ -207,7 +202,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getStatus()
     {
@@ -227,7 +222,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getReason()
     {
@@ -247,7 +242,7 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getInsertedTime()
     {
@@ -267,12 +262,10 @@ abstract class UsersWatcherDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

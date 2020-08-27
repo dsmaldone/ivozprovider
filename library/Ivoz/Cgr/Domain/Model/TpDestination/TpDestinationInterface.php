@@ -2,18 +2,11 @@
 
 namespace Ivoz\Cgr\Domain\Model\TpDestination;
 
-use Ivoz\Core\Domain\Model\EntityInterface;
+use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
-interface TpDestinationInterface extends EntityInterface
+interface TpDestinationInterface extends LoggableEntityInterface
 {
-    /**
-     * Set tpid
-     *
-     * @param string $tpid
-     *
-     * @return self
-     */
-    public function setTpid($tpid);
+    public function getChangeSet();
 
     /**
      * Get tpid
@@ -23,29 +16,11 @@ interface TpDestinationInterface extends EntityInterface
     public function getTpid();
 
     /**
-     * Set tag
-     *
-     * @param string $tag
-     *
-     * @return self
-     */
-    public function setTag($tag = null);
-
-    /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag();
-
-    /**
-     * Set prefix
-     *
-     * @param string $prefix
-     *
-     * @return self
-     */
-    public function setPrefix($prefix);
 
     /**
      * Get prefix
@@ -55,31 +30,6 @@ interface TpDestinationInterface extends EntityInterface
     public function getPrefix();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name = null);
-
-    /**
-     * Get name
-     *
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * Set createdAt
-     *
-     * @param \DateTime $createdAt
-     *
-     * @return self
-     */
-    public function setCreatedAt($createdAt);
-
-    /**
      * Get createdAt
      *
      * @return \DateTime
@@ -87,20 +37,18 @@ interface TpDestinationInterface extends EntityInterface
     public function getCreatedAt();
 
     /**
-     * Set tpDestinationRate
+     * Set destination
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface $tpDestinationRate
+     * @param \Ivoz\Provider\Domain\Model\Destination\DestinationInterface $destination
      *
-     * @return self
+     * @return static
      */
-    public function setTpDestinationRate(\Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface $tpDestinationRate);
+    public function setDestination(\Ivoz\Provider\Domain\Model\Destination\DestinationInterface $destination);
 
     /**
-     * Get tpDestinationRate
+     * Get destination
      *
-     * @return \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface
+     * @return \Ivoz\Provider\Domain\Model\Destination\DestinationInterface
      */
-    public function getTpDestinationRate();
-
+    public function getDestination();
 }
-

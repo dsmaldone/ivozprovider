@@ -3,8 +3,8 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleRepository;
 use Ivoz\Provider\Domain\Model\TransformationRule\TransformationRule;
+use Ivoz\Provider\Domain\Model\TransformationRule\TransformationRuleRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -18,24 +18,5 @@ class TransformationRuleDoctrineRepository extends ServiceEntityRepository imple
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, TransformationRule::class);
-    }
-
-    public function countByCriteria(array $criteria)
-    {
-        $alias = 'TransformationRules';
-        $qb = $this->createQueryBuilder($alias);
-        $qb->select('count('. $alias .')');
-
-        foreach ($criteria as $field => $value) {
-
-            $normalizedField = $alias . '.' . $field;
-            $qb->andWhere(
-                $qb->expr()->eq($normalizedField, $value)
-            );
-        }
-
-        return $qb
-            ->getQuery()
-            ->getSingleScalarResult();
     }
 }

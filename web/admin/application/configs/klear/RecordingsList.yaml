@@ -20,7 +20,7 @@ production:
       title: _("List of %s %2s", ngettext('Recording', 'Recordings', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}//company/call_recording.html"
+        href: "/doc/en/administration_portal/client/vpbx/calls/call_recordings.html"
       forcedValues:
         <<: *forcedCompany
       fields: &recordings_fieldsLink
@@ -38,14 +38,16 @@ production:
         options:
           title: _("Options")
           screens:
-            recordingsEdit_screen: true
+            recordingsEdit_screen: ${auth.acls.Recordings.update}
           dialogs:
-            recordingsDel_dialog: true
+            recordingsDel_dialog: ${auth.companyRecordingRemoval}
           default: recordingsEdit_screen
       options:
         title: _("Options")
         dialogs:
-          recordingsDel_dialog: true
+          recordingsDel_dialog: ${auth.companyRecordingRemoval}
+        commands:
+          recordingsRecordedFileMultiDownload_command: ${auth.acls.Recordings.read}
     recordingsEdit_screen: &recordingsEdit_screenLink
       <<: *Recordings
       controller: edit
@@ -94,6 +96,15 @@ production:
       controller: File
       action: preview
       mainColumn: recordedFile
+    recordingsRecordedFileMultiDownload_command: &recordingsRecordedFileMultiDownload_commandLink
+      <<: *Recordings
+      title: _("Download")
+      controller: File
+      action: zip-and-download
+      mainColumn: recordedFile
+      class: ui-silk-bullet-disk
+      label: true
+      multiItem: true
 staging:
   _extends: production
 testing:

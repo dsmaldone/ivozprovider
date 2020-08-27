@@ -3,9 +3,7 @@
 namespace Ivoz\Provider\Domain\Model\RetailAccount;
 
 use Assert\Assertion;
-
 use Doctrine\Common\Collections\Criteria;
-use Ivoz\Provider\Domain\Model\Ddi\DdiInterface;
 
 /**
  * RetailAccount
@@ -20,12 +18,7 @@ class RetailAccount extends RetailAccountAbstract implements RetailAccountInterf
      */
     public function getChangeSet()
     {
-        $changeSet = parent::getChangeSet();
-        if (isset($changeSet['password'])) {
-            $changeSet['password'] = '****';
-        }
-
-        return $changeSet;
+        return parent::getChangeSet();
     }
 
     /**
@@ -46,6 +39,18 @@ class RetailAccount extends RetailAccountAbstract implements RetailAccountInterf
                 ->getBrand()
                 ->getDomain()
         );
+
+        if ($this->isDirectConnectivity() && !$this->getTransport()) {
+            throw new \DomainException('Invalid empty transport');
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDirectConnectivity() : bool
+    {
+        return $this->getDirectConnectivity() === self::DIRECTCONNECTIVITY_YES;
     }
 
     /**
@@ -92,104 +97,37 @@ class RetailAccount extends RetailAccountAbstract implements RetailAccountInterf
     }
 
     /**
-     * @return string
+     * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface|mixed
      */
-    public function getContact()
+    public function getAstPsEndpoint()
     {
-        return sprintf("sip:%s@%s",
-            $this->getName(),
-            $this->getDomain());
+        $astPsEnpoints = $this->getPsEndpoints(
+            Criteria::create()->setMaxResults(1)
+        );
+
+        return current($astPsEnpoints);
     }
+
 
     /**
      * @return string
      */
     public function getSorcery()
     {
-        return sprintf("b%dc%dr%d_%s",
+        return sprintf(
+            "b%dc%drt%d_%s",
             $this->getCompany()->getBrand()->getId(),
             $this->getCompany()->getId(),
             $this->getId(),
-            $this->getName());
-    }
-
-    /**
-     * Obtain content for X-Info-Location header
-     *
-     * @param mixed $callee
-     * @return string
-     */
-    public function getRequestUri($callee)
-    {
-        if ($this->getDirectConnectivity() == 'yes') {
-            return $this->getRequestDirectUri($callee);
-        }
-
-        // Only Kamailio knows this!
-        return 'dynamic';
-    }
-
-    /**
-     * @param $callee
-     * @return string
-     */
-    public function getRequestDirectUri($callee)
-    {
-        $uri = sprintf('sip:%s@%s', $callee, $this->getIp());
-
-        // Check if the configured port is not the standard (5060)
-        $port = $this->getPort();
-        if (!is_null($port) && $port != 5060) {
-            $uri .= ":$port";
-        }
-
-        // Check if the configured transport is not the standard (UDP)
-        $transport = $this->getTransport();
-        if ($transport != 'udp') {
-            $uri .= ";transport=$tranport";
-        }
-
-        return $uri;
-    }
-
-    public function getAstPsEndpoint()
-    {
-        $psEndpoints = $this->getPsEndpoints();
-
-        return array_shift($psEndpoints);
-    }
-
-    public function getLanguageCode()
-    {
-        $language = $this->getLanguage();
-        if ($language) {
-            return $language->getIden();
-        }
-
-        return $this->getCompany()->getLanguageCode();
-    }
-
-    /**
-     * Get Retail Account outgoingDdi
-     * If no Ddi is assigned, retrieve company's default Ddi
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface or NULL
-     */
-    public function getOutgoingDdi()
-    {
-        $ddi = parent::getOutgoingDdi();
-        if (!is_null($ddi)) {
-            return $ddi;
-        }
-
-        return $this
-            ->getCompany()
-            ->getOutgoingDdi();
+            $this->getName()
+        );
     }
 
     /**
      * Get Ddi associated with this retail Account
      *
-     * @return DdiInterface
+     * @param string $ddieE164
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     public function getDdi($ddieE164)
     {
@@ -210,4 +148,3 @@ class RetailAccount extends RetailAccountAbstract implements RetailAccountInterf
         return array_shift($ddis);
     }
 }
-

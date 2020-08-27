@@ -24,35 +24,35 @@ abstract class UserAbstract
     protected $lastname;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $email;
 
     /**
      * comment: password
-     * @var string
+     * @var string | null
      */
     protected $pass;
 
     /**
      * @var boolean
      */
-    protected $doNotDisturb = '0';
+    protected $doNotDisturb = false;
 
     /**
      * @var boolean
      */
-    protected $isBoss = '0';
+    protected $isBoss = false;
 
     /**
      * @var boolean
      */
-    protected $active = '0';
+    protected $active = false;
 
     /**
      * @var integer
      */
-    protected $maxCalls = '0';
+    protected $maxCalls = 0;
 
     /**
      * comment: enum:0|1|2|3
@@ -63,27 +63,22 @@ abstract class UserAbstract
     /**
      * @var boolean
      */
-    protected $voicemailEnabled = '1';
+    protected $voicemailEnabled = true;
 
     /**
      * @var boolean
      */
-    protected $voicemailSendMail = '0';
+    protected $voicemailSendMail = false;
 
     /**
      * @var boolean
      */
-    protected $voicemailAttachSound = '1';
-
-    /**
-     * @var string
-     */
-    protected $tokenKey;
+    protected $voicemailAttachSound = true;
 
     /**
      * @var boolean
      */
-    protected $gsQRCode = '0';
+    protected $gsQRCode = false;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
@@ -91,57 +86,57 @@ abstract class UserAbstract
     protected $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface
+     * @var \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface | null
      */
     protected $callAcl;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     protected $bossAssistant;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface
+     * @var \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface | null
      */
     protected $bossAssistantWhiteList;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @var \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     protected $transformationRuleSet;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     protected $language;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface
+     * @var \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface | null
      */
     protected $terminal;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     protected $extension;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface
+     * @var \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface | null
      */
     protected $timezone;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @var \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     protected $outgoingDdi;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface
+     * @var \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface | null
      */
     protected $outgoingDdiRule;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     protected $voicemailLocution;
 
@@ -181,7 +176,8 @@ abstract class UserAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "User",
             $this->getId()
         );
@@ -205,7 +201,8 @@ abstract class UserAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param UserInterface|null $entity
      * @param int $depth
      * @return UserDto|null
      */
@@ -225,19 +222,22 @@ abstract class UserAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var UserDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UserDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UserDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UserDto::class);
 
         $self = new static(
@@ -251,41 +251,40 @@ abstract class UserAbstract
             $dto->getVoicemailEnabled(),
             $dto->getVoicemailSendMail(),
             $dto->getVoicemailAttachSound(),
-            $dto->getGsQRCode());
+            $dto->getGsQRCode()
+        );
 
         $self
             ->setEmail($dto->getEmail())
             ->setPass($dto->getPass())
-            ->setTokenKey($dto->getTokenKey())
-            ->setCompany($dto->getCompany())
-            ->setCallAcl($dto->getCallAcl())
-            ->setBossAssistant($dto->getBossAssistant())
-            ->setBossAssistantWhiteList($dto->getBossAssistantWhiteList())
-            ->setTransformationRuleSet($dto->getTransformationRuleSet())
-            ->setLanguage($dto->getLanguage())
-            ->setTerminal($dto->getTerminal())
-            ->setExtension($dto->getExtension())
-            ->setTimezone($dto->getTimezone())
-            ->setOutgoingDdi($dto->getOutgoingDdi())
-            ->setOutgoingDdiRule($dto->getOutgoingDdiRule())
-            ->setVoicemailLocution($dto->getVoicemailLocution())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCallAcl($fkTransformer->transform($dto->getCallAcl()))
+            ->setBossAssistant($fkTransformer->transform($dto->getBossAssistant()))
+            ->setBossAssistantWhiteList($fkTransformer->transform($dto->getBossAssistantWhiteList()))
+            ->setTransformationRuleSet($fkTransformer->transform($dto->getTransformationRuleSet()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setTerminal($fkTransformer->transform($dto->getTerminal()))
+            ->setExtension($fkTransformer->transform($dto->getExtension()))
+            ->setTimezone($fkTransformer->transform($dto->getTimezone()))
+            ->setOutgoingDdi($fkTransformer->transform($dto->getOutgoingDdi()))
+            ->setOutgoingDdiRule($fkTransformer->transform($dto->getOutgoingDdiRule()))
+            ->setVoicemailLocution($fkTransformer->transform($dto->getVoicemailLocution()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param UserDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto UserDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, UserDto::class);
 
         $this
@@ -301,28 +300,27 @@ abstract class UserAbstract
             ->setVoicemailEnabled($dto->getVoicemailEnabled())
             ->setVoicemailSendMail($dto->getVoicemailSendMail())
             ->setVoicemailAttachSound($dto->getVoicemailAttachSound())
-            ->setTokenKey($dto->getTokenKey())
             ->setGsQRCode($dto->getGsQRCode())
-            ->setCompany($dto->getCompany())
-            ->setCallAcl($dto->getCallAcl())
-            ->setBossAssistant($dto->getBossAssistant())
-            ->setBossAssistantWhiteList($dto->getBossAssistantWhiteList())
-            ->setTransformationRuleSet($dto->getTransformationRuleSet())
-            ->setLanguage($dto->getLanguage())
-            ->setTerminal($dto->getTerminal())
-            ->setExtension($dto->getExtension())
-            ->setTimezone($dto->getTimezone())
-            ->setOutgoingDdi($dto->getOutgoingDdi())
-            ->setOutgoingDdiRule($dto->getOutgoingDdiRule())
-            ->setVoicemailLocution($dto->getVoicemailLocution());
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCallAcl($fkTransformer->transform($dto->getCallAcl()))
+            ->setBossAssistant($fkTransformer->transform($dto->getBossAssistant()))
+            ->setBossAssistantWhiteList($fkTransformer->transform($dto->getBossAssistantWhiteList()))
+            ->setTransformationRuleSet($fkTransformer->transform($dto->getTransformationRuleSet()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setTerminal($fkTransformer->transform($dto->getTerminal()))
+            ->setExtension($fkTransformer->transform($dto->getExtension()))
+            ->setTimezone($fkTransformer->transform($dto->getTimezone()))
+            ->setOutgoingDdi($fkTransformer->transform($dto->getOutgoingDdi()))
+            ->setOutgoingDdiRule($fkTransformer->transform($dto->getOutgoingDdiRule()))
+            ->setVoicemailLocution($fkTransformer->transform($dto->getVoicemailLocution()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return UserDto
      */
@@ -341,7 +339,6 @@ abstract class UserAbstract
             ->setVoicemailEnabled(self::getVoicemailEnabled())
             ->setVoicemailSendMail(self::getVoicemailSendMail())
             ->setVoicemailAttachSound(self::getVoicemailAttachSound())
-            ->setTokenKey(self::getTokenKey())
             ->setGsQRCode(self::getGsQRCode())
             ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
             ->setCallAcl(\Ivoz\Provider\Domain\Model\CallAcl\CallAcl::entityToDto(self::getCallAcl(), $depth))
@@ -375,9 +372,8 @@ abstract class UserAbstract
             'voicemailEnabled' => self::getVoicemailEnabled(),
             'voicemailSendMail' => self::getVoicemailSendMail(),
             'voicemailAttachSound' => self::getVoicemailAttachSound(),
-            'tokenKey' => self::getTokenKey(),
             'gsQRCode' => self::getGsQRCode(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
+            'companyId' => self::getCompany()->getId(),
             'callAclId' => self::getCallAcl() ? self::getCallAcl()->getId() : null,
             'bossAssistantId' => self::getBossAssistant() ? self::getBossAssistant()->getId() : null,
             'bossAssistantWhiteListId' => self::getBossAssistantWhiteList() ? self::getBossAssistantWhiteList()->getId() : null,
@@ -391,8 +387,6 @@ abstract class UserAbstract
             'voicemailLocutionId' => self::getVoicemailLocution() ? self::getVoicemailLocution()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -400,9 +394,9 @@ abstract class UserAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 100, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -427,9 +421,9 @@ abstract class UserAbstract
      *
      * @param string $lastname
      *
-     * @return self
+     * @return static
      */
-    public function setLastname($lastname)
+    protected function setLastname($lastname)
     {
         Assertion::notNull($lastname, 'lastname value "%s" is null, but non null value was expected.');
         Assertion::maxLength($lastname, 100, 'lastname value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -452,11 +446,11 @@ abstract class UserAbstract
     /**
      * Set email
      *
-     * @param string $email
+     * @param string $email | null
      *
-     * @return self
+     * @return static
      */
-    public function setEmail($email = null)
+    protected function setEmail($email = null)
     {
         if (!is_null($email)) {
             Assertion::maxLength($email, 100, 'email value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -470,7 +464,7 @@ abstract class UserAbstract
     /**
      * Get email
      *
-     * @return string
+     * @return string | null
      */
     public function getEmail()
     {
@@ -480,11 +474,11 @@ abstract class UserAbstract
     /**
      * Set pass
      *
-     * @param string $pass
+     * @param string $pass | null
      *
-     * @return self
+     * @return static
      */
-    public function setPass($pass = null)
+    protected function setPass($pass = null)
     {
         if (!is_null($pass)) {
             Assertion::maxLength($pass, 80, 'pass value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -498,7 +492,7 @@ abstract class UserAbstract
     /**
      * Get pass
      *
-     * @return string
+     * @return string | null
      */
     public function getPass()
     {
@@ -510,12 +504,13 @@ abstract class UserAbstract
      *
      * @param boolean $doNotDisturb
      *
-     * @return self
+     * @return static
      */
-    public function setDoNotDisturb($doNotDisturb)
+    protected function setDoNotDisturb($doNotDisturb)
     {
         Assertion::notNull($doNotDisturb, 'doNotDisturb value "%s" is null, but non null value was expected.');
         Assertion::between(intval($doNotDisturb), 0, 1, 'doNotDisturb provided "%s" is not a valid boolean value.');
+        $doNotDisturb = (bool) $doNotDisturb;
 
         $this->doNotDisturb = $doNotDisturb;
 
@@ -537,12 +532,13 @@ abstract class UserAbstract
      *
      * @param boolean $isBoss
      *
-     * @return self
+     * @return static
      */
-    public function setIsBoss($isBoss)
+    protected function setIsBoss($isBoss)
     {
         Assertion::notNull($isBoss, 'isBoss value "%s" is null, but non null value was expected.');
         Assertion::between(intval($isBoss), 0, 1, 'isBoss provided "%s" is not a valid boolean value.');
+        $isBoss = (bool) $isBoss;
 
         $this->isBoss = $isBoss;
 
@@ -564,12 +560,13 @@ abstract class UserAbstract
      *
      * @param boolean $active
      *
-     * @return self
+     * @return static
      */
-    public function setActive($active)
+    protected function setActive($active)
     {
         Assertion::notNull($active, 'active value "%s" is null, but non null value was expected.');
         Assertion::between(intval($active), 0, 1, 'active provided "%s" is not a valid boolean value.');
+        $active = (bool) $active;
 
         $this->active = $active;
 
@@ -591,15 +588,15 @@ abstract class UserAbstract
      *
      * @param integer $maxCalls
      *
-     * @return self
+     * @return static
      */
-    public function setMaxCalls($maxCalls)
+    protected function setMaxCalls($maxCalls)
     {
         Assertion::notNull($maxCalls, 'maxCalls value "%s" is null, but non null value was expected.');
         Assertion::integerish($maxCalls, 'maxCalls value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($maxCalls, 0, 'maxCalls provided "%s" is not greater or equal than "%s".');
 
-        $this->maxCalls = $maxCalls;
+        $this->maxCalls = (int) $maxCalls;
 
         return $this;
     }
@@ -619,18 +616,18 @@ abstract class UserAbstract
      *
      * @param string $externalIpCalls
      *
-     * @return self
+     * @return static
      */
-    public function setExternalIpCalls($externalIpCalls)
+    protected function setExternalIpCalls($externalIpCalls)
     {
         Assertion::notNull($externalIpCalls, 'externalIpCalls value "%s" is null, but non null value was expected.');
         Assertion::maxLength($externalIpCalls, 1, 'externalIpCalls value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($externalIpCalls, array (
-          0 => '0',
-          1 => '1',
-          2 => '2',
-          3 => '3',
-        ), 'externalIpCallsvalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($externalIpCalls, [
+            UserInterface::EXTERNALIPCALLS_0,
+            UserInterface::EXTERNALIPCALLS_1,
+            UserInterface::EXTERNALIPCALLS_2,
+            UserInterface::EXTERNALIPCALLS_3
+        ], 'externalIpCallsvalue "%s" is not an element of the valid values: %s');
 
         $this->externalIpCalls = $externalIpCalls;
 
@@ -652,12 +649,13 @@ abstract class UserAbstract
      *
      * @param boolean $voicemailEnabled
      *
-     * @return self
+     * @return static
      */
-    public function setVoicemailEnabled($voicemailEnabled)
+    protected function setVoicemailEnabled($voicemailEnabled)
     {
         Assertion::notNull($voicemailEnabled, 'voicemailEnabled value "%s" is null, but non null value was expected.');
         Assertion::between(intval($voicemailEnabled), 0, 1, 'voicemailEnabled provided "%s" is not a valid boolean value.');
+        $voicemailEnabled = (bool) $voicemailEnabled;
 
         $this->voicemailEnabled = $voicemailEnabled;
 
@@ -679,12 +677,13 @@ abstract class UserAbstract
      *
      * @param boolean $voicemailSendMail
      *
-     * @return self
+     * @return static
      */
-    public function setVoicemailSendMail($voicemailSendMail)
+    protected function setVoicemailSendMail($voicemailSendMail)
     {
         Assertion::notNull($voicemailSendMail, 'voicemailSendMail value "%s" is null, but non null value was expected.');
         Assertion::between(intval($voicemailSendMail), 0, 1, 'voicemailSendMail provided "%s" is not a valid boolean value.');
+        $voicemailSendMail = (bool) $voicemailSendMail;
 
         $this->voicemailSendMail = $voicemailSendMail;
 
@@ -706,12 +705,13 @@ abstract class UserAbstract
      *
      * @param boolean $voicemailAttachSound
      *
-     * @return self
+     * @return static
      */
-    public function setVoicemailAttachSound($voicemailAttachSound)
+    protected function setVoicemailAttachSound($voicemailAttachSound)
     {
         Assertion::notNull($voicemailAttachSound, 'voicemailAttachSound value "%s" is null, but non null value was expected.');
         Assertion::between(intval($voicemailAttachSound), 0, 1, 'voicemailAttachSound provided "%s" is not a valid boolean value.');
+        $voicemailAttachSound = (bool) $voicemailAttachSound;
 
         $this->voicemailAttachSound = $voicemailAttachSound;
 
@@ -729,44 +729,17 @@ abstract class UserAbstract
     }
 
     /**
-     * Set tokenKey
-     *
-     * @param string $tokenKey
-     *
-     * @return self
-     */
-    public function setTokenKey($tokenKey = null)
-    {
-        if (!is_null($tokenKey)) {
-            Assertion::maxLength($tokenKey, 125, 'tokenKey value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        }
-
-        $this->tokenKey = $tokenKey;
-
-        return $this;
-    }
-
-    /**
-     * Get tokenKey
-     *
-     * @return string
-     */
-    public function getTokenKey()
-    {
-        return $this->tokenKey;
-    }
-
-    /**
      * Set gsQRCode
      *
      * @param boolean $gsQRCode
      *
-     * @return self
+     * @return static
      */
-    public function setGsQRCode($gsQRCode)
+    protected function setGsQRCode($gsQRCode)
     {
         Assertion::notNull($gsQRCode, 'gsQRCode value "%s" is null, but non null value was expected.');
         Assertion::between(intval($gsQRCode), 0, 1, 'gsQRCode provided "%s" is not a valid boolean value.');
+        $gsQRCode = (bool) $gsQRCode;
 
         $this->gsQRCode = $gsQRCode;
 
@@ -788,9 +761,9 @@ abstract class UserAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -810,11 +783,11 @@ abstract class UserAbstract
     /**
      * Set callAcl
      *
-     * @param \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl
+     * @param \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallAcl(\Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl = null)
+    protected function setCallAcl(\Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl = null)
     {
         $this->callAcl = $callAcl;
 
@@ -824,7 +797,7 @@ abstract class UserAbstract
     /**
      * Get callAcl
      *
-     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface
+     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface | null
      */
     public function getCallAcl()
     {
@@ -834,11 +807,11 @@ abstract class UserAbstract
     /**
      * Set bossAssistant
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $bossAssistant
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $bossAssistant | null
      *
-     * @return self
+     * @return static
      */
-    public function setBossAssistant(UserInterface $bossAssistant = null)
+    protected function setBossAssistant(UserInterface $bossAssistant = null)
     {
         $this->bossAssistant = $bossAssistant;
 
@@ -848,7 +821,7 @@ abstract class UserAbstract
     /**
      * Get bossAssistant
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getBossAssistant()
     {
@@ -858,11 +831,11 @@ abstract class UserAbstract
     /**
      * Set bossAssistantWhiteList
      *
-     * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $bossAssistantWhiteList
+     * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $bossAssistantWhiteList | null
      *
-     * @return self
+     * @return static
      */
-    public function setBossAssistantWhiteList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $bossAssistantWhiteList = null)
+    protected function setBossAssistantWhiteList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $bossAssistantWhiteList = null)
     {
         $this->bossAssistantWhiteList = $bossAssistantWhiteList;
 
@@ -872,7 +845,7 @@ abstract class UserAbstract
     /**
      * Get bossAssistantWhiteList
      *
-     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface
+     * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface | null
      */
     public function getBossAssistantWhiteList()
     {
@@ -882,11 +855,11 @@ abstract class UserAbstract
     /**
      * Set transformationRuleSet
      *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet
+     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet | null
      *
-     * @return self
+     * @return static
      */
-    public function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null)
+    protected function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null)
     {
         $this->transformationRuleSet = $transformationRuleSet;
 
@@ -896,7 +869,7 @@ abstract class UserAbstract
     /**
      * Get transformationRuleSet
      *
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     public function getTransformationRuleSet()
     {
@@ -906,11 +879,11 @@ abstract class UserAbstract
     /**
      * Set language
      *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
+     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language | null
      *
-     * @return self
+     * @return static
      */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
+    protected function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
     {
         $this->language = $language;
 
@@ -920,7 +893,7 @@ abstract class UserAbstract
     /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage()
     {
@@ -930,9 +903,9 @@ abstract class UserAbstract
     /**
      * Set terminal
      *
-     * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal
+     * @param \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal | null
      *
-     * @return self
+     * @return static
      */
     public function setTerminal(\Ivoz\Provider\Domain\Model\Terminal\TerminalInterface $terminal = null)
     {
@@ -944,7 +917,7 @@ abstract class UserAbstract
     /**
      * Get terminal
      *
-     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface
+     * @return \Ivoz\Provider\Domain\Model\Terminal\TerminalInterface | null
      */
     public function getTerminal()
     {
@@ -954,9 +927,9 @@ abstract class UserAbstract
     /**
      * Set extension
      *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension
+     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension | null
      *
-     * @return self
+     * @return static
      */
     public function setExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $extension = null)
     {
@@ -968,7 +941,7 @@ abstract class UserAbstract
     /**
      * Get extension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getExtension()
     {
@@ -978,11 +951,11 @@ abstract class UserAbstract
     /**
      * Set timezone
      *
-     * @param \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $timezone
+     * @param \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $timezone | null
      *
-     * @return self
+     * @return static
      */
-    public function setTimezone(\Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $timezone = null)
+    protected function setTimezone(\Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $timezone = null)
     {
         $this->timezone = $timezone;
 
@@ -992,7 +965,7 @@ abstract class UserAbstract
     /**
      * Get timezone
      *
-     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface
+     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface | null
      */
     public function getTimezone()
     {
@@ -1002,11 +975,11 @@ abstract class UserAbstract
     /**
      * Set outgoingDdi
      *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi
+     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi | null
      *
-     * @return self
+     * @return static
      */
-    public function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null)
+    protected function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null)
     {
         $this->outgoingDdi = $outgoingDdi;
 
@@ -1016,7 +989,7 @@ abstract class UserAbstract
     /**
      * Get outgoingDdi
      *
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     public function getOutgoingDdi()
     {
@@ -1026,11 +999,11 @@ abstract class UserAbstract
     /**
      * Set outgoingDdiRule
      *
-     * @param \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule
+     * @param \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule | null
      *
-     * @return self
+     * @return static
      */
-    public function setOutgoingDdiRule(\Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule = null)
+    protected function setOutgoingDdiRule(\Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface $outgoingDdiRule = null)
     {
         $this->outgoingDdiRule = $outgoingDdiRule;
 
@@ -1040,7 +1013,7 @@ abstract class UserAbstract
     /**
      * Get outgoingDdiRule
      *
-     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface
+     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface | null
      */
     public function getOutgoingDdiRule()
     {
@@ -1050,11 +1023,11 @@ abstract class UserAbstract
     /**
      * Set voicemailLocution
      *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $voicemailLocution
+     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $voicemailLocution | null
      *
-     * @return self
+     * @return static
      */
-    public function setVoicemailLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $voicemailLocution = null)
+    protected function setVoicemailLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $voicemailLocution = null)
     {
         $this->voicemailLocution = $voicemailLocution;
 
@@ -1064,15 +1037,12 @@ abstract class UserAbstract
     /**
      * Get voicemailLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getVoicemailLocution()
     {
         return $this->voicemailLocution;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

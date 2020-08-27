@@ -12,8 +12,18 @@ class RoutingPatternGroupLifecycleServiceCollection implements LifecycleServiceC
 {
     use LifecycleServiceCollectionTrait;
 
-    protected function addService(RoutingPatternGroupLifecycleEventHandlerInterface $service)
+    public static $bindedBaseServices = [
+        "on_commit" =>
+        [
+            \Ivoz\Provider\Infrastructure\Domain\Service\RoutingPatternGroup\SendTrunksLcrReloadRequest::class => 200,
+        ],
+    ];
+
+    /**
+     * @return void
+     */
+    protected function addService(string $event, RoutingPatternGroupLifecycleEventHandlerInterface $service)
     {
-        $this->services[] = $service;
+        $this->services[$event][] = $service;
     }
 }

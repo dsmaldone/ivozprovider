@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\CallAcl;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -48,7 +46,7 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -67,43 +65,26 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'defaultPolicy' => $this->getDefaultPolicy(),
             'id' => $this->getId(),
             'company' => $this->getCompany(),
             'relMatchLists' => $this->getRelMatchLists()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        if (!is_null($this->relMatchLists)) {
-            $items = $this->getRelMatchLists();
-            $this->relMatchLists = [];
-            foreach ($items as $item) {
-                $this->relMatchLists[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\CallAclRelMatchList\\CallAclRelMatchList',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->relMatchLists = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\CallAclRelMatchList\\CallAclRelMatchList',
-            $this->relMatchLists
-        );
+        return $response;
     }
 
     /**
@@ -119,7 +100,7 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -139,7 +120,7 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDefaultPolicy()
     {
@@ -159,7 +140,7 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -179,7 +160,7 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -187,7 +168,7 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -201,7 +182,7 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -225,12 +206,10 @@ abstract class CallAclDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getRelMatchLists()
     {
         return $this->relMatchLists;
     }
 }
-
-

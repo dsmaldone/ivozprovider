@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class ExternalCallFilterWhiteListAbstract
 {
     /**
-     * @var \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface
+     * @var \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface | null
      */
     protected $filter;
 
@@ -31,14 +31,14 @@ abstract class ExternalCallFilterWhiteListAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "ExternalCallFilterWhiteList",
             $this->getId()
         );
@@ -62,7 +62,8 @@ abstract class ExternalCallFilterWhiteListAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param ExternalCallFilterWhiteListInterface|null $entity
      * @param int $depth
      * @return ExternalCallFilterWhiteListDto|null
      */
@@ -82,56 +83,58 @@ abstract class ExternalCallFilterWhiteListAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var ExternalCallFilterWhiteListDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ExternalCallFilterWhiteListDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ExternalCallFilterWhiteListDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ExternalCallFilterWhiteListDto::class);
 
         $self = new static();
 
         $self
-            ->setFilter($dto->getFilter())
-            ->setMatchlist($dto->getMatchlist())
+            ->setFilter($fkTransformer->transform($dto->getFilter()))
+            ->setMatchlist($fkTransformer->transform($dto->getMatchlist()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ExternalCallFilterWhiteListDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ExternalCallFilterWhiteListDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ExternalCallFilterWhiteListDto::class);
 
         $this
-            ->setFilter($dto->getFilter())
-            ->setMatchlist($dto->getMatchlist());
+            ->setFilter($fkTransformer->transform($dto->getFilter()))
+            ->setMatchlist($fkTransformer->transform($dto->getMatchlist()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ExternalCallFilterWhiteListDto
      */
@@ -149,19 +152,17 @@ abstract class ExternalCallFilterWhiteListAbstract
     {
         return [
             'filterId' => self::getFilter() ? self::getFilter()->getId() : null,
-            'matchlistId' => self::getMatchlist() ? self::getMatchlist()->getId() : null
+            'matchlistId' => self::getMatchlist()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set filter
      *
-     * @param \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $filter
+     * @param \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $filter | null
      *
-     * @return self
+     * @return static
      */
     public function setFilter(\Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $filter = null)
     {
@@ -173,7 +174,7 @@ abstract class ExternalCallFilterWhiteListAbstract
     /**
      * Get filter
      *
-     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface
+     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface | null
      */
     public function getFilter()
     {
@@ -185,9 +186,9 @@ abstract class ExternalCallFilterWhiteListAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchlist
      *
-     * @return self
+     * @return static
      */
-    public function setMatchlist(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchlist)
+    protected function setMatchlist(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchlist)
     {
         $this->matchlist = $matchlist;
 
@@ -204,8 +205,5 @@ abstract class ExternalCallFilterWhiteListAbstract
         return $this->matchlist;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

@@ -2,20 +2,20 @@
 
 namespace Ivoz\Provider\Domain\Service\BalanceNotification;
 
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Core\Domain\Event\DomainEventInterface;
+use Ivoz\Core\Domain\Model\Mailer\Message;
 use Ivoz\Core\Domain\Service\DomainEventSubscriberInterface;
-use Ivoz\Core\Domain\Service\DomainEventSubscriberTrait;
+use Ivoz\Core\Domain\Service\MailerClientInterface;
+use Ivoz\Provider\Domain\Events\AbstractBalanceThresholdWasBroken;
+use Ivoz\Provider\Domain\Model\BalanceNotification\BalanceNotificationDto;
 use Ivoz\Provider\Domain\Model\BalanceNotification\BalanceNotificationInterface;
 use Ivoz\Provider\Domain\Model\BalanceNotification\BalanceNotificationRepository;
-use Ivoz\Provider\Domain\Model\Company\Events\CompanyBalanceThresholdWasBroken;
+use Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface;
 use Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateRepository;
-use Ivoz\Core\Infrastructure\Domain\Service\Mailer\Client;
-use Ivoz\Core\Domain\Model\Mailer\Message;
 
 class NotifyBrokenThreshold implements DomainEventSubscriberInterface
 {
-    use DomainEventSubscriberTrait;
-
     /**
      * @var NotificationTemplateRepository
      */
@@ -27,67 +27,84 @@ class NotifyBrokenThreshold implements DomainEventSubscriberInterface
     protected $balanceNotificationRepository;
 
     /**
-     * @var Client
+     * @var EntityTools
+     */
+    protected $entityTools;
+
+    /**
+     * @var MailerClientInterface
      */
     protected $mailer;
 
     public function __construct(
         NotificationTemplateRepository $notificationTemplateRepository,
         BalanceNotificationRepository $balanceNotificationRepository,
-        Client $mailer
+        EntityTools $entityTools,
+        MailerClientInterface $mailer
     ) {
         $this->notificationTemplateRepository = $notificationTemplateRepository;
         $this->balanceNotificationRepository = $balanceNotificationRepository;
+        $this->entityTools = $entityTools;
         $this->mailer = $mailer;
     }
 
     /**
-     * @param CompanyBalanceThresholdWasBroken $domainEvent
+     * @param AbstractBalanceThresholdWasBroken $domainEvent
      * @throws \Exception
      * @return void
      */
     public function handle(DomainEventInterface $domainEvent)
     {
-        if (!($domainEvent instanceof CompanyBalanceThresholdWasBroken)) {
-            throw new \Exception('CompanyBalanceThresholdWasBroken was expected');
+        if (!($domainEvent instanceof AbstractBalanceThresholdWasBroken)) {
+            throw new \Exception('AbstractBalanceThresholdWasBroken was expected');
         }
-        $this->events[] = $domainEvent;
 
         $this->sendNotification($domainEvent);
     }
 
-    private function sendNotification(CompanyBalanceThresholdWasBroken $event)
+    /**
+     * @param DomainEventInterface $domainEvent
+     * @return boolean
+     */
+    public function isSubscribedTo(DomainEventInterface $domainEvent)
+    {
+        return $domainEvent instanceof AbstractBalanceThresholdWasBroken;
+    }
+
+    /**
+     * @return void
+     */
+    private function sendNotification(AbstractBalanceThresholdWasBroken $event)
     {
         /** @var BalanceNotificationInterface $balanceNotification */
         $balanceNotification = $this->balanceNotificationRepository
             ->find($event->getBalanceNotificationId());
 
+        /** @var NotificationTemplateInterface $notificationTemplate */
         $notificationTemplate = $this->notificationTemplateRepository
             ->findTemplateByBalanceNotification($balanceNotification);
 
-        $company = $balanceNotification->getCompany();
-        $language = $company->getLanguage();
-        if (!$language) {
-            $language = $company->getBrand()->getLanguage();
-        }
+        $name = $balanceNotification->getEntityName();
+        $language = $balanceNotification->getLanguage();
 
         $notificationContent = $notificationTemplate->getContentsByLanguage($language);
         $subject = $this->parseNotificationContent(
             $notificationContent->getSubject(),
-            $company->getName(),
+            $name,
             $event->getCurrentBalance()
         );
+        $bodyType = $notificationContent->getBodyType();
 
         $body = $this->parseNotificationContent(
             $notificationContent->getBody(),
-            $company->getName(),
+            $name,
             $event->getCurrentBalance()
         );
 
         $email = new Message();
         $email
             ->setSubject($subject)
-            ->setBody($body)
+            ->setBody($body, $bodyType)
             ->setFromAddress(
                 $notificationContent->getFromAddress()
             )
@@ -100,28 +117,23 @@ class NotifyBrokenThreshold implements DomainEventSubscriberInterface
 
         $this->mailer->send($email);
 
+        /** @var BalanceNotificationDto $balanceNotificationDto */
+        $balanceNotificationDto = $this->entityTools->entityToDto($balanceNotification);
+        $balanceNotificationDto->setLastSent(new \DateTime(null, new \DateTimeZone('UTC')));
+        $this->entityTools->persistDto(
+            $balanceNotificationDto,
+            $balanceNotification,
+            false
+        );
     }
 
-    private function parseNotificationContent(string $content, string $companyName, float $currentBalance)
+    private function parseNotificationContent(string $content, string $name, float $currentBalance): string
     {
         $substitution = array(
-            '${BALANCE_COMPANY}' => $companyName,
+            '${BALANCE_NAME}' => $name,
             '${BALANCE_AMOUNT}' => $currentBalance
         );
 
         return str_replace(array_keys($substitution), array_values($substitution), $content);
-    }
-
-    /**
-     * @param DomainEventInterface $domainEvent
-     * @return boolean
-     */
-    public function isSubscribedTo(DomainEventInterface $domainEvent)
-    {
-        if ($domainEvent instanceof CompanyBalanceThresholdWasBroken) {
-            return true;
-        }
-
-        return false;
     }
 }

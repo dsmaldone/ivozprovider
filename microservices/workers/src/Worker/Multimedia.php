@@ -3,14 +3,16 @@
 namespace Worker;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Provider\Domain\Model\Locution\LocutionDto;
 use Ivoz\Provider\Domain\Model\Locution\LocutionInterface;
 use Symfony\Bridge\Monolog\Logger;
 use Symfony\Component\Process\Process;
 use Mmoreram\GearmanBundle\Driver\Gearman;
 use GearmanJob;
+use Ivoz\Core\Domain\Service\DomainEventPublisher;
+use Ivoz\Core\Application\RequestId;
+use Ivoz\Core\Application\RegisterCommandTrait;
 
 /**
  * @Gearman\Work(
@@ -22,43 +24,25 @@ use GearmanJob;
  */
 class Multimedia
 {
+    use RegisterCommandTrait;
 
-    /**
-     * @var EntityManagerInterface
-     */
-    protected $em;
+    private $eventPublisher;
+    private $requestId;
+    private $em;
+    private $entityTools;
+    private $logger;
 
-    /**
-     * @var EntityPersisterInterface
-     */
-    protected $entityPersister;
-
-    /**
-     * @var DtoAssembler
-     */
-    protected $dtoAssembler;
-
-    /**
-     * @var Logger
-     */
-    protected $logger;
-
-    /**
-     * Multimedia constructor.
-     * @param EntityManagerInterface $em
-     * @param EntityPersisterInterface $entityPersister
-     * @param DtoAssembler $dtoAssembler
-     * @param Logger $logger
-     */
     public function __construct(
+        DomainEventPublisher $eventPublisher,
+        RequestId $requestId,
         EntityManagerInterface $em,
-        EntityPersisterInterface $entityPersister,
-        DtoAssembler $dtoAssembler,
+        EntityTools $entityTools,
         Logger $logger
     ) {
+        $this->eventPublisher = $eventPublisher;
+        $this->requestId = $requestId;
         $this->em = $em;
-        $this->entityPersister = $entityPersister;
-        $this->dtoAssembler = $dtoAssembler;
+        $this->entityTools = $entityTools;
         $this->logger = $logger;
     }
 
@@ -79,6 +63,7 @@ class Multimedia
     {
         // Thanks Gearmand, you've done your job
         $serializedJob->sendComplete("DONE");
+        $this->registerCommand('Worker', 'multimedia');
 
         $job = igbinary_unserialize($serializedJob->workload());
 
@@ -93,7 +78,7 @@ class Multimedia
             return false;
         }
 
-        /** @var LocutionInterface $entity */
+        /** @var LocutionInterface | null $entity */
         $entity = $repository->find($entityId);
         if (!$entity) {
             $this->logger->error(sprintf("Unable to find %s with id %d", $entityName, $entityId));
@@ -103,9 +88,9 @@ class Multimedia
         $this->logger->info(sprintf("Encode process started for %s", $entity));
 
         /** @var LocutionDto $entityDto */
-        $entityDto = $this->dtoAssembler->toDto($entity);
+        $entityDto = $this->entityTools->entityToDto($entity);
         $entityDto->setStatus('encoding');
-        $this->entityPersister->persistDto($entityDto, $entity);
+        $this->entityTools->persistDto($entityDto, $entity);
 
         try {
             $originalFile = $entityDto->getOriginalFilePath();
@@ -122,9 +107,11 @@ class Multimedia
                 $dumpWavFile
             ]);
             $process->mustRun();
-            $this->logger->info(sprintf("Executed %s [exitCode: %d]",
-                $process->getCommandLine(), $process->getExitCode())
-            );
+            $this->logger->info(sprintf(
+                "Executed %s [exitCode: %d]",
+                $process->getCommandLine(),
+                $process->getExitCode()
+            ));
 
             $encodedFile = sprintf("/tmp/%s%d.wav", $entityClass, $entityId);
             $process = new Process([
@@ -136,9 +123,11 @@ class Multimedia
                 "rate", "-ql", "8000"
             ]);
             $process->mustRun();
-            $this->logger->info(sprintf("Executed %s [exitCode: %d]",
-                    $process->getCommandLine(), $process->getExitCode())
-            );
+            $this->logger->info(sprintf(
+                "Executed %s [exitCode: %d]",
+                $process->getCommandLine(),
+                $process->getExitCode()
+            ));
 
             // Remove temp files
             unlink($dumpWavFile);
@@ -148,15 +137,14 @@ class Multimedia
                 ->setEncodedFilePath($encodedFile)
                 ->setStatus('ready');
 
-            $this->entityPersister->persistDto($entityDto, $entity);
+            $this->entityTools->persistDto($entityDto, $entity);
             $this->logger->info(sprintf("Successfully encoded %s", $entity));
-
-        } catch(\Exception $e){
+        } catch (\Exception $e) {
             $entityDto
                 ->setEncodedFilePath(null)
                 ->setStatus('error');
 
-            $this->entityPersister->persistDto($entityDto, $entity);
+            $this->entityTools->persistDto($entityDto, $entity);
             $this->logger->error(sprintf("Failed to encode %s: %s ", $entity, $e->getMessage()));
             throw $e;
         }
@@ -164,5 +152,4 @@ class Multimedia
         // Done!
         return true;
     }
-
 }

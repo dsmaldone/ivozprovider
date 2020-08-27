@@ -13,29 +13,11 @@ interface TrunksLcrGatewayInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set lcrId
-     *
-     * @param integer $lcrId
-     *
-     * @return self
-     */
-    public function setLcrId($lcrId);
-
-    /**
      * Get lcrId
      *
      * @return integer
      */
     public function getLcrId();
-
-    /**
-     * Set gwName
-     *
-     * @param string $gwName
-     *
-     * @return self
-     */
-    public function setGwName($gwName);
 
     /**
      * Get gwName
@@ -45,180 +27,88 @@ interface TrunksLcrGatewayInterface extends LoggableEntityInterface
     public function getGwName();
 
     /**
-     * Set ip
-     *
-     * @param string $ip
-     *
-     * @return self
-     */
-    public function setIp($ip = null);
-
-    /**
      * Get ip
      *
-     * @return string
+     * @return string | null
      */
     public function getIp();
 
     /**
-     * Set hostname
-     *
-     * @param string $hostname
-     *
-     * @return self
-     */
-    public function setHostname($hostname = null);
-
-    /**
      * Get hostname
      *
-     * @return string
+     * @return string | null
      */
     public function getHostname();
 
     /**
-     * Set port
-     *
-     * @param integer $port
-     *
-     * @return self
-     */
-    public function setPort($port = null);
-
-    /**
      * Get port
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPort();
 
     /**
-     * Set params
-     *
-     * @param string $params
-     *
-     * @return self
-     */
-    public function setParams($params = null);
-
-    /**
      * Get params
      *
-     * @return string
+     * @return string | null
      */
     public function getParams();
 
     /**
-     * Set uriScheme
-     *
-     * @param integer $uriScheme
-     *
-     * @return self
-     */
-    public function setUriScheme($uriScheme = null);
-
-    /**
      * Get uriScheme
      *
-     * @return integer
+     * @return integer | null
      */
     public function getUriScheme();
 
     /**
-     * Set transport
-     *
-     * @param integer $transport
-     *
-     * @return self
-     */
-    public function setTransport($transport = null);
-
-    /**
      * Get transport
      *
-     * @return integer
+     * @return integer | null
      */
     public function getTransport();
 
     /**
-     * Set strip
-     *
-     * @param boolean $strip
-     *
-     * @return self
-     */
-    public function setStrip($strip = null);
-
-    /**
      * Get strip
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getStrip();
 
     /**
-     * Set prefix
-     *
-     * @param string $prefix
-     *
-     * @return self
-     */
-    public function setPrefix($prefix = null);
-
-    /**
      * Get prefix
      *
-     * @return string
+     * @return string | null
      */
     public function getPrefix();
 
     /**
-     * Set tag
-     *
-     * @param string $tag
-     *
-     * @return self
-     */
-    public function setTag($tag = null);
-
-    /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag();
 
     /**
-     * Set defunct
-     *
-     * @param integer $defunct
-     *
-     * @return self
-     */
-    public function setDefunct($defunct = null);
-
-    /**
      * Get defunct
      *
-     * @return integer
+     * @return integer | null
      */
     public function getDefunct();
 
     /**
-     * Set peerServer
+     * Set carrierServer
      *
-     * @param \Ivoz\Provider\Domain\Model\PeerServer\PeerServerInterface $peerServer
+     * @param \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerInterface $carrierServer | null
      *
-     * @return self
+     * @return static
      */
-    public function setPeerServer(\Ivoz\Provider\Domain\Model\PeerServer\PeerServerInterface $peerServer);
+    public function setCarrierServer(\Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerInterface $carrierServer = null);
 
     /**
-     * Get peerServer
+     * Get carrierServer
      *
-     * @return \Ivoz\Provider\Domain\Model\PeerServer\PeerServerInterface
+     * @return \Ivoz\Provider\Domain\Model\CarrierServer\CarrierServerInterface | null
      */
-    public function getPeerServer();
-
+    public function getCarrierServer();
 }
-

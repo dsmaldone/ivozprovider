@@ -5,7 +5,11 @@ namespace Ivoz\Provider\Domain\Model\BalanceMovement;
 class BalanceMovementDto extends BalanceMovementDtoAbstract
 {
 
-    public static function getPropertyMap(string $context = '')
+    /**
+     * @inheritdoc
+     * @codeCoverageIgnore
+     */
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return [
@@ -25,5 +29,3 @@ class BalanceMovementDto extends BalanceMovementDtoAbstract
         ];
     }
 }
-
-

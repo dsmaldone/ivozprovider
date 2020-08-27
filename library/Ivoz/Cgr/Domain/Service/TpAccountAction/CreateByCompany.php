@@ -3,26 +3,31 @@
 namespace Ivoz\Cgr\Domain\Service\TpAccountAction;
 
 use Ivoz\Cgr\Domain\Model\TpAccountAction\TpAccountAction;
+use Ivoz\Cgr\Domain\Model\TpAccountAction\TpAccountActionRepository;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Core\Domain\Service\EntityPersisterInterface;
-use Ivoz\Provider\Domain\Model\Company\CompanyDTO;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
 use Ivoz\Provider\Domain\Service\Company\CompanyLifecycleEventHandlerInterface;
 
 class CreateByCompany implements CompanyLifecycleEventHandlerInterface
 {
-    /**
-     * @var EntityPersisterInterface
-     */
+
     protected $entityPersister;
+    protected $tpAccountActionRepository;
+    protected $entityTools;
 
     /**
      * UpdateByDestinationTpAccountAction constructor.
      * @param EntityPersisterInterface $entityPersister
      */
     public function __construct(
-        EntityPersisterInterface $entityPersister
+        EntityPersisterInterface $entityPersister,
+        TpAccountActionRepository $tpAccountActionRepository,
+        EntityTools $entityTools
     ) {
         $this->entityPersister = $entityPersister;
+        $this->tpAccountActionRepository = $tpAccountActionRepository;
+        $this->entityTools = $entityTools;
     }
 
     public static function getSubscribedEvents()
@@ -32,23 +37,44 @@ class CreateByCompany implements CompanyLifecycleEventHandlerInterface
         ];
     }
 
-    public function execute(CompanyInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(CompanyInterface $company)
     {
-        if (!$isNew) {
-            return;
+        $isNew = $company->isNew();
+
+        if ($isNew) {
+            $brand = $company->getBrand();
+            $accountActionDto = TpAccountAction::createDTO();
+
+            // Fill all rating plan fields
+            $accountActionDto
+                ->setTpid($brand->getCgrTenant())
+                ->setCompanyId($company->getId())
+                ->setTenant($brand->getCgrTenant())
+                ->setActionTriggersTag($company->getCgrSubject())
+                ->setAccount($company->getCgrSubject());
+        } else {
+            $accountAction = $this->tpAccountActionRepository
+                ->findByCompany(
+                    $company->getId()
+                );
+
+            $accountActionDto = $this->entityTools->entityToDto(
+                $accountAction
+            );
         }
 
-        /** @var CompanyDTO $entityDto */
-        $entityDto = $entity->toDTO();
+        $allowNegative = $company->getBillingMethod() === CompanyInterface::BILLINGMETHOD_POSTPAID
+            ? 1
+            : 0;
 
-        $accountActionDto = TpAccountAction::createDTO();
+        $accountActionDto->setAllowNegative($allowNegative);
 
-        // Fill all rating plan fields
-        $accountActionDto
-            ->setCompanyId($entityDto->getId())
-            ->setTenant(sprintf("b%d", $entityDto->getBrandId()))
-            ->setAccount(sprintf("c%d", $entityDto->getId()));
-
-        $this->entityPersister->persistDto($accountActionDto, null);
+        $this->entityPersister->persistDto(
+            $accountActionDto,
+            null
+        );
     }
 }

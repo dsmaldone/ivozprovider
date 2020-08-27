@@ -3,10 +3,9 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingRepository;
 use Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRouting;
+use Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingRepository;
 use Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternInterface;
-use Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupInterface;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -32,7 +31,8 @@ class OutgoingRoutingDoctrineRepository extends ServiceEntityRepository implemen
             ->select('self')
             ->innerJoin('self.routingPatternGroup', 'routingPatternGroup')
             ->innerJoin('routingPatternGroup.relPatterns', 'relPattern')
-            ->innerJoin('relPattern.routingPattern', 'routingPattern')
+            ->where('relPattern.routingPattern = :routingPatternId')
+            ->setParameter(':routingPatternId', $routingPattern->getId())
             ->groupBy('self.id')
             ->getQuery();
 

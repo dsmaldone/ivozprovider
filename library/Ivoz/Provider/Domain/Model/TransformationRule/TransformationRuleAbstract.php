@@ -25,22 +25,22 @@ abstract class TransformationRuleAbstract
     protected $description = '';
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $priority;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $matchExpr;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $replaceExpr;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @var \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     protected $transformationRuleSet;
 
@@ -60,7 +60,8 @@ abstract class TransformationRuleAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TransformationRule",
             $this->getId()
         );
@@ -84,7 +85,8 @@ abstract class TransformationRuleAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TransformationRuleInterface|null $entity
      * @param int $depth
      * @return TransformationRuleDto|null
      */
@@ -104,47 +106,50 @@ abstract class TransformationRuleAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TransformationRuleDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TransformationRuleDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TransformationRuleDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TransformationRuleDto::class);
 
         $self = new static(
             $dto->getType(),
-            $dto->getDescription());
+            $dto->getDescription()
+        );
 
         $self
             ->setPriority($dto->getPriority())
             ->setMatchExpr($dto->getMatchExpr())
             ->setReplaceExpr($dto->getReplaceExpr())
-            ->setTransformationRuleSet($dto->getTransformationRuleSet())
+            ->setTransformationRuleSet($fkTransformer->transform($dto->getTransformationRuleSet()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TransformationRuleDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TransformationRuleDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TransformationRuleDto::class);
 
         $this
@@ -153,15 +158,15 @@ abstract class TransformationRuleAbstract
             ->setPriority($dto->getPriority())
             ->setMatchExpr($dto->getMatchExpr())
             ->setReplaceExpr($dto->getReplaceExpr())
-            ->setTransformationRuleSet($dto->getTransformationRuleSet());
+            ->setTransformationRuleSet($fkTransformer->transform($dto->getTransformationRuleSet()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TransformationRuleDto
      */
@@ -190,8 +195,6 @@ abstract class TransformationRuleAbstract
             'transformationRuleSetId' => self::getTransformationRuleSet() ? self::getTransformationRuleSet()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -199,18 +202,18 @@ abstract class TransformationRuleAbstract
      *
      * @param string $type
      *
-     * @return self
+     * @return static
      */
-    public function setType($type)
+    protected function setType($type)
     {
         Assertion::notNull($type, 'type value "%s" is null, but non null value was expected.');
         Assertion::maxLength($type, 10, 'type value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($type, array (
-          0 => 'callerin',
-          1 => 'calleein',
-          2 => 'callerout',
-          3 => 'calleeout',
-        ), 'typevalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($type, [
+            TransformationRuleInterface::TYPE_CALLERIN,
+            TransformationRuleInterface::TYPE_CALLEEIN,
+            TransformationRuleInterface::TYPE_CALLEROUT,
+            TransformationRuleInterface::TYPE_CALLEEOUT
+        ], 'typevalue "%s" is not an element of the valid values: %s');
 
         $this->type = $type;
 
@@ -232,9 +235,9 @@ abstract class TransformationRuleAbstract
      *
      * @param string $description
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description)
+    protected function setDescription($description)
     {
         Assertion::notNull($description, 'description value "%s" is null, but non null value was expected.');
         Assertion::maxLength($description, 64, 'description value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -257,17 +260,16 @@ abstract class TransformationRuleAbstract
     /**
      * Set priority
      *
-     * @param integer $priority
+     * @param integer $priority | null
      *
-     * @return self
+     * @return static
      */
-    public function setPriority($priority = null)
+    protected function setPriority($priority = null)
     {
         if (!is_null($priority)) {
-            if (!is_null($priority)) {
-                Assertion::integerish($priority, 'priority value "%s" is not an integer or a number castable to integer.');
-                Assertion::greaterOrEqualThan($priority, 0, 'priority provided "%s" is not greater or equal than "%s".');
-            }
+            Assertion::integerish($priority, 'priority value "%s" is not an integer or a number castable to integer.');
+            Assertion::greaterOrEqualThan($priority, 0, 'priority provided "%s" is not greater or equal than "%s".');
+            $priority = (int) $priority;
         }
 
         $this->priority = $priority;
@@ -278,7 +280,7 @@ abstract class TransformationRuleAbstract
     /**
      * Get priority
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPriority()
     {
@@ -288,11 +290,11 @@ abstract class TransformationRuleAbstract
     /**
      * Set matchExpr
      *
-     * @param string $matchExpr
+     * @param string $matchExpr | null
      *
-     * @return self
+     * @return static
      */
-    public function setMatchExpr($matchExpr = null)
+    protected function setMatchExpr($matchExpr = null)
     {
         if (!is_null($matchExpr)) {
             Assertion::maxLength($matchExpr, 128, 'matchExpr value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -306,7 +308,7 @@ abstract class TransformationRuleAbstract
     /**
      * Get matchExpr
      *
-     * @return string
+     * @return string | null
      */
     public function getMatchExpr()
     {
@@ -316,11 +318,11 @@ abstract class TransformationRuleAbstract
     /**
      * Set replaceExpr
      *
-     * @param string $replaceExpr
+     * @param string $replaceExpr | null
      *
-     * @return self
+     * @return static
      */
-    public function setReplaceExpr($replaceExpr = null)
+    protected function setReplaceExpr($replaceExpr = null)
     {
         if (!is_null($replaceExpr)) {
             Assertion::maxLength($replaceExpr, 128, 'replaceExpr value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -334,7 +336,7 @@ abstract class TransformationRuleAbstract
     /**
      * Get replaceExpr
      *
-     * @return string
+     * @return string | null
      */
     public function getReplaceExpr()
     {
@@ -344,9 +346,9 @@ abstract class TransformationRuleAbstract
     /**
      * Set transformationRuleSet
      *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet
+     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet | null
      *
-     * @return self
+     * @return static
      */
     public function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null)
     {
@@ -358,15 +360,12 @@ abstract class TransformationRuleAbstract
     /**
      * Get transformationRuleSet
      *
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     public function getTransformationRuleSet()
     {
         return $this->transformationRuleSet;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

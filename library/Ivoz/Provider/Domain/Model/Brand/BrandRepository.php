@@ -2,8 +2,13 @@
 
 namespace Ivoz\Provider\Domain\Model\Brand;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
-interface BrandRepository extends ObjectRepository, Selectable {}
-
+interface BrandRepository extends ObjectRepository, Selectable
+{
+    /**
+     * @return string[]
+     */
+    public function getNames();
+}

@@ -39,8 +39,7 @@ class Queues extends RouteHandlerAbstract
         Wrapper $agi,
         EntityManagerInterface $em,
         QueueCallAction $queueCallAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->em = $em;
         $this->queueCallAction = $queueCallAction;
@@ -57,7 +56,7 @@ class Queues extends RouteHandlerAbstract
         /** @var QueueMemberRepository $queueMemberRepository */
         $queueMemberRepository = $this->em->getRepository(QueueMember::class);
 
-        /** @var QueueMemberInterface $queueMember */
+        /** @var QueueMemberInterface|null $queueMember */
         $queueMember = $queueMemberRepository->find($queueMemberId);
         if (is_null($queueMember)) {
             $this->agi->error("Queue member with id %d does not exists.", $queueMemberId);
@@ -68,6 +67,5 @@ class Queues extends RouteHandlerAbstract
         $this->queueCallAction
             ->setQueueMember($queueMember)
             ->process();
-
     }
 }

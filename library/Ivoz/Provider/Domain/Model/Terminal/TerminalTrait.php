@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\Terminal;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,12 +18,12 @@ trait TerminalTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $astPsEndpoints;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $users;
 
@@ -39,24 +38,37 @@ trait TerminalTrait
         $this->users = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param TerminalDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TerminalDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getAstPsEndpoints()) {
-            $self->replaceAstPsEndpoints($dto->getAstPsEndpoints());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getAstPsEndpoints())) {
+            $self->replaceAstPsEndpoints(
+                $fkTransformer->transformCollection(
+                    $dto->getAstPsEndpoints()
+                )
+            );
         }
 
-        if ($dto->getUsers()) {
-            $self->replaceUsers($dto->getUsers());
+        if (!is_null($dto->getUsers())) {
+            $self->replaceUsers(
+                $fkTransformer->transformCollection(
+                    $dto->getUsers()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -66,25 +78,37 @@ trait TerminalTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param TerminalDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TerminalDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getAstPsEndpoints()) {
-            $this->replaceAstPsEndpoints($dto->getAstPsEndpoints());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getAstPsEndpoints())) {
+            $this->replaceAstPsEndpoints(
+                $fkTransformer->transformCollection(
+                    $dto->getAstPsEndpoints()
+                )
+            );
         }
-        if ($dto->getUsers()) {
-            $this->replaceUsers($dto->getUsers());
+        if (!is_null($dto->getUsers())) {
+            $this->replaceUsers(
+                $fkTransformer->transformCollection(
+                    $dto->getUsers()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TerminalDto
      */
@@ -104,14 +128,12 @@ trait TerminalTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add astPsEndpoint
      *
      * @param \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $astPsEndpoint
      *
-     * @return TerminalTrait
+     * @return static
      */
     public function addAstPsEndpoint(\Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $astPsEndpoint)
     {
@@ -133,10 +155,10 @@ trait TerminalTrait
     /**
      * Replace astPsEndpoints
      *
-     * @param \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface[] $astPsEndpoints
-     * @return self
+     * @param ArrayCollection $astPsEndpoints of Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface
+     * @return static
      */
-    public function replaceAstPsEndpoints(Collection $astPsEndpoints)
+    public function replaceAstPsEndpoints(ArrayCollection $astPsEndpoints)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -166,7 +188,7 @@ trait TerminalTrait
 
     /**
      * Get astPsEndpoints
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface[]
      */
     public function getAstPsEndpoints(Criteria $criteria = null)
@@ -183,7 +205,7 @@ trait TerminalTrait
      *
      * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
      *
-     * @return TerminalTrait
+     * @return static
      */
     public function addUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user)
     {
@@ -205,10 +227,10 @@ trait TerminalTrait
     /**
      * Replace users
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface[] $users
-     * @return self
+     * @param ArrayCollection $users of Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return static
      */
-    public function replaceUsers(Collection $users)
+    public function replaceUsers(ArrayCollection $users)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -238,7 +260,7 @@ trait TerminalTrait
 
     /**
      * Get users
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\User\UserInterface[]
      */
     public function getUsers(Criteria $criteria = null)
@@ -249,7 +271,4 @@ trait TerminalTrait
 
         return $this->users->toArray();
     }
-
-
 }
-

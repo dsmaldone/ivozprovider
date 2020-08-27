@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use Ivoz\Ast\Domain\Model\Voicemail\Voicemail;
 use Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate;
+use Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateRepository;
 use PhpMimeMailParser\Parser;
 use RouteHandlerAbstract;
 
@@ -49,19 +50,17 @@ class Sender extends RouteHandlerAbstract
         EntityManagerInterface $em,
         Parser $parser,
         \Swift_Mailer $mailer
-    )
-    {
+    ) {
         $this->em = $em;
         $this->parser = $parser;
         $this->mailer = $mailer;
     }
 
     /**
-     * @throws \Assert\AssertionFailedException
+     * @throws \InvalidArgumentException
      */
-    public function process ()
+    public function process()
     {
-
         // Load Email data
         $this->parser->setStream(fopen("php://stdin", "r"));
 
@@ -72,30 +71,35 @@ class Sender extends RouteHandlerAbstract
         $vmRepository = $this->em->getRepository(Voicemail::class);
 
         /** @var \Ivoz\Ast\Domain\Model\Voicemail\VoicemailInterface $vm */
-        $vm = $vmRepository->findOneBy([
-            "mailbox" => $vmdata[self::VM_MAILBOX],
-            "context" => $vmdata[self::VM_CONTEXT]
-        ]);
+        $vm = $vmRepository->findByMailboxAndContext(
+            $vmdata[self::VM_MAILBOX],
+            $vmdata[self::VM_CONTEXT]
+        );
 
         // No voicemail, this should not happen
         Assertion::notNull(
             $vm,
-            sprintf("Unable to find voicemail for %s@%s",
+            sprintf(
+                "Unable to find voicemail for %s@%s",
                 $vmdata[self::VM_MAILBOX],
-                $vmdata[self::VM_CONTEXT])
+                $vmdata[self::VM_CONTEXT]
+            )
         );
 
         /** @var \Ivoz\Provider\Domain\Model\User\UserInterface $user */
         $user = $vm->getUser();
         Assertion::notNull(
             $user,
-            sprintf("Unable to find user for voicemail %s@%s",
+            sprintf(
+                "Unable to find user for voicemail %s@%s",
                 $vmdata[self::VM_MAILBOX],
-                $vmdata[self::VM_CONTEXT])
+                $vmdata[self::VM_CONTEXT]
+            )
         );
 
         // Assume user has company and brand
         $company = $user->getCompany();
+        $brand = $company->getBrand();
 
         $substitution = array(
             '${VM_CATEGORY}' => $vmdata[self::VM_CATEGORY],
@@ -114,12 +118,15 @@ class Sender extends RouteHandlerAbstract
         // Get Company Notification Template for voicemails
         $vmNotificationTemplate = $company->getVoicemailNotificationTemplate();
 
+        // If company has no template associated, fallback to brand notification template for voicemails
+        if (!$vmNotificationTemplate) {
+            $vmNotificationTemplate = $brand->getVoicemailNotificationTemplate();
+        }
+
         // Get Generic Notification Template for voicemails
+        /** @var NotificationTemplateRepository $notificationTemplateRepository */
         $notificationTemplateRepository = $this->em->getRepository(NotificationTemplate::class);
-        $genericVoicemailNotificationTemplate = $notificationTemplateRepository->findOneBy([
-            "brand" => null,
-            "type" => "voicemail"
-        ]);
+        $genericVoicemailNotificationTemplate = $notificationTemplateRepository->findGenericVoicemailTemplate();
 
         // If no template is associated, fallback to generic notification template for voicemails
         if (!$vmNotificationTemplate) {
@@ -136,6 +143,7 @@ class Sender extends RouteHandlerAbstract
         // Get data from template
         $fromName = $notificationTemplateContent->getFromName();
         $fromAddress = $notificationTemplateContent->getFromAddress();
+        $bodyType = $notificationTemplateContent->getBodyType();
         $body = $notificationTemplateContent->getBody();
         $subject = $notificationTemplateContent->getSubject();
 
@@ -146,7 +154,7 @@ class Sender extends RouteHandlerAbstract
 
         // Create a new mail and attach the PDF file
         $mail = new \Swift_Message();
-        $mail->setBody($body, 'text/html')
+        $mail->setBody($body, $bodyType)
             ->setSubject($subject)
             ->setFrom($fromAddress, $fromName)
             ->setTo($vm->getEmail());

@@ -14,12 +14,12 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class NotificationTemplateContentAbstract
 {
     /**
-     * @var string
+     * @var string | null
      */
     protected $fromName;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $fromAddress;
 
@@ -34,12 +34,18 @@ abstract class NotificationTemplateContentAbstract
     protected $body;
 
     /**
+     * comment: enum:text/plain|text/html
+     * @var string
+     */
+    protected $bodyType = 'text/plain';
+
+    /**
      * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
      */
     protected $notificationTemplate;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     protected $language;
 
@@ -49,17 +55,19 @@ abstract class NotificationTemplateContentAbstract
     /**
      * Constructor
      */
-    protected function __construct($subject, $body)
+    protected function __construct($subject, $body, $bodyType)
     {
         $this->setSubject($subject);
         $this->setBody($body);
+        $this->setBodyType($bodyType);
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "NotificationTemplateContent",
             $this->getId()
         );
@@ -83,7 +91,8 @@ abstract class NotificationTemplateContentAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param NotificationTemplateContentInterface|null $entity
      * @param int $depth
      * @return NotificationTemplateContentDto|null
      */
@@ -103,47 +112,51 @@ abstract class NotificationTemplateContentAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var NotificationTemplateContentDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param NotificationTemplateContentDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto NotificationTemplateContentDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, NotificationTemplateContentDto::class);
 
         $self = new static(
             $dto->getSubject(),
-            $dto->getBody());
+            $dto->getBody(),
+            $dto->getBodyType()
+        );
 
         $self
             ->setFromName($dto->getFromName())
             ->setFromAddress($dto->getFromAddress())
-            ->setNotificationTemplate($dto->getNotificationTemplate())
-            ->setLanguage($dto->getLanguage())
+            ->setNotificationTemplate($fkTransformer->transform($dto->getNotificationTemplate()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param NotificationTemplateContentDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto NotificationTemplateContentDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, NotificationTemplateContentDto::class);
 
         $this
@@ -151,16 +164,17 @@ abstract class NotificationTemplateContentAbstract
             ->setFromAddress($dto->getFromAddress())
             ->setSubject($dto->getSubject())
             ->setBody($dto->getBody())
-            ->setNotificationTemplate($dto->getNotificationTemplate())
-            ->setLanguage($dto->getLanguage());
+            ->setBodyType($dto->getBodyType())
+            ->setNotificationTemplate($fkTransformer->transform($dto->getNotificationTemplate()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return NotificationTemplateContentDto
      */
@@ -171,6 +185,7 @@ abstract class NotificationTemplateContentAbstract
             ->setFromAddress(self::getFromAddress())
             ->setSubject(self::getSubject())
             ->setBody(self::getBody())
+            ->setBodyType(self::getBodyType())
             ->setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getNotificationTemplate(), $depth))
             ->setLanguage(\Ivoz\Provider\Domain\Model\Language\Language::entityToDto(self::getLanguage(), $depth));
     }
@@ -185,22 +200,21 @@ abstract class NotificationTemplateContentAbstract
             'fromAddress' => self::getFromAddress(),
             'subject' => self::getSubject(),
             'body' => self::getBody(),
-            'notificationTemplateId' => self::getNotificationTemplate() ? self::getNotificationTemplate()->getId() : null,
+            'bodyType' => self::getBodyType(),
+            'notificationTemplateId' => self::getNotificationTemplate()->getId(),
             'languageId' => self::getLanguage() ? self::getLanguage()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set fromName
      *
-     * @param string $fromName
+     * @param string $fromName | null
      *
-     * @return self
+     * @return static
      */
-    public function setFromName($fromName = null)
+    protected function setFromName($fromName = null)
     {
         if (!is_null($fromName)) {
             Assertion::maxLength($fromName, 255, 'fromName value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -214,7 +228,7 @@ abstract class NotificationTemplateContentAbstract
     /**
      * Get fromName
      *
-     * @return string
+     * @return string | null
      */
     public function getFromName()
     {
@@ -224,11 +238,11 @@ abstract class NotificationTemplateContentAbstract
     /**
      * Set fromAddress
      *
-     * @param string $fromAddress
+     * @param string $fromAddress | null
      *
-     * @return self
+     * @return static
      */
-    public function setFromAddress($fromAddress = null)
+    protected function setFromAddress($fromAddress = null)
     {
         if (!is_null($fromAddress)) {
             Assertion::maxLength($fromAddress, 255, 'fromAddress value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -242,7 +256,7 @@ abstract class NotificationTemplateContentAbstract
     /**
      * Get fromAddress
      *
-     * @return string
+     * @return string | null
      */
     public function getFromAddress()
     {
@@ -254,9 +268,9 @@ abstract class NotificationTemplateContentAbstract
      *
      * @param string $subject
      *
-     * @return self
+     * @return static
      */
-    public function setSubject($subject)
+    protected function setSubject($subject)
     {
         Assertion::notNull($subject, 'subject value "%s" is null, but non null value was expected.');
         Assertion::maxLength($subject, 255, 'subject value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -281,9 +295,9 @@ abstract class NotificationTemplateContentAbstract
      *
      * @param string $body
      *
-     * @return self
+     * @return static
      */
-    public function setBody($body)
+    protected function setBody($body)
     {
         Assertion::notNull($body, 'body value "%s" is null, but non null value was expected.');
         Assertion::maxLength($body, 65535, 'body value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -304,13 +318,44 @@ abstract class NotificationTemplateContentAbstract
     }
 
     /**
+     * Set bodyType
+     *
+     * @param string $bodyType
+     *
+     * @return static
+     */
+    protected function setBodyType($bodyType)
+    {
+        Assertion::notNull($bodyType, 'bodyType value "%s" is null, but non null value was expected.');
+        Assertion::maxLength($bodyType, 25, 'bodyType value "%s" is too long, it should have no more than %d characters, but has %d characters.');
+        Assertion::choice($bodyType, [
+            NotificationTemplateContentInterface::BODYTYPE_TEXTPLAIN,
+            NotificationTemplateContentInterface::BODYTYPE_TEXTHTML
+        ], 'bodyTypevalue "%s" is not an element of the valid values: %s');
+
+        $this->bodyType = $bodyType;
+
+        return $this;
+    }
+
+    /**
+     * Get bodyType
+     *
+     * @return string
+     */
+    public function getBodyType()
+    {
+        return $this->bodyType;
+    }
+
+    /**
      * Set notificationTemplate
      *
      * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate
      *
-     * @return self
+     * @return static
      */
-    public function setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate = null)
+    public function setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate)
     {
         $this->notificationTemplate = $notificationTemplate;
 
@@ -330,11 +375,11 @@ abstract class NotificationTemplateContentAbstract
     /**
      * Set language
      *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
+     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language | null
      *
-     * @return self
+     * @return static
      */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
+    protected function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
     {
         $this->language = $language;
 
@@ -344,15 +389,12 @@ abstract class NotificationTemplateContentAbstract
     /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage()
     {
         return $this->language;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

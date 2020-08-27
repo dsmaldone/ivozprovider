@@ -1,6 +1,10 @@
 <?php
+
 namespace Agi\Action;
 
+use Agi\Agents\AgentInterface;
+use Agi\Agents\ResidentialAgent;
+use Agi\Agents\UserAgent;
 use Agi\ChannelInfo;
 use Agi\Wrapper;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
@@ -13,7 +17,7 @@ use Ivoz\Provider\Domain\Model\Fax\FaxInterface;
 use Ivoz\Provider\Domain\Model\Friend\FriendInterface;
 use Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface;
 use Ivoz\Provider\Domain\Model\Ivr\IvrInterface;
-use Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface;
+use Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
 
 class RouterAction
@@ -32,7 +36,7 @@ class RouterAction
     const Fax            = 'fax';
     const ConferenceRoom = 'conferenceRoom';
     const Queue          = 'queue';
-    const RetailAccount  = 'retailAccount';
+    const Residential    = 'residential';
     const Conditional    = 'conditional';
 
     /**
@@ -66,9 +70,14 @@ class RouterAction
     protected $routeIvr;
 
     /**
-     * @var UserInterface
+     * @var AgentInterface | null
      */
     protected $routeVoiceMail;
+
+    /**
+     * @var bool Determine if voicemail must play user-not-available banner
+     */
+    protected $routeVoicemailBanner;
 
     /**
      * @var HuntGroupInterface
@@ -106,9 +115,9 @@ class RouterAction
     protected $routeQueue;
 
     /**
-     * @var RetailAccountInterface
+     * @var ResidentialDeviceInterface
      */
-    protected $routeRetail;
+    protected $routeResidential;
 
     /**
      * @var ConditionalRouteInterface
@@ -136,19 +145,9 @@ class RouterAction
     protected $extensionAction;
 
     /**
-     * @var ExternalUserCallAction
+     * @var ExternalNumberAction
      */
-    protected $externalUserCallAction;
-
-    /**
-     * @var ExternalDdiCallAction
-     */
-    protected $externalDdiCallAction;
-
-    /**
-     * @var ExternalFriendCallAction
-     */
-    protected $externalFriendCallAction;
+    protected $externalNumberCallAction;
 
     /**
      * @var FaxReceiveAction
@@ -181,9 +180,9 @@ class RouterAction
     protected $userCallAction;
 
     /**
-     * @var RetailCallAction
+     * @var ResidentialCallAction
      */
-    protected $retailCallAction;
+    protected $residentialCallAction;
 
     /**
      * @var ServiceAction
@@ -202,53 +201,48 @@ class RouterAction
         ConferenceRoomAction $conferenceRoomAction,
         UserCallAction $userCallAction,
         ExtensionAction $extensionAction,
-        ExternalUserCallAction $externalUserCallAction,
-        ExternalDdiCallAction $externalDdiCallAction,
-        ExternalFriendCallAction $externalFriendCallAction,
+        ExternalNumberAction $externalNumberCallAction,
         FaxReceiveAction $faxReceiveAction,
         FriendCallAction $friendCallAction,
         HuntGroupAction $huntGroupAction,
         IvrAction $ivrAction,
         QueueAction $queueAction,
-        RetailCallAction $retailCallAction,
+        ResidentialCallAction $residentialCallAction,
         ServiceAction $serviceAction,
         VoiceMailAction $voiceMailAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->channelInfo = $channelInfo;
         $this->conditionalRouteAction = $conditionalRouteAction;
         $this->conferenceRoomAction = $conferenceRoomAction;
         $this->extensionAction = $extensionAction;
-        $this->externalUserCallAction = $externalUserCallAction;
-        $this->externalDdiCallAction = $externalDdiCallAction;
-        $this->externalFriendCallAction = $externalFriendCallAction;
+        $this->externalNumberCallAction = $externalNumberCallAction;
         $this->faxReceiveAction = $faxReceiveAction;
         $this->friendCallAction = $friendCallAction;
         $this->huntGroupAction = $huntGroupAction;
         $this->userCallAction = $userCallAction;
         $this->ivrAction = $ivrAction;
         $this->queueAction = $queueAction;
-        $this->retailCallAction = $retailCallAction;
+        $this->residentialCallAction = $residentialCallAction;
         $this->serviceAction = $serviceAction;
         $this->voiceMailAction = $voiceMailAction;
     }
 
-    public function setRouteType(string $routeType)
+    public function setRouteType(string $routeType = null)
     {
         $this->routeType = $routeType;
         return $this;
     }
 
-    public function setRouteConditional(ConditionalRouteInterface $routeConditional  = null)
+    public function setRouteConditional(ConditionalRouteInterface $routeConditional = null)
     {
         $this->routeConditional = $routeConditional;
         return $this;
     }
 
-    public function setRouteConferenceRoom(ConferenceRoomInterface $routeConfereceRoom  = null)
+    public function setRouteConferenceRoom(ConferenceRoomInterface $routeConferenceRoom = null)
     {
-        $this->routeConference = $routeConfereceRoom;
+        $this->routeConference = $routeConferenceRoom;
         return $this;
     }
 
@@ -282,9 +276,31 @@ class RouterAction
         return $this;
     }
 
-    public function setRouteVoicemail(UserInterface $routeVoicemail = null)
+    public function setRouteVoicemailUser(UserInterface $user = null, bool $playBanner = false)
+    {
+        if (!$user) {
+            $this->routeVoiceMail = null;
+            return $this;
+        }
+
+        return $this->setRouteVoicemail(new UserAgent($this->agi, $user), $playBanner);
+    }
+
+    public function setRouteVoicemailResidential(ResidentialDeviceInterface $residentialDevice = null, bool $playBanner = false)
+    {
+        if (!$residentialDevice) {
+            $this->routeVoiceMail = null;
+            return $this;
+        }
+
+        return $this->setRouteVoicemail(new ResidentialAgent($this->agi, $residentialDevice), $playBanner);
+    }
+
+
+    private function setRouteVoicemail(AgentInterface $routeVoicemail = null, bool $playBanner = false)
     {
         $this->routeVoiceMail = $routeVoicemail;
+        $this->routeVoicemailBanner = $playBanner;
         return $this;
     }
 
@@ -306,16 +322,16 @@ class RouterAction
         return $this;
     }
 
-    public function setRouteQueue(QueueInterface $routeQueue  = null)
+    public function setRouteQueue(QueueInterface $routeQueue = null)
     {
         $this->routeQueue = $routeQueue;
         return $this;
     }
 
 
-    public function setRouteRetail(RetailAccountInterface $routeRetail = null)
+    public function setRouteResidential(ResidentialDeviceInterface $routeResidential = null)
     {
-        $this->routeRetail = $routeRetail;
+        $this->routeResidential = $routeResidential;
         return $this;
     }
 
@@ -328,7 +344,7 @@ class RouterAction
     public function route()
     {
         // Handle based on configured route type
-        switch($this->routeType) {
+        switch ($this->routeType) {
             case RouterAction::User:
                 $this->routeToUser();
                 break;
@@ -359,14 +375,17 @@ class RouterAction
             case RouterAction::Queue:
                 $this->routeToQueue();
                 break;
-            case RouterAction::RetailAccount:
-                $this->routeToRetailAccount();
+            case RouterAction::Residential:
+                $this->routeToResidentialDevice();
                 break;
             case RouterAction::Conditional:
                 $this->routeToConditionalRoute();
                 break;
             case RouterAction::Service:
                 $this->routeService();
+                break;
+            default:
+                $this->agi->notice("No configured route type");
                 break;
         }
     }
@@ -387,30 +406,9 @@ class RouterAction
 
     protected function routeToExternal()
     {
-        // External Route depends on who is calling
-        $caller = $this->channelInfo->getChannelCaller();
-
-        if ($caller instanceof UserInterface) {
-            // Handle external call route for users
-            $this->externalUserCallAction
-                ->setCheckACL(false)
-                ->setDestination($this->routeExternal)
-                ->process();
-
-        } else if ($caller instanceof FriendInterface) {
-            // Handle external call route for users
-            $this->externalFriendCallAction
-                ->setFriend($caller)
-                ->setCheckACL(false)
-                ->setDestination($this->routeExternal)
-                ->process();
-
-        } else {
-            // Handle external call route
-            $this->externalDdiCallAction
-                ->setDestination($this->routeExternal)
-                ->process();
-        }
+        $this->externalNumberCallAction
+            ->setDestination($this->routeExternal)
+            ->process();
     }
 
     protected function routeToIvr()
@@ -430,6 +428,7 @@ class RouterAction
     protected function routeToVoiceMail()
     {
         $this->voiceMailAction
+            ->setPlayBanner($this->routeVoicemailBanner)
             ->setVoiceMail($this->routeVoiceMail)
             ->process();
     }
@@ -466,7 +465,7 @@ class RouterAction
 
         $this->friendCallAction
             ->setFriend($friend)
-            ->setDestination($this->routeFriend)
+            ->setDestination($this->routeFriendDestination)
             ->process();
     }
 
@@ -477,10 +476,10 @@ class RouterAction
             ->process();
     }
 
-    protected function routeToRetailAccount()
+    protected function routeToResidentialDevice()
     {
-        $this->retailCallAction
-            ->setRetailAccount($this->routeRetail)
+        $this->residentialCallAction
+            ->setResidentialDevice($this->routeResidential)
             ->process();
     }
 
@@ -490,5 +489,4 @@ class RouterAction
             ->setService($this->routeService)
             ->process();
     }
-
 }

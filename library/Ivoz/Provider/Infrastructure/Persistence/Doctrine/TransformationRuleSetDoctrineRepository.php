@@ -3,8 +3,8 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetRepository;
 use Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSet;
+use Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -20,22 +20,26 @@ class TransformationRuleSetDoctrineRepository extends ServiceEntityRepository im
         parent::__construct($registry, TransformationRuleSet::class);
     }
 
-    public function countByCriteria(array $criteria)
+    /**
+     * @param int $brandId
+     * @return array
+     */
+    public function getIdsByBrandId(int $brandId): array
     {
-        $alias = 'TransformationRuleSet';
-        $qb = $this->createQueryBuilder($alias);
-        $qb->select('count('. $alias .')');
+        $qb = $this->createQueryBuilder('self');
+        $expression = $qb->expr();
 
-        foreach ($criteria as $field => $value) {
-
-            $normalizedField = $alias . '.' . $field;
-            $qb->andWhere(
-                $qb->expr()->eq($normalizedField, $value)
+        $qb
+            ->select('self.id')
+            ->where(
+                $expression->eq('self.brand', $brandId)
             );
-        }
 
-        return $qb
-            ->getQuery()
-            ->getSingleScalarResult();
+        $result = $qb->getQuery()->getScalarResult();
+
+        return array_column(
+            $result,
+            'id'
+        );
     }
 }

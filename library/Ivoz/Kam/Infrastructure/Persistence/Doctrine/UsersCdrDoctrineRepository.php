@@ -4,6 +4,7 @@ namespace Ivoz\Kam\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Ivoz\Kam\Domain\Model\UsersCdr\UsersCdr;
+use Ivoz\Kam\Domain\Model\UsersCdr\UsersCdrInterface;
 use Ivoz\Kam\Domain\Model\UsersCdr\UsersCdrRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
@@ -21,7 +22,7 @@ class UsersCdrDoctrineRepository extends ServiceEntityRepository implements User
     }
 
     /**
-     * @param mixed $userId
+     * @param int $userId
      * @return int
      */
     public function countByUserId($userId) :int
@@ -31,7 +32,36 @@ class UsersCdrDoctrineRepository extends ServiceEntityRepository implements User
         return $qb
             ->select('count(self.id)')
             ->where($qb->expr()->eq('self.user', $userId))
+            ->andWhere($qb->expr()->eq('self.hidden', 0))
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * @param string $callid
+     * @return UsersCdrInterface[]
+     */
+    public function findByCallid($callid)
+    {
+        /** @var UsersCdrInterface[] $response */
+        $response = $this->findBy([
+            'callid' => $callid
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * @param string $callid
+     * @return UsersCdrInterface | null
+     */
+    public function findOneByCallid($callid)
+    {
+        /** @var UsersCdrInterface $response */
+        $response = $this->findOneBy([
+            'callid' => $callid
+        ]);
+
+        return $response;
     }
 }

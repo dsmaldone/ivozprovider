@@ -21,7 +21,6 @@ class TerminalSpec extends ObjectBehavior
     function let(
         CompanyInterface $company,
         DomainInterface $domain
-
     ) {
         $this->dto = $dto = new TerminalDto();
         $this->company = $company;
@@ -50,7 +49,7 @@ class TerminalSpec extends ObjectBehavior
 
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 
@@ -102,11 +101,13 @@ class TerminalSpec extends ObjectBehavior
             ]
         );
 
-        $this->updateFromDto($dto);
+        $this->updateFromDto(
+            $dto,
+            new \spec\DtoToEntityFakeTransformer()
+        );
 
         $this
             ->getDomain()
             ->shouldBe($this->domain);
     }
-
 }

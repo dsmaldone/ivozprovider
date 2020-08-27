@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Ivr;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -30,7 +28,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     /**
      * @var boolean
      */
-    private $allowExtensions = '0';
+    private $allowExtensions = false;
 
     /**
      * @var string
@@ -133,7 +131,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -168,7 +166,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'timeout' => $this->getTimeout(),
             'maxDigits' => $this->getMaxDigits(),
@@ -192,61 +190,19 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
             'entries' => $this->getEntries(),
             'excludedExtensions' => $this->getExcludedExtensions()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->welcomeLocution = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Locution\\Locution', $this->getWelcomeLocutionId());
-        $this->noInputLocution = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Locution\\Locution', $this->getNoInputLocutionId());
-        $this->errorLocution = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Locution\\Locution', $this->getErrorLocutionId());
-        $this->successLocution = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Locution\\Locution', $this->getSuccessLocutionId());
-        $this->noInputExtension = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Extension\\Extension', $this->getNoInputExtensionId());
-        $this->errorExtension = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Extension\\Extension', $this->getErrorExtensionId());
-        $this->noInputVoiceMailUser = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\User\\User', $this->getNoInputVoiceMailUserId());
-        $this->errorVoiceMailUser = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\User\\User', $this->getErrorVoiceMailUserId());
-        $this->noInputNumberCountry = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Country\\Country', $this->getNoInputNumberCountryId());
-        $this->errorNumberCountry = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Country\\Country', $this->getErrorNumberCountryId());
-        if (!is_null($this->entries)) {
-            $items = $this->getEntries();
-            $this->entries = [];
-            foreach ($items as $item) {
-                $this->entries[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\IvrEntry\\IvrEntry',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-        if (!is_null($this->excludedExtensions)) {
-            $items = $this->getExcludedExtensions();
-            $this->excludedExtensions = [];
-            foreach ($items as $item) {
-                $this->excludedExtensions[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\IvrExcludedExtension\\IvrExcludedExtension',
-                    $item->getId() ?? $item
-                );
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
             }
+            $response[$sensitiveField] = '*****';
         }
 
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->entries = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\IvrEntry\\IvrEntry',
-            $this->entries
-        );
-        $this->excludedExtensions = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\IvrExcludedExtension\\IvrExcludedExtension',
-            $this->excludedExtensions
-        );
+        return $response;
     }
 
     /**
@@ -262,7 +218,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -282,7 +238,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getTimeout()
     {
@@ -302,7 +258,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getMaxDigits()
     {
@@ -322,7 +278,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getAllowExtensions()
     {
@@ -342,7 +298,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNoInputRouteType()
     {
@@ -362,7 +318,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNoInputNumberValue()
     {
@@ -382,7 +338,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getErrorRouteType()
     {
@@ -402,7 +358,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getErrorNumberValue()
     {
@@ -422,7 +378,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -442,7 +398,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -450,7 +406,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -464,7 +420,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -488,7 +444,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto | null
      */
     public function getWelcomeLocution()
     {
@@ -496,7 +452,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -510,7 +466,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getWelcomeLocutionId()
     {
@@ -534,7 +490,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto | null
      */
     public function getNoInputLocution()
     {
@@ -542,7 +498,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -556,7 +512,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNoInputLocutionId()
     {
@@ -580,7 +536,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto | null
      */
     public function getErrorLocution()
     {
@@ -588,7 +544,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -602,7 +558,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getErrorLocutionId()
     {
@@ -626,7 +582,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionDto | null
      */
     public function getSuccessLocution()
     {
@@ -634,7 +590,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -648,7 +604,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getSuccessLocutionId()
     {
@@ -672,7 +628,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto | null
      */
     public function getNoInputExtension()
     {
@@ -680,7 +636,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -694,7 +650,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNoInputExtensionId()
     {
@@ -718,7 +674,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionDto | null
      */
     public function getErrorExtension()
     {
@@ -726,7 +682,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -740,7 +696,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getErrorExtensionId()
     {
@@ -764,7 +720,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\User\UserDto
+     * @return \Ivoz\Provider\Domain\Model\User\UserDto | null
      */
     public function getNoInputVoiceMailUser()
     {
@@ -772,7 +728,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -786,7 +742,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNoInputVoiceMailUserId()
     {
@@ -810,7 +766,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\User\UserDto
+     * @return \Ivoz\Provider\Domain\Model\User\UserDto | null
      */
     public function getErrorVoiceMailUser()
     {
@@ -818,7 +774,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -832,7 +788,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getErrorVoiceMailUserId()
     {
@@ -856,7 +812,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto | null
      */
     public function getNoInputNumberCountry()
     {
@@ -864,7 +820,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -878,7 +834,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getNoInputNumberCountryId()
     {
@@ -902,7 +858,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto | null
      */
     public function getErrorNumberCountry()
     {
@@ -910,7 +866,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -924,7 +880,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getErrorNumberCountryId()
     {
@@ -948,7 +904,7 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getEntries()
     {
@@ -968,12 +924,10 @@ abstract class IvrDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getExcludedExtensions()
     {
         return $this->excludedExtensions;
     }
 }
-
-

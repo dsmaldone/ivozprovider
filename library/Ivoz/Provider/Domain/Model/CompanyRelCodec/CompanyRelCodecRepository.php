@@ -2,9 +2,10 @@
 
 namespace Ivoz\Provider\Domain\Model\CompanyRelCodec;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
+interface CompanyRelCodecRepository extends ObjectRepository, Selectable
+{
 
-interface CompanyRelCodecRepository extends ObjectRepository, Selectable {}
-
+}

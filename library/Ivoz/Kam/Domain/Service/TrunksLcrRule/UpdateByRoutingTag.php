@@ -2,10 +2,6 @@
 
 namespace Ivoz\Kam\Domain\Service\TrunksLcrRule;
 
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
-use Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleDto;
-use Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface;
-use Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface;
 use Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagInterface;
 use Ivoz\Provider\Domain\Service\RoutingTag\RoutingTagLifecycleEventHandlerInterface;
 
@@ -16,40 +12,56 @@ use Ivoz\Provider\Domain\Service\RoutingTag\RoutingTagLifecycleEventHandlerInter
  */
 class UpdateByRoutingTag implements RoutingTagLifecycleEventHandlerInterface
 {
+    const POST_PERSIST_PRIORITY = self::PRIORITY_NORMAL;
+
     /**
-     * @var UpdateByOutgoingRouting
+     * @var TrunksLcrRuleFactory
      */
-    protected $updateByOutgoingRouting;
+    protected $trunksLcrRuleFactory;
 
     /**
      * UpdateByRoutingTag constructor.
-     * @param UpdateByOutgoingRouting $updateByOutgoingRouting
+     *
+     * @param TrunksLcrRuleFactory $trunksLcrRuleFactory
      */
     public function __construct(
-        UpdateByOutgoingRouting $updateByOutgoingRouting
+        TrunksLcrRuleFactory $trunksLcrRuleFactory
     ) {
-        $this->updateByOutgoingRouting = $updateByOutgoingRouting;
+        $this->trunksLcrRuleFactory = $trunksLcrRuleFactory;
     }
 
     public static function getSubscribedEvents()
     {
         return [
-            self::EVENT_POST_PERSIST => 10
+            self::EVENT_POST_PERSIST => self::POST_PERSIST_PRIORITY
         ];
     }
 
-    public function execute(RoutingTagInterface $entity, $isNew)
+    /**
+     * @param RoutingTagInterface $routingTag
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function execute(RoutingTagInterface $routingTag)
     {
-        if (!$entity->hasChanged('tag')) {
+        if (!$routingTag->hasChanged('tag')) {
             return;
         }
 
         // Get all OutgointRoutings that use this routingTag
-        $outgoingRoutings = $entity->getOutgoingRoutings();
+        $outgoingRoutings = $routingTag->getOutgoingRoutings();
 
         // Update all outgoing routes if required
         foreach ($outgoingRoutings as $outgoingRouting) {
-            $this->updateByOutgoingRouting->execute($outgoingRouting);
+            $routingPatterns = $outgoingRouting->getRoutingPatterns();
+            foreach ($routingPatterns as $routingPattern) {
+                $this->trunksLcrRuleFactory->execute(
+                    $outgoingRouting,
+                    $routingPattern
+                );
+            }
         }
     }
 }

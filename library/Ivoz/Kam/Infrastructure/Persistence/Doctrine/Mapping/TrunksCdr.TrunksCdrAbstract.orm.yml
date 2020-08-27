@@ -1,24 +1,17 @@
 Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrAbstract:
   type: mappedSuperclass
+  uniqueConstraints:
+    trunksCdr_callid_direction:
+      columns:
+        - callid
+        - direction
   indexes:
     trunksCdr_start_time_idx:
       columns:
-        - start_time
-    trunksCdr_end_time_idx:
+      - start_time
+    trunksCdr_parsed_idx:
       columns:
-        - end_time
-    trunksCdr_callid_idx:
-      columns:
-        - callid
-    trunksCdr_xcallid_idx:
-      columns:
-        - xcallid
-    trunksCdr_direction_idx:
-      columns:
-        - direction
-    trunksCdr_cgrid_idx:
-      columns:
-        - cgrid
+        - parsed
   fields:
     startTime:
       type: datetime
@@ -38,7 +31,7 @@ Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrAbstract:
       precision: 10
       scale: 3
       options:
-        default: '0.000'
+        default: 0.0
     caller:
       type: string
       nullable: true
@@ -46,18 +39,6 @@ Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrAbstract:
       options:
         fixed: false
     callee:
-      type: string
-      nullable: true
-      length: 128
-      options:
-        fixed: false
-    referee:
-      type: string
-      nullable: true
-      length: 128
-      options:
-        fixed: false
-    referrer:
       type: string
       nullable: true
       length: 128
@@ -91,24 +72,24 @@ Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrAbstract:
     bounced:
       type: boolean
       nullable: true
-    price:
-      type: decimal
+    parsed:
+      type: boolean
       nullable: true
-      precision: 10
-      scale: 4
-    priceDetails:
-      type: text
-      nullable: true
-      length: 65535
       options:
-        fixed: false
-      column: priceDetails
+        default: '0'
+    parserScheduledAt:
+      type: datetime
+      nullable: false
+      options:
+        default: CURRENT_TIMESTAMP
+      column: parserScheduledAt
     direction:
       type: string
       nullable: true
       length: null
       options:
         fixed: false
+        comment: '[enum:inbound|outbound]'
     cgrid:
       type: string
       nullable: true
@@ -117,17 +98,6 @@ Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrAbstract:
         fixed: false
       column: cgrid
   manyToOne:
-    invoice:
-      targetEntity: \Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface
-      cascade: {  }
-      fetch: LAZY
-      mappedBy: null
-      inversedBy: null
-      joinColumns:
-        invoiceId:
-          referencedColumnName: id
-          onDelete: set null
-      orphanRemoval: false
     brand:
       targetEntity: \Ivoz\Provider\Domain\Model\Brand\BrandInterface
       cascade: {  }
@@ -137,7 +107,7 @@ Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrAbstract:
       joinColumns:
         brandId:
           referencedColumnName: id
-          onDelete: cascade
+          onDelete: set null
       orphanRemoval: false
     company:
       targetEntity: \Ivoz\Provider\Domain\Model\Company\CompanyInterface
@@ -148,38 +118,95 @@ Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrAbstract:
       joinColumns:
         companyId:
           referencedColumnName: id
-          onDelete: cascade
+          onDelete: set null
       orphanRemoval: false
-    peeringContract:
-      targetEntity: \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+    carrier:
+      targetEntity: \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface
       cascade: {  }
       fetch: LAZY
       mappedBy: null
       inversedBy: null
       joinColumns:
-        peeringContractId:
+        carrierId:
           referencedColumnName: id
           onDelete: set null
       orphanRemoval: false
-    tpDestination:
-      targetEntity: \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface
+    retailAccount:
+      targetEntity: \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
       cascade: {  }
       fetch: LAZY
       mappedBy: null
       inversedBy: null
       joinColumns:
-        tpDestinationId:
+        retailAccountId:
           referencedColumnName: id
           onDelete: set null
       orphanRemoval: false
-    destinationRate:
-      targetEntity: \Ivoz\Cgr\Domain\Model\DestinationRate\DestinationRateInterface
+    residentialDevice:
+      targetEntity: \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
       cascade: {  }
       fetch: LAZY
       mappedBy: null
       inversedBy: null
       joinColumns:
-        destinationRateId:
+        residentialDeviceId:
           referencedColumnName: id
+          onDelete: set null
+      orphanRemoval: false
+    user:
+      targetEntity: \Ivoz\Provider\Domain\Model\User\UserInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        userId:
+          referencedColumnName: id
+          onDelete: set null
+      orphanRemoval: false
+    friend:
+      targetEntity: \Ivoz\Provider\Domain\Model\Friend\FriendInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        friendId:
+          referencedColumnName: id
+          onDelete: set null
+      orphanRemoval: false
+    fax:
+      targetEntity: \Ivoz\Provider\Domain\Model\Fax\FaxInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        faxId:
+          referencedColumnName: id
+          onDelete: set null
+      orphanRemoval: false
+    ddi:
+      targetEntity: \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        ddiId:
+          referencedColumnName: id
+          nullable: true
+          onDelete: set null
+      orphanRemoval: false
+    ddiProvider:
+      targetEntity: \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        ddiProviderId:
+          referencedColumnName: id
+          nullable: true
           onDelete: set null
       orphanRemoval: false

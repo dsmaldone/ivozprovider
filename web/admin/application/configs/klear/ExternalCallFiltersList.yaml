@@ -17,16 +17,16 @@ production:
       title: _("List of %s %2s", ngettext('External call filter', 'External call filters', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/company/external_filters.html"
+        href: "/doc/en/administration_portal/client/vpbx/routing_tools/external_call_filters.html"
       forcedValues:
         <<: *forcedCompany
       fields:
         options:
           title: _("Options")
           screens:
-            externalCallFiltersEdit_screen: true
+            externalCallFiltersEdit_screen: ${auth.acls.ExternalCallFilters.update}
           dialogs:
-            externalCallFiltersDel_dialog: true
+            externalCallFiltersDel_dialog: ${auth.acls.ExternalCallFilters.delete}
           default: externalCallFiltersEdit_screen
         blacklist:
           company: false
@@ -70,9 +70,9 @@ production:
       options:
         title: _("Options")
         screens:
-          externalCallFiltersNew_screen: true
+          externalCallFiltersNew_screen: ${auth.acls.ExternalCallFilters.create}
         dialogs:
-          externalCallFiltersDel_dialog: true
+          externalCallFiltersDel_dialog: ${auth.acls.ExternalCallFilters.delete}
 
     externalCallFiltersNew_screen: &externalCallFiltersNew_screenLink
       <<: *ExternalCallFilters

@@ -1,6 +1,7 @@
 Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPattern:
   repositoryClass: Ivoz\Provider\Infrastructure\Persistence\Doctrine\RoutingPatternDoctrineRepository
   type: entity
+  changeTrackingPolicy: DEFERRED_EXPLICIT
   table: RoutingPatterns
   id:
     id:
@@ -18,6 +19,8 @@ Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPattern:
     relPatternGroups:
       targetEntity: Ivoz\Provider\Domain\Model\RoutingPatternGroupsRelPattern\RoutingPatternGroupsRelPatternInterface
       mappedBy: routingPattern
+      cascade: ['persist']
+      orphanRemoval: true
     lcrRules:
       targetEntity: Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleInterface
       mappedBy: routingPattern

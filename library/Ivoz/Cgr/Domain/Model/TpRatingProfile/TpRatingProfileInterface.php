@@ -13,29 +13,11 @@ interface TpRatingProfileInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set tpid
-     *
-     * @param string $tpid
-     *
-     * @return self
-     */
-    public function setTpid($tpid);
-
-    /**
      * Get tpid
      *
      * @return string
      */
     public function getTpid();
-
-    /**
-     * Set loadid
-     *
-     * @param string $loadid
-     *
-     * @return self
-     */
-    public function setLoadid($loadid);
 
     /**
      * Get loadid
@@ -45,15 +27,6 @@ interface TpRatingProfileInterface extends LoggableEntityInterface
     public function getLoadid();
 
     /**
-     * Set direction
-     *
-     * @param string $direction
-     *
-     * @return self
-     */
-    public function setDirection($direction);
-
-    /**
      * Get direction
      *
      * @return string
@@ -61,29 +34,11 @@ interface TpRatingProfileInterface extends LoggableEntityInterface
     public function getDirection();
 
     /**
-     * Set tenant
-     *
-     * @param string $tenant
-     *
-     * @return self
-     */
-    public function setTenant($tenant = null);
-
-    /**
      * Get tenant
      *
-     * @return string
+     * @return string | null
      */
     public function getTenant();
-
-    /**
-     * Set category
-     *
-     * @param string $category
-     *
-     * @return self
-     */
-    public function setCategory($category);
 
     /**
      * Get category
@@ -93,93 +48,39 @@ interface TpRatingProfileInterface extends LoggableEntityInterface
     public function getCategory();
 
     /**
-     * Set subject
-     *
-     * @param string $subject
-     *
-     * @return self
-     */
-    public function setSubject($subject = null);
-
-    /**
      * Get subject
      *
-     * @return string
+     * @return string | null
      */
     public function getSubject();
 
     /**
-     * Set activationTime
-     *
-     * @param \DateTime $activationTime
-     *
-     * @return self
-     */
-    public function setActivationTime($activationTime);
-
-    /**
      * Get activationTime
      *
-     * @return \DateTime
+     * @return string
      */
     public function getActivationTime();
 
     /**
-     * Set ratingPlanTag
-     *
-     * @param string $ratingPlanTag
-     *
-     * @return self
-     */
-    public function setRatingPlanTag($ratingPlanTag = null);
-
-    /**
      * Get ratingPlanTag
      *
-     * @return string
+     * @return string | null
      */
     public function getRatingPlanTag();
 
     /**
-     * Set fallbackSubjects
-     *
-     * @param string $fallbackSubjects
-     *
-     * @return self
-     */
-    public function setFallbackSubjects($fallbackSubjects = null);
-
-    /**
      * Get fallbackSubjects
      *
-     * @return string
+     * @return string | null
      */
     public function getFallbackSubjects();
 
     /**
-     * Set cdrStatQueueIds
-     *
-     * @param string $cdrStatQueueIds
-     *
-     * @return self
-     */
-    public function setCdrStatQueueIds($cdrStatQueueIds = null);
-
-    /**
      * Get cdrStatQueueIds
      *
-     * @return string
+     * @return string | null
      */
     public function getCdrStatQueueIds();
-
-    /**
-     * Set createdAt
-     *
-     * @param \DateTime $createdAt
-     *
-     * @return self
-     */
-    public function setCreatedAt($createdAt);
 
     /**
      * Get createdAt
@@ -189,36 +90,34 @@ interface TpRatingProfileInterface extends LoggableEntityInterface
     public function getCreatedAt();
 
     /**
-     * Set company
+     * Set ratingProfile
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface $ratingProfile | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
+    public function setRatingProfile(\Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface $ratingProfile = null);
 
     /**
-     * Get company
+     * Get ratingProfile
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\RatingProfile\RatingProfileInterface | null
      */
-    public function getCompany();
+    public function getRatingProfile();
 
     /**
-     * Set ratingPlan
+     * Set outgoingRoutingRelCarrier
      *
-     * @param \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface $ratingPlan
+     * @param \Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierInterface $outgoingRoutingRelCarrier | null
      *
-     * @return self
+     * @return static
      */
-    public function setRatingPlan(\Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface $ratingPlan);
+    public function setOutgoingRoutingRelCarrier(\Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierInterface $outgoingRoutingRelCarrier = null);
 
     /**
-     * Get ratingPlan
+     * Get outgoingRoutingRelCarrier
      *
-     * @return \Ivoz\Cgr\Domain\Model\RatingPlan\RatingPlanInterface
+     * @return \Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierInterface | null
      */
-    public function getRatingPlan();
-
+    public function getOutgoingRoutingRelCarrier();
 }
-

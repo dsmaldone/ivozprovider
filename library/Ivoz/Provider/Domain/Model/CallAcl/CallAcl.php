@@ -1,7 +1,8 @@
 <?php
 
 namespace Ivoz\Provider\Domain\Model\CallAcl;
-use Ivoz\Provider\Domain\Model\CallAclRelMatchList\CallAclRelMatchList;
+
+use Doctrine\Common\Collections\Criteria;
 use Ivoz\Provider\Domain\Model\CallAclRelMatchList\CallAclRelMatchListInterface;
 
 /**
@@ -32,14 +33,11 @@ class CallAcl extends CallAclAbstract implements CallAclInterface
     }
 
     /**
-     * @param $dst
+     * @param string $dst
      * @return bool
      */
     public function dstIsCallable($dst)
     {
-        /**
-         * @var CallAcl $this
-         */
         $defaultPolicy = $this->getDefaultPolicy();
 
         $criteria = Criteria
@@ -51,11 +49,11 @@ class CallAcl extends CallAclAbstract implements CallAclInterface
          */
         $aclRelMatchLists = $this->getRelMatchLists($criteria);
 
-        foreach($aclRelMatchLists as $aclRelMatchList) {
+        foreach ($aclRelMatchLists as $aclRelMatchList) {
             $policy = $aclRelMatchList->getPolicy();
             $matchList = $aclRelMatchList->getMatchList();
 
-            if($matchList->numberMatches($dst)) {
+            if ($matchList->numberMatches($dst)) {
                 return 'allow' === $policy;
             }
         }
@@ -63,4 +61,3 @@ class CallAcl extends CallAclAbstract implements CallAclInterface
         return 'allow' === $defaultPolicy;
     }
 }
-

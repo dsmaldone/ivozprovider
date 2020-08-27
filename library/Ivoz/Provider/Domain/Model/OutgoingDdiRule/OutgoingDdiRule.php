@@ -37,7 +37,8 @@ class OutgoingDdiRule extends OutgoingDdiRuleAbstract implements OutgoingDdiRule
      */
     public function __toString()
     {
-        return sprintf("%s[%s]",
+        return sprintf(
+            "%s[%s]",
             $this->getName(),
             parent::__toString()
         );
@@ -51,7 +52,7 @@ class OutgoingDdiRule extends OutgoingDdiRuleAbstract implements OutgoingDdiRule
 
         $defaultAction = $this->getDefaultAction();
         foreach ($nullableFields as $type => $fieldName) {
-            if ($defaultAction == $type) {
+            if ($defaultAction === $type) {
                 continue;
             }
             $setter = 'set' . ucfirst($fieldName);
@@ -61,7 +62,7 @@ class OutgoingDdiRule extends OutgoingDdiRuleAbstract implements OutgoingDdiRule
 
     /**
      * Return forced Ddi for this rule
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     public function getForcedDdi()
     {
@@ -77,15 +78,18 @@ class OutgoingDdiRule extends OutgoingDdiRuleAbstract implements OutgoingDdiRule
 
     /**
      * Check final outgoing Ddi presentation for given destination
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $originalDdi
+     * @param string $e164destination
+     * @param string $prefix
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null $e164destination
      */
-    public function getOutgoingDdi($originalDdi, $e164destination)
+    public function getOutgoingDdi($originalDdi, $e164destination, $prefix = "")
     {
         // Default Rule action
-        if ($this->getDefaultAction() == 'keep') {
-            $finalDdi = $originalDdi;
-        } else if ($this->getDefaultAction() == 'force') {
+        if ($this->getDefaultAction() === OutgoingDdiRule::DEFAULTACTION_FORCE) {
             $finalDdi = $this->getForcedDdi();
+        } else {
+            $finalDdi = $originalDdi;
         }
 
         // Check rule patterns
@@ -94,21 +98,33 @@ class OutgoingDdiRule extends OutgoingDdiRuleAbstract implements OutgoingDdiRule
         ]);
         $rulePatterns = $this->getPatterns($criteria);
 
-        /**
-         * @var OutgoingDdiRulesPatternInterface $rulePattern
-         */
         foreach ($rulePatterns as $rulePattern) {
-            $list = $rulePattern->getMatchList();
-            // If rule pattern matches, apply action and leave
-            if ($list->numberMatches($e164destination)) {
-                if ($rulePattern->getAction() == 'force')  {
-                    $finalDdi = $rulePattern->getForcedDdi();
+            if ($rulePattern->getType() === OutgoingDdiRulesPatternInterface::TYPE_PREFIX) {
+                // skip pattern if doesn't match the prefix
+                if ($rulePattern->getPrefix() != $prefix) {
+                    continue;
                 }
-                break;
+            } elseif ($rulePattern->getType() === OutgoingDdiRulesPatternInterface::TYPE_DESTINATION) {
+                $list = $rulePattern->getMatchList();
+                // skip pattern if doesn't match pattern
+                if (!$list->numberMatches($e164destination)) {
+                    continue;
+                }
+            } else {
+                // Invalid pattern type, this must be a bug!
+                continue;
             }
+
+            // If we reached here, pattern matched: apply action
+            if ($rulePattern->getAction() === OutgoingDdiRulesPatternInterface::ACTION_FORCE) {
+                $finalDdi = $rulePattern->getForcedDdi();
+            } else {
+                $finalDdi = $originalDdi;
+            }
+
+            break;
         }
 
         return $finalDdi;
     }
 }
-

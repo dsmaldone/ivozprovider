@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class QueueMemberAbstract
 {
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $penalty;
 
@@ -36,14 +36,14 @@ abstract class QueueMemberAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "QueueMember",
             $this->getId()
         );
@@ -67,7 +67,8 @@ abstract class QueueMemberAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param QueueMemberInterface|null $entity
      * @param int $depth
      * @return QueueMemberDto|null
      */
@@ -87,58 +88,60 @@ abstract class QueueMemberAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var QueueMemberDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param QueueMemberDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto QueueMemberDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, QueueMemberDto::class);
 
         $self = new static();
 
         $self
             ->setPenalty($dto->getPenalty())
-            ->setQueue($dto->getQueue())
-            ->setUser($dto->getUser())
+            ->setQueue($fkTransformer->transform($dto->getQueue()))
+            ->setUser($fkTransformer->transform($dto->getUser()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param QueueMemberDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto QueueMemberDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, QueueMemberDto::class);
 
         $this
             ->setPenalty($dto->getPenalty())
-            ->setQueue($dto->getQueue())
-            ->setUser($dto->getUser());
+            ->setQueue($fkTransformer->transform($dto->getQueue()))
+            ->setUser($fkTransformer->transform($dto->getUser()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return QueueMemberDto
      */
@@ -157,27 +160,24 @@ abstract class QueueMemberAbstract
     {
         return [
             'penalty' => self::getPenalty(),
-            'queueId' => self::getQueue() ? self::getQueue()->getId() : null,
-            'userId' => self::getUser() ? self::getUser()->getId() : null
+            'queueId' => self::getQueue()->getId(),
+            'userId' => self::getUser()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set penalty
      *
-     * @param integer $penalty
+     * @param integer $penalty | null
      *
-     * @return self
+     * @return static
      */
-    public function setPenalty($penalty = null)
+    protected function setPenalty($penalty = null)
     {
         if (!is_null($penalty)) {
-            if (!is_null($penalty)) {
-                Assertion::integerish($penalty, 'penalty value "%s" is not an integer or a number castable to integer.');
-            }
+            Assertion::integerish($penalty, 'penalty value "%s" is not an integer or a number castable to integer.');
+            $penalty = (int) $penalty;
         }
 
         $this->penalty = $penalty;
@@ -188,7 +188,7 @@ abstract class QueueMemberAbstract
     /**
      * Get penalty
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPenalty()
     {
@@ -200,9 +200,9 @@ abstract class QueueMemberAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue
      *
-     * @return self
+     * @return static
      */
-    public function setQueue(\Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue = null)
+    protected function setQueue(\Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue)
     {
         $this->queue = $queue;
 
@@ -224,9 +224,9 @@ abstract class QueueMemberAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
      *
-     * @return self
+     * @return static
      */
-    public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null)
+    public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user)
     {
         $this->user = $user;
 
@@ -243,8 +243,5 @@ abstract class QueueMemberAbstract
         return $this->user;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

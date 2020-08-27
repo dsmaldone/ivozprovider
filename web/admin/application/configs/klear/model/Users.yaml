@@ -2,7 +2,7 @@ production:
   entity: Ivoz\Provider\Domain\Model\User\User
   fields:
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       required: true
       source:
@@ -88,7 +88,7 @@ production:
             template: '%name${lang}%'
           order:
             TransformationRuleSet.name.${lang}: asc
-        'null': _("Company's default")
+        'null': _("Client's default")
     terminal:
       title: _('Terminal')
       type: select
@@ -104,6 +104,14 @@ production:
           order:
             Terminal.name: asc
         'null': _("Unassigned")
+    statusIcon:
+      title: _('Status')
+      type: ghost
+      dirty: true
+      source:
+        class: IvozProvider_Klear_Ghost_RegisterStatus
+        method: getUserTerminalStatusIcon
+        orderMethod: getOrderByUserTerminalStatus
     extension:
       title: _('Screen Extension')
       type: select
@@ -133,7 +141,7 @@ production:
             template: '%ddie164%'
           order:
             Ddi.ddie164: asc
-        'null': _("Company's default")
+        'null': _("Client's default")
     outgoingDdiRule:
       title: ngettext('Outgoing DDI Rule', 'Outgoing DDI Rules', 1)
       type: select
@@ -148,7 +156,7 @@ production:
             template: '%name%'
           order:
             OutgoingDdiRule.name: asc
-        'null': _("Company's default")
+        'null': _("Client's default")
       info:
         type: box
         position: left
@@ -236,7 +244,7 @@ production:
         text: _("Origins matching this list will call directly to the user.")
         label: _("Need help?")
     maxCalls:
-      title: _('Max calls')
+      title: _('Call waiting')
       type: number
       defaultValue: 0
       source:
@@ -247,7 +255,7 @@ production:
         type: box
         position: left
         icon: help
-        text: _("Limits the number of received calls if the user is handling simultaneously (inbound and outbound) more than the number set. Set 0 for unlimited calls.")
+        text: _("Limits received calls when already handling this number of calls. Set 0 for unlimited.")
         label: _("Need help?")
     voicemailEnabled:
       title: _('Voicemail enabled')
@@ -323,38 +331,6 @@ production:
           related: \Ivoz\Provider\Domain\Model\PickUpGroup\PickUpGroup
           relatedFieldName: name
           filterClass: IvozProvider_Klear_Filter_Company
-    HuntGroupsRelUsers:
-      title: ngettext('Hunt Group', 'Hunt Groups', 0)
-      searchable: false
-      type: ghost
-      source:
-        predefined: list
-      data: mapper
-      config:
-        entity: \Ivoz\Provider\Domain\Model\HuntGroupsRelUser\HuntGroupsRelUser
-        filterField: HuntGroupsRelUser.user
-        showAsTable: true
-        fieldName:
-          fields:
-            huntGroup:
-              title: ngettext('Hunt Group', 'Hunt Groups', 1)
-              entity: \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroup
-              field:
-                - name
-              pattern: "%name%"
-            timeoutTime:
-              title: _("Timeout")
-            priority:
-              title: _("Priority")
-        options:
-          dialogs:
-            huntGroupsRelUsersDel_dialog: true
-          screens:
-            huntGroupsRelUsersEdit_screen: true
-          default:
-      options:
-        screens:
-          huntGroupsRelUsersNew_screen: true
     language:
       title: _('Language')
       type: select
@@ -369,7 +345,7 @@ production:
             template: '%name${lang}%'
           order:
             Language.name.${lang}: asc
-        'null': _("Company's default")
+        'null': _("Client's default")
     externalIpCalls:
       title: _('Calls from non-granted IPs')
       type: select

@@ -60,7 +60,7 @@ class TerminalModel extends TerminalModelAbstract implements TerminalModelInterf
     }
 
     /**
-     * @param $template string
+     * @param string $template
      * @return string
      *
      * Ensures that template lines don't end with a php close tag: ?>
@@ -70,4 +70,3 @@ class TerminalModel extends TerminalModelAbstract implements TerminalModelInterf
         return preg_replace('/\?>\r\n/', "?> \r\n", $template);
     }
 }
-

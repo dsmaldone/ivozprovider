@@ -2,8 +2,6 @@
 
 namespace Ivoz\Provider\Domain\Model\BalanceMovement;
 
-use Doctrine\Common\Collections\Criteria;
-
 /**
  * BalanceMovement
  */
@@ -30,5 +28,10 @@ class BalanceMovement extends BalanceMovementAbstract implements BalanceMovement
         return $this->id;
     }
 
+    protected function sanitizeValues()
+    {
+        if ($this->getCarrier()) {
+            $this->setCompany(null);
+        }
+    }
 }
-

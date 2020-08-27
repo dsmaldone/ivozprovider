@@ -13,15 +13,6 @@ interface FixedCostInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
-
-    /**
      * Get name
      *
      * @return string
@@ -29,45 +20,18 @@ interface FixedCostInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
 
     /**
-     * Set cost
-     *
-     * @param string $cost
-     *
-     * @return self
-     */
-    public function setCost($cost = null);
-
-    /**
      * Get cost
      *
-     * @return string
+     * @return float | null
      */
     public function getCost();
-
-    /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand);
 
     /**
      * Get brand
@@ -75,6 +39,4 @@ interface FixedCostInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
      */
     public function getBrand();
-
 }
-

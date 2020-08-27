@@ -2,7 +2,10 @@
 
 namespace Agi\Action;
 
+use Agi\Agents\AgentInterface;
+use Agi\Agents\UserAgent;
 use Agi\Wrapper;
+use Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
 
 class VoiceMailAction
@@ -13,7 +16,7 @@ class VoiceMailAction
     protected $agi;
 
     /**
-     * @var UserInterface
+     * @var AgentInterface|null
      */
     protected $voicemail;
 
@@ -29,8 +32,7 @@ class VoiceMailAction
      */
     public function __construct(
         Wrapper $agi
-    )
-    {
+    ) {
         $this->agi = $agi;
     }
 
@@ -45,10 +47,10 @@ class VoiceMailAction
     }
 
     /**
-     * @param UserInterface|null $voicemail
+     * @param AgentInterface|null $voicemail
      * @return $this
      */
-    public function setVoiceMail(UserInterface $voicemail = null)
+    public function setVoiceMail(AgentInterface $voicemail = null)
     {
         $this->voicemail = $voicemail;
         return $this;
@@ -56,11 +58,11 @@ class VoiceMailAction
 
     public function process()
     {
-        // Check extension is defined
         $voicemail = $this->voicemail;
-
         if (is_null($voicemail)) {
             $this->agi->error("Voicemail is not properly defined. Check configuration.");
+            $this->agi->hangup();
+            return;
         }
 
         // Some feedback for asterisk cli
@@ -72,17 +74,29 @@ class VoiceMailAction
             if ($this->playBanner) {
                 if ($voicemail->getVoiceMailLocution()) {
                     $this->agi->verbose("Playing custom user Voicemail Locution.");
-                    $this->agi->playback($voicemail->getVoiceMailLocution());
+                    $this->agi->playbackLocution($voicemail->getVoiceMailLocution());
                     $vmopts .= "s";     // Skip welcome message
+                } else {
+                    $vmopts .= "u";
                 }
             } else {
                 $vmopts .= "s";         // Skip welcome message
             }
+
+
             $this->agi->voicemail($voicemail->getVoiceMail(), $vmopts);
         } else {
-            $this->agi->error("User %s has voicemail disabled.", $voicemail->getFullName());
+            $this->agi->error("%s has voicemail disabled.", $voicemail);
             $this->agi->busy();
         }
     }
 
+    public function processResidential()
+    {
+        $voicemail = $this->voicemail;
+
+        $this->agi->voicemail(
+            $voicemail->getVoiceMail()
+        );
+    }
 }

@@ -19,7 +19,7 @@ abstract class DdiAbstract
     protected $ddi;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $ddie164;
 
@@ -30,23 +30,23 @@ abstract class DdiAbstract
     protected $recordCalls = 'none';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $displayName;
 
     /**
-     * comment: enum:user|ivr|huntGroup|fax|conferenceRoom|friend|queue|retailAccount|conditional
-     * @var string
+     * comment: enum:user|ivr|huntGroup|fax|conferenceRoom|friend|queue|conditional|residential|retail
+     * @var string | null
      */
     protected $routeType;
 
     /**
      * @var boolean
      */
-    protected $billInboundCalls = '0';
+    protected $billInboundCalls = false;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $friendValue;
 
@@ -61,49 +61,49 @@ abstract class DdiAbstract
     protected $brand;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface
+     * @var \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface | null
      */
     protected $conferenceRoom;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     protected $language;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Queue\QueueInterface
+     * @var \Ivoz\Provider\Domain\Model\Queue\QueueInterface | null
      */
     protected $queue;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface
+     * @var \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface | null
      */
     protected $externalCallFilter;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     protected $user;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Ivr\IvrInterface
+     * @var \Ivoz\Provider\Domain\Model\Ivr\IvrInterface | null
      */
     protected $ivr;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface
+     * @var \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface | null
      */
     protected $huntGroup;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Fax\FaxInterface
+     * @var \Ivoz\Provider\Domain\Model\Fax\FaxInterface | null
      */
     protected $fax;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+     * @var \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface | null
      */
-    protected $peeringContract;
+    protected $ddiProvider;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface
@@ -111,14 +111,19 @@ abstract class DdiAbstract
     protected $country;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+     * @var \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
      */
-    protected $retailAccount;
+    protected $residentialDevice;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface
+     * @var \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface | null
      */
     protected $conditionalRoute;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
+     */
+    protected $retailAccount;
 
 
     use ChangelogTrait;
@@ -137,7 +142,8 @@ abstract class DdiAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Ddi",
             $this->getId()
         );
@@ -161,7 +167,8 @@ abstract class DdiAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param DdiInterface|null $entity
      * @param int $depth
      * @return DdiDto|null
      */
@@ -181,62 +188,66 @@ abstract class DdiAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var DdiDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param DdiDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto DdiDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, DdiDto::class);
 
         $self = new static(
             $dto->getDdi(),
             $dto->getRecordCalls(),
-            $dto->getBillInboundCalls());
+            $dto->getBillInboundCalls()
+        );
 
         $self
             ->setDdie164($dto->getDdie164())
             ->setDisplayName($dto->getDisplayName())
             ->setRouteType($dto->getRouteType())
             ->setFriendValue($dto->getFriendValue())
-            ->setCompany($dto->getCompany())
-            ->setBrand($dto->getBrand())
-            ->setConferenceRoom($dto->getConferenceRoom())
-            ->setLanguage($dto->getLanguage())
-            ->setQueue($dto->getQueue())
-            ->setExternalCallFilter($dto->getExternalCallFilter())
-            ->setUser($dto->getUser())
-            ->setIvr($dto->getIvr())
-            ->setHuntGroup($dto->getHuntGroup())
-            ->setFax($dto->getFax())
-            ->setPeeringContract($dto->getPeeringContract())
-            ->setCountry($dto->getCountry())
-            ->setRetailAccount($dto->getRetailAccount())
-            ->setConditionalRoute($dto->getConditionalRoute())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setConferenceRoom($fkTransformer->transform($dto->getConferenceRoom()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setQueue($fkTransformer->transform($dto->getQueue()))
+            ->setExternalCallFilter($fkTransformer->transform($dto->getExternalCallFilter()))
+            ->setUser($fkTransformer->transform($dto->getUser()))
+            ->setIvr($fkTransformer->transform($dto->getIvr()))
+            ->setHuntGroup($fkTransformer->transform($dto->getHuntGroup()))
+            ->setFax($fkTransformer->transform($dto->getFax()))
+            ->setDdiProvider($fkTransformer->transform($dto->getDdiProvider()))
+            ->setCountry($fkTransformer->transform($dto->getCountry()))
+            ->setResidentialDevice($fkTransformer->transform($dto->getResidentialDevice()))
+            ->setConditionalRoute($fkTransformer->transform($dto->getConditionalRoute()))
+            ->setRetailAccount($fkTransformer->transform($dto->getRetailAccount()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param DdiDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto DdiDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, DdiDto::class);
 
         $this
@@ -247,28 +258,29 @@ abstract class DdiAbstract
             ->setRouteType($dto->getRouteType())
             ->setBillInboundCalls($dto->getBillInboundCalls())
             ->setFriendValue($dto->getFriendValue())
-            ->setCompany($dto->getCompany())
-            ->setBrand($dto->getBrand())
-            ->setConferenceRoom($dto->getConferenceRoom())
-            ->setLanguage($dto->getLanguage())
-            ->setQueue($dto->getQueue())
-            ->setExternalCallFilter($dto->getExternalCallFilter())
-            ->setUser($dto->getUser())
-            ->setIvr($dto->getIvr())
-            ->setHuntGroup($dto->getHuntGroup())
-            ->setFax($dto->getFax())
-            ->setPeeringContract($dto->getPeeringContract())
-            ->setCountry($dto->getCountry())
-            ->setRetailAccount($dto->getRetailAccount())
-            ->setConditionalRoute($dto->getConditionalRoute());
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
+            ->setConferenceRoom($fkTransformer->transform($dto->getConferenceRoom()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setQueue($fkTransformer->transform($dto->getQueue()))
+            ->setExternalCallFilter($fkTransformer->transform($dto->getExternalCallFilter()))
+            ->setUser($fkTransformer->transform($dto->getUser()))
+            ->setIvr($fkTransformer->transform($dto->getIvr()))
+            ->setHuntGroup($fkTransformer->transform($dto->getHuntGroup()))
+            ->setFax($fkTransformer->transform($dto->getFax()))
+            ->setDdiProvider($fkTransformer->transform($dto->getDdiProvider()))
+            ->setCountry($fkTransformer->transform($dto->getCountry()))
+            ->setResidentialDevice($fkTransformer->transform($dto->getResidentialDevice()))
+            ->setConditionalRoute($fkTransformer->transform($dto->getConditionalRoute()))
+            ->setRetailAccount($fkTransformer->transform($dto->getRetailAccount()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return DdiDto
      */
@@ -292,10 +304,11 @@ abstract class DdiAbstract
             ->setIvr(\Ivoz\Provider\Domain\Model\Ivr\Ivr::entityToDto(self::getIvr(), $depth))
             ->setHuntGroup(\Ivoz\Provider\Domain\Model\HuntGroup\HuntGroup::entityToDto(self::getHuntGroup(), $depth))
             ->setFax(\Ivoz\Provider\Domain\Model\Fax\Fax::entityToDto(self::getFax(), $depth))
-            ->setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContract::entityToDto(self::getPeeringContract(), $depth))
+            ->setDdiProvider(\Ivoz\Provider\Domain\Model\DdiProvider\DdiProvider::entityToDto(self::getDdiProvider(), $depth))
             ->setCountry(\Ivoz\Provider\Domain\Model\Country\Country::entityToDto(self::getCountry(), $depth))
-            ->setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccount::entityToDto(self::getRetailAccount(), $depth))
-            ->setConditionalRoute(\Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRoute::entityToDto(self::getConditionalRoute(), $depth));
+            ->setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDevice::entityToDto(self::getResidentialDevice(), $depth))
+            ->setConditionalRoute(\Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRoute::entityToDto(self::getConditionalRoute(), $depth))
+            ->setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccount::entityToDto(self::getRetailAccount(), $depth));
     }
 
     /**
@@ -311,8 +324,8 @@ abstract class DdiAbstract
             'routeType' => self::getRouteType(),
             'billInboundCalls' => self::getBillInboundCalls(),
             'friendValue' => self::getFriendValue(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
-            'brandId' => self::getBrand() ? self::getBrand()->getId() : null,
+            'companyId' => self::getCompany()->getId(),
+            'brandId' => self::getBrand()->getId(),
             'conferenceRoomId' => self::getConferenceRoom() ? self::getConferenceRoom()->getId() : null,
             'languageId' => self::getLanguage() ? self::getLanguage()->getId() : null,
             'queueId' => self::getQueue() ? self::getQueue()->getId() : null,
@@ -321,14 +334,13 @@ abstract class DdiAbstract
             'ivrId' => self::getIvr() ? self::getIvr()->getId() : null,
             'huntGroupId' => self::getHuntGroup() ? self::getHuntGroup()->getId() : null,
             'faxId' => self::getFax() ? self::getFax()->getId() : null,
-            'peeringContractId' => self::getPeeringContract() ? self::getPeeringContract()->getId() : null,
-            'countryId' => self::getCountry() ? self::getCountry()->getId() : null,
-            'retailAccountId' => self::getRetailAccount() ? self::getRetailAccount()->getId() : null,
-            'conditionalRouteId' => self::getConditionalRoute() ? self::getConditionalRoute()->getId() : null
+            'ddiProviderId' => self::getDdiProvider() ? self::getDdiProvider()->getId() : null,
+            'countryId' => self::getCountry()->getId(),
+            'residentialDeviceId' => self::getResidentialDevice() ? self::getResidentialDevice()->getId() : null,
+            'conditionalRouteId' => self::getConditionalRoute() ? self::getConditionalRoute()->getId() : null,
+            'retailAccountId' => self::getRetailAccount() ? self::getRetailAccount()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -336,9 +348,9 @@ abstract class DdiAbstract
      *
      * @param string $ddi
      *
-     * @return self
+     * @return static
      */
-    public function setDdi($ddi)
+    protected function setDdi($ddi)
     {
         Assertion::notNull($ddi, 'ddi value "%s" is null, but non null value was expected.');
         Assertion::maxLength($ddi, 25, 'ddi value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -361,11 +373,11 @@ abstract class DdiAbstract
     /**
      * Set ddie164
      *
-     * @param string $ddie164
+     * @param string $ddie164 | null
      *
-     * @return self
+     * @return static
      */
-    public function setDdie164($ddie164 = null)
+    protected function setDdie164($ddie164 = null)
     {
         if (!is_null($ddie164)) {
             Assertion::maxLength($ddie164, 25, 'ddie164 value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -379,7 +391,7 @@ abstract class DdiAbstract
     /**
      * Get ddie164
      *
-     * @return string
+     * @return string | null
      */
     public function getDdie164()
     {
@@ -391,18 +403,18 @@ abstract class DdiAbstract
      *
      * @param string $recordCalls
      *
-     * @return self
+     * @return static
      */
-    public function setRecordCalls($recordCalls)
+    protected function setRecordCalls($recordCalls)
     {
         Assertion::notNull($recordCalls, 'recordCalls value "%s" is null, but non null value was expected.');
         Assertion::maxLength($recordCalls, 25, 'recordCalls value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($recordCalls, array (
-          0 => 'none',
-          1 => 'all',
-          2 => 'inbound',
-          3 => 'outbound',
-        ), 'recordCallsvalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($recordCalls, [
+            DdiInterface::RECORDCALLS_NONE,
+            DdiInterface::RECORDCALLS_ALL,
+            DdiInterface::RECORDCALLS_INBOUND,
+            DdiInterface::RECORDCALLS_OUTBOUND
+        ], 'recordCallsvalue "%s" is not an element of the valid values: %s');
 
         $this->recordCalls = $recordCalls;
 
@@ -422,11 +434,11 @@ abstract class DdiAbstract
     /**
      * Set displayName
      *
-     * @param string $displayName
+     * @param string $displayName | null
      *
-     * @return self
+     * @return static
      */
-    public function setDisplayName($displayName = null)
+    protected function setDisplayName($displayName = null)
     {
         if (!is_null($displayName)) {
             Assertion::maxLength($displayName, 50, 'displayName value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -440,7 +452,7 @@ abstract class DdiAbstract
     /**
      * Get displayName
      *
-     * @return string
+     * @return string | null
      */
     public function getDisplayName()
     {
@@ -450,25 +462,26 @@ abstract class DdiAbstract
     /**
      * Set routeType
      *
-     * @param string $routeType
+     * @param string $routeType | null
      *
-     * @return self
+     * @return static
      */
-    public function setRouteType($routeType = null)
+    protected function setRouteType($routeType = null)
     {
         if (!is_null($routeType)) {
             Assertion::maxLength($routeType, 25, 'routeType value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($routeType, array (
-          0 => 'user',
-          1 => 'ivr',
-          2 => 'huntGroup',
-          3 => 'fax',
-          4 => 'conferenceRoom',
-          5 => 'friend',
-          6 => 'queue',
-          7 => 'retailAccount',
-          8 => 'conditional',
-        ), 'routeTypevalue "%s" is not an element of the valid values: %s');
+            Assertion::choice($routeType, [
+                DdiInterface::ROUTETYPE_USER,
+                DdiInterface::ROUTETYPE_IVR,
+                DdiInterface::ROUTETYPE_HUNTGROUP,
+                DdiInterface::ROUTETYPE_FAX,
+                DdiInterface::ROUTETYPE_CONFERENCEROOM,
+                DdiInterface::ROUTETYPE_FRIEND,
+                DdiInterface::ROUTETYPE_QUEUE,
+                DdiInterface::ROUTETYPE_CONDITIONAL,
+                DdiInterface::ROUTETYPE_RESIDENTIAL,
+                DdiInterface::ROUTETYPE_RETAIL
+            ], 'routeTypevalue "%s" is not an element of the valid values: %s');
         }
 
         $this->routeType = $routeType;
@@ -479,7 +492,7 @@ abstract class DdiAbstract
     /**
      * Get routeType
      *
-     * @return string
+     * @return string | null
      */
     public function getRouteType()
     {
@@ -491,12 +504,13 @@ abstract class DdiAbstract
      *
      * @param boolean $billInboundCalls
      *
-     * @return self
+     * @return static
      */
-    public function setBillInboundCalls($billInboundCalls)
+    protected function setBillInboundCalls($billInboundCalls)
     {
         Assertion::notNull($billInboundCalls, 'billInboundCalls value "%s" is null, but non null value was expected.');
         Assertion::between(intval($billInboundCalls), 0, 1, 'billInboundCalls provided "%s" is not a valid boolean value.');
+        $billInboundCalls = (bool) $billInboundCalls;
 
         $this->billInboundCalls = $billInboundCalls;
 
@@ -516,11 +530,11 @@ abstract class DdiAbstract
     /**
      * Set friendValue
      *
-     * @param string $friendValue
+     * @param string $friendValue | null
      *
-     * @return self
+     * @return static
      */
-    public function setFriendValue($friendValue = null)
+    protected function setFriendValue($friendValue = null)
     {
         if (!is_null($friendValue)) {
             Assertion::maxLength($friendValue, 25, 'friendValue value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -534,7 +548,7 @@ abstract class DdiAbstract
     /**
      * Get friendValue
      *
-     * @return string
+     * @return string | null
      */
     public function getFriendValue()
     {
@@ -546,9 +560,9 @@ abstract class DdiAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
+    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -570,9 +584,9 @@ abstract class DdiAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
+    protected function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
     {
         $this->brand = $brand;
 
@@ -592,11 +606,11 @@ abstract class DdiAbstract
     /**
      * Set conferenceRoom
      *
-     * @param \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface $conferenceRoom
+     * @param \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface $conferenceRoom | null
      *
-     * @return self
+     * @return static
      */
-    public function setConferenceRoom(\Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface $conferenceRoom = null)
+    protected function setConferenceRoom(\Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface $conferenceRoom = null)
     {
         $this->conferenceRoom = $conferenceRoom;
 
@@ -606,7 +620,7 @@ abstract class DdiAbstract
     /**
      * Get conferenceRoom
      *
-     * @return \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface
+     * @return \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface | null
      */
     public function getConferenceRoom()
     {
@@ -616,11 +630,11 @@ abstract class DdiAbstract
     /**
      * Set language
      *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
+     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language | null
      *
-     * @return self
+     * @return static
      */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
+    protected function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
     {
         $this->language = $language;
 
@@ -630,7 +644,7 @@ abstract class DdiAbstract
     /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage()
     {
@@ -640,11 +654,11 @@ abstract class DdiAbstract
     /**
      * Set queue
      *
-     * @param \Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue
+     * @param \Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue | null
      *
-     * @return self
+     * @return static
      */
-    public function setQueue(\Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue = null)
+    protected function setQueue(\Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue = null)
     {
         $this->queue = $queue;
 
@@ -654,7 +668,7 @@ abstract class DdiAbstract
     /**
      * Get queue
      *
-     * @return \Ivoz\Provider\Domain\Model\Queue\QueueInterface
+     * @return \Ivoz\Provider\Domain\Model\Queue\QueueInterface | null
      */
     public function getQueue()
     {
@@ -664,11 +678,11 @@ abstract class DdiAbstract
     /**
      * Set externalCallFilter
      *
-     * @param \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $externalCallFilter
+     * @param \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $externalCallFilter | null
      *
-     * @return self
+     * @return static
      */
-    public function setExternalCallFilter(\Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $externalCallFilter = null)
+    protected function setExternalCallFilter(\Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $externalCallFilter = null)
     {
         $this->externalCallFilter = $externalCallFilter;
 
@@ -678,7 +692,7 @@ abstract class DdiAbstract
     /**
      * Get externalCallFilter
      *
-     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface
+     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface | null
      */
     public function getExternalCallFilter()
     {
@@ -688,11 +702,11 @@ abstract class DdiAbstract
     /**
      * Set user
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user | null
      *
-     * @return self
+     * @return static
      */
-    public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null)
+    protected function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null)
     {
         $this->user = $user;
 
@@ -702,7 +716,7 @@ abstract class DdiAbstract
     /**
      * Get user
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getUser()
     {
@@ -712,11 +726,11 @@ abstract class DdiAbstract
     /**
      * Set ivr
      *
-     * @param \Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr
+     * @param \Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr | null
      *
-     * @return self
+     * @return static
      */
-    public function setIvr(\Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr = null)
+    protected function setIvr(\Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr = null)
     {
         $this->ivr = $ivr;
 
@@ -726,7 +740,7 @@ abstract class DdiAbstract
     /**
      * Get ivr
      *
-     * @return \Ivoz\Provider\Domain\Model\Ivr\IvrInterface
+     * @return \Ivoz\Provider\Domain\Model\Ivr\IvrInterface | null
      */
     public function getIvr()
     {
@@ -736,11 +750,11 @@ abstract class DdiAbstract
     /**
      * Set huntGroup
      *
-     * @param \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup
+     * @param \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup | null
      *
-     * @return self
+     * @return static
      */
-    public function setHuntGroup(\Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup = null)
+    protected function setHuntGroup(\Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup = null)
     {
         $this->huntGroup = $huntGroup;
 
@@ -750,7 +764,7 @@ abstract class DdiAbstract
     /**
      * Get huntGroup
      *
-     * @return \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface
+     * @return \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface | null
      */
     public function getHuntGroup()
     {
@@ -760,11 +774,11 @@ abstract class DdiAbstract
     /**
      * Set fax
      *
-     * @param \Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax
+     * @param \Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax | null
      *
-     * @return self
+     * @return static
      */
-    public function setFax(\Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax = null)
+    protected function setFax(\Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax = null)
     {
         $this->fax = $fax;
 
@@ -774,7 +788,7 @@ abstract class DdiAbstract
     /**
      * Get fax
      *
-     * @return \Ivoz\Provider\Domain\Model\Fax\FaxInterface
+     * @return \Ivoz\Provider\Domain\Model\Fax\FaxInterface | null
      */
     public function getFax()
     {
@@ -782,27 +796,27 @@ abstract class DdiAbstract
     }
 
     /**
-     * Set peeringContract
+     * Set ddiProvider
      *
-     * @param \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract
+     * @param \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface $ddiProvider | null
      *
-     * @return self
+     * @return static
      */
-    public function setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract = null)
+    protected function setDdiProvider(\Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface $ddiProvider = null)
     {
-        $this->peeringContract = $peeringContract;
+        $this->ddiProvider = $ddiProvider;
 
         return $this;
     }
 
     /**
-     * Get peeringContract
+     * Get ddiProvider
      *
-     * @return \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
+     * @return \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface | null
      */
-    public function getPeeringContract()
+    public function getDdiProvider()
     {
-        return $this->peeringContract;
+        return $this->ddiProvider;
     }
 
     /**
@@ -810,9 +824,9 @@ abstract class DdiAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $country
      *
-     * @return self
+     * @return static
      */
-    public function setCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $country)
+    protected function setCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $country)
     {
         $this->country = $country;
 
@@ -830,11 +844,59 @@ abstract class DdiAbstract
     }
 
     /**
+     * Set residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice | null
+     *
+     * @return static
+     */
+    public function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice = null)
+    {
+        $this->residentialDevice = $residentialDevice;
+
+        return $this;
+    }
+
+    /**
+     * Get residentialDevice
+     *
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
+     */
+    public function getResidentialDevice()
+    {
+        return $this->residentialDevice;
+    }
+
+    /**
+     * Set conditionalRoute
+     *
+     * @param \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute | null
+     *
+     * @return static
+     */
+    protected function setConditionalRoute(\Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute = null)
+    {
+        $this->conditionalRoute = $conditionalRoute;
+
+        return $this;
+    }
+
+    /**
+     * Get conditionalRoute
+     *
+     * @return \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface | null
+     */
+    public function getConditionalRoute()
+    {
+        return $this->conditionalRoute;
+    }
+
+    /**
      * Set retailAccount
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount | null
      *
-     * @return self
+     * @return static
      */
     public function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount = null)
     {
@@ -846,39 +908,12 @@ abstract class DdiAbstract
     /**
      * Get retailAccount
      *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
     public function getRetailAccount()
     {
         return $this->retailAccount;
     }
 
-    /**
-     * Set conditionalRoute
-     *
-     * @param \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute
-     *
-     * @return self
-     */
-    public function setConditionalRoute(\Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute = null)
-    {
-        $this->conditionalRoute = $conditionalRoute;
-
-        return $this;
-    }
-
-    /**
-     * Get conditionalRoute
-     *
-     * @return \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface
-     */
-    public function getConditionalRoute()
-    {
-        return $this->conditionalRoute;
-    }
-
-
-
     // @codeCoverageIgnoreEnd
 }
-

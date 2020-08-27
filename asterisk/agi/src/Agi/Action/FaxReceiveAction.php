@@ -2,11 +2,10 @@
 namespace Agi\Action;
 
 use Agi\Wrapper;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Provider\Domain\Model\Fax\FaxInterface;
-use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutDTO;
+use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutDto;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutInterface;
-
 
 class FaxReceiveAction
 {
@@ -16,12 +15,12 @@ class FaxReceiveAction
     protected $agi;
 
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
-     * @var FaxInterface
+     * @var FaxInterface|null
      */
     protected $fax;
 
@@ -29,15 +28,14 @@ class FaxReceiveAction
      * FaxReceiveAction constructor.
      *
      * @param Wrapper $agi
-     * @param EntityPersisterInterface $entityPersister
+     * @param EntityTools $entityTools
      */
     public function __construct(
         Wrapper $agi,
-        EntityPersisterInterface $entityPersister
-    )
-    {
+        EntityTools $entityTools
+    ) {
         $this->agi = $agi;
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
     }
 
     /**
@@ -67,8 +65,8 @@ class FaxReceiveAction
 
         // Set destination file and fax options
         $faxDir = $spoolDir . "/faxes";
-        if(!is_dir($faxDir)){
-            mkdir($faxDir,0777);
+        if (!is_dir($faxDir)) {
+            mkdir($faxDir, 0777);
         }
 
         $this->agi->setVariable("FAXFILE", $spoolDir . "/faxes/fax-" . $did . "-" . time() . ".tif");
@@ -76,8 +74,8 @@ class FaxReceiveAction
         $this->agi->setVariable("FAXOPT(localstationid)", $did);
 
         // Create a new items for received fax data
-        $faxInDTO = new FaxesInOutDTO();
-        $faxInDTO
+        $faxInDto = new FaxesInOutDto();
+        $faxInDto
             ->setFaxId($fax->getId())
             ->setSrc($this->agi->getVariable("CALLERID(number)"))
             ->setDst($did)
@@ -85,7 +83,7 @@ class FaxReceiveAction
             ->setStatus("inprogress");
 
         /** @var FaxesInOutInterface $faxIn */
-        $faxIn = $this->entityPersister->persistDto($faxInDTO);
+        $faxIn = $this->entityTools->persistDto($faxInDto, null, true);
 
         // Store FaxId for later searchs
         $this->agi->setVariable("FAXFILE_ID", $faxIn->getId());
@@ -94,10 +92,9 @@ class FaxReceiveAction
         $this->agi->notice("Incoming fax for %s [fax%d])", $fax->getName(), $fax->getId());
 
         // Set recive fax options
-        $this->agi->setVariable("FAX_OPT","zf");
+        $this->agi->setVariable("FAX_OPT", "zf");
 
         // Redirect to the calling dialplan context
         $this->agi->redirect('fax-receive', $did);
     }
-
 }

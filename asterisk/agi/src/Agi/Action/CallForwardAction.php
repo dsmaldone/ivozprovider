@@ -1,10 +1,11 @@
 <?php
 namespace Agi\Action;
 
+use Agi\Agents\ResidentialAgent;
+use Agi\Agents\UserAgent;
 use Agi\ChannelInfo;
 use Agi\Wrapper;
 use Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface;
-
 
 class CallForwardAction
 {
@@ -26,7 +27,7 @@ class CallForwardAction
     protected $_maxRedirections = 5;
 
     /**
-     * @var CallForwardSettingInterface
+     * @var CallForwardSettingInterface|null
      */
     protected $cfw;
 
@@ -36,29 +37,20 @@ class CallForwardAction
     protected $routerAction;
 
     /**
-     * @var VoiceMailAction
-     */
-    protected $voiceMailAction;
-
-    /**
      * CallForwardAction constructor.
      *
      * @param Wrapper $agi
      * @param ChannelInfo $channelInfo
      * @param RouterAction $routerAction
-     * @param VoiceMailAction $voiceMailAction
      */
     public function __construct(
         Wrapper $agi,
         ChannelInfo $channelInfo,
-        RouterAction $routerAction,
-        VoiceMailAction $voiceMailAction
-    )
-    {
+        RouterAction $routerAction
+    ) {
         $this->agi = $agi;
         $this->channelInfo = $channelInfo;
         $this->routerAction = $routerAction;
-        $this->voiceMailAction = $voiceMailAction;
     }
 
     /**
@@ -80,6 +72,27 @@ class CallForwardAction
 
         // Some CLI information
         $this->agi->notice("Processing %s call forward", $this->cfw->getCallForwardType());
+
+        // Use CFW owner as caller on following routes
+        $forwarder = $this->cfw->getUser();
+        if ($forwarder) {
+            $caller = new UserAgent($this->agi, $forwarder);
+            $this->agi->setVariable("_USERID", $forwarder->getId());
+        } else {
+            $forwarder = $this->cfw->getResidentialDevice();
+
+            if (!$forwarder) {
+                // Cfw without owner. This should not happen.
+                $this->agi->error("Call forward without owner. Check configuration.");
+                return;
+            }
+
+            $caller = new ResidentialAgent($this->agi, $forwarder);
+            $this->agi->setVariable("_RESIDENTIALDEVICEID", $forwarder->getId());
+        }
+
+        // Set the new caller
+        $this->channelInfo->setChannelCaller($caller);
 
         /**
          * Set Diversion reason based on current Call Forward settings
@@ -111,50 +124,24 @@ class CallForwardAction
             return;
         }
 
-        // Use Redirecting user as caller on following routes
-        $caller = $this->cfw->getUser();
-        $this->channelInfo->setChannelCaller($caller);
+        // Set as diversion number the user extension
+        $this->agi->setRedirecting('from-num', $caller->getExtensionNumber());
 
-        if ($this->cfw->getTargetType() == RouterAction::Voicemail) {
-            // Set as diversion number the user extension
-            $this->agi->setRedirecting('from-num,i', $caller->getExtensionNumber());
-            $this->agi->setRedirecting('from-tag,i', $caller->getExtensionNumber());
-            $this->agi->setRedirecting('from-name', $caller->getFullName());
-
-            $this->voiceMailAction
-                ->setVoiceMail($this->cfw->getVoiceMailUser())
-                ->setPlayBanner(true)
-                ->process();
-
-        } else if ($this->cfw->getTargetType() == RouterAction::Extension) {
-            // Set as diversion number the user extension
-            $this->agi->setRedirecting('from-num,i', $caller->getExtensionNumber());
-            $this->agi->setRedirecting('from-tag,i', $caller->getExtensionNumber());
-            $this->agi->setRedirecting('from-name',  $caller->getFullName());
-
-            // Route to destination
+        // Set voicemail destination
+        $isUserCallForward = $this->cfw->getUser() !== null;
+        if ($isUserCallForward) {
             $this->routerAction
-                ->setRouteType($this->cfw->getTargetType())
-                ->setRouteExtension($this->cfw->getExtension())
-                ->setRouteVoicemail($this->cfw->getVoiceMailUser())
-                ->setRouteExternal($this->cfw->getNumberValueE164())
-                ->route();
-
-        } else if ($this->cfw->getTargetType() == RouterAction::External) {
-            // Set as diversion number the user Outgoing DDI
-            $this->agi->setRedirecting('from-num,i', $caller->getOutgoingDDINumber());
-            $this->agi->setRedirecting('from-tag,i', $caller->getExtensionNumber());
-            $this->agi->setRedirecting('from-name',  $caller->getFullName());
-
-            // Route to destination
+                ->setRouteVoicemailUser($this->cfw->getVoiceMailUser(), true);
+        } else {
             $this->routerAction
-                ->setRouteType($this->cfw->getTargetType())
-                ->setRouteExtension($this->cfw->getExtension())
-                ->setRouteVoicemail($this->cfw->getVoiceMailUser())
-                ->setRouteExternal($this->cfw->getNumberValueE164())
-                ->route();
+                ->setRouteVoicemailResidential($this->cfw->getResidentialDevice(), true);
         }
 
+        // Route based on configured type
+        $this->routerAction
+            ->setRouteType($this->cfw->getTargetType())
+            ->setRouteExtension($this->cfw->getExtension())
+            ->setRouteExternal($this->cfw->getNumberValueE164())
+            ->route();
     }
-
 }

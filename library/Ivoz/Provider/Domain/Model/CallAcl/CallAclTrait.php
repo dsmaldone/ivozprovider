@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\CallAcl;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,7 +18,7 @@ trait CallAclTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $relMatchLists;
 
@@ -33,20 +32,29 @@ trait CallAclTrait
         $this->relMatchLists = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param CallAclDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CallAclDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getRelMatchLists()) {
-            $self->replaceRelMatchLists($dto->getRelMatchLists());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getRelMatchLists())) {
+            $self->replaceRelMatchLists(
+                $fkTransformer->transformCollection(
+                    $dto->getRelMatchLists()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -56,22 +64,30 @@ trait CallAclTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param CallAclDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto CallAclDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getRelMatchLists()) {
-            $this->replaceRelMatchLists($dto->getRelMatchLists());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getRelMatchLists())) {
+            $this->replaceRelMatchLists(
+                $fkTransformer->transformCollection(
+                    $dto->getRelMatchLists()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return CallAclDto
      */
@@ -91,14 +107,12 @@ trait CallAclTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add relMatchList
      *
      * @param \Ivoz\Provider\Domain\Model\CallAclRelMatchList\CallAclRelMatchListInterface $relMatchList
      *
-     * @return CallAclTrait
+     * @return static
      */
     public function addRelMatchList(\Ivoz\Provider\Domain\Model\CallAclRelMatchList\CallAclRelMatchListInterface $relMatchList)
     {
@@ -120,10 +134,10 @@ trait CallAclTrait
     /**
      * Replace relMatchLists
      *
-     * @param \Ivoz\Provider\Domain\Model\CallAclRelMatchList\CallAclRelMatchListInterface[] $relMatchLists
-     * @return self
+     * @param ArrayCollection $relMatchLists of Ivoz\Provider\Domain\Model\CallAclRelMatchList\CallAclRelMatchListInterface
+     * @return static
      */
-    public function replaceRelMatchLists(Collection $relMatchLists)
+    public function replaceRelMatchLists(ArrayCollection $relMatchLists)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -153,7 +167,7 @@ trait CallAclTrait
 
     /**
      * Get relMatchLists
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\CallAclRelMatchList\CallAclRelMatchListInterface[]
      */
     public function getRelMatchLists(Criteria $criteria = null)
@@ -164,7 +178,4 @@ trait CallAclTrait
 
         return $this->relMatchLists->toArray();
     }
-
-
 }
-

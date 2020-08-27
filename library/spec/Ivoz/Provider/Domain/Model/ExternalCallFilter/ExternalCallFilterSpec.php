@@ -11,7 +11,6 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use spec\HelperTrait;
 
-
 class ExternalCallFilterSpec extends ObjectBehavior
 {
     use HelperTrait;
@@ -23,7 +22,6 @@ class ExternalCallFilterSpec extends ObjectBehavior
 
     function let(
         CompanyInterface $company
-
     ) {
 
         $this->dto = $dto = new ExternalCallFilterDto();
@@ -38,7 +36,7 @@ class ExternalCallFilterSpec extends ObjectBehavior
 
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 

@@ -20,17 +20,17 @@ abstract class LocutionAbstract
 
     /**
      * comment: enum:pending|encoding|ready|error
-     * @var string
+     * @var string | null
      */
     protected $status;
 
     /**
-     * @var EncodedFile
+     * @var EncodedFile | null
      */
     protected $encodedFile;
 
     /**
-     * @var OriginalFile
+     * @var OriginalFile | null
      */
     protected $originalFile;
 
@@ -59,7 +59,8 @@ abstract class LocutionAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Locution",
             $this->getId()
         );
@@ -83,7 +84,8 @@ abstract class LocutionAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param LocutionInterface|null $entity
      * @param int $depth
      * @return LocutionDto|null
      */
@@ -103,19 +105,22 @@ abstract class LocutionAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var LocutionDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param LocutionDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto LocutionDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, LocutionDto::class);
 
         $encodedFile = new EncodedFile(
@@ -138,24 +143,23 @@ abstract class LocutionAbstract
 
         $self
             ->setStatus($dto->getStatus())
-            ->setCompany($dto->getCompany())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param LocutionDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto LocutionDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, LocutionDto::class);
 
         $encodedFile = new EncodedFile(
@@ -175,15 +179,15 @@ abstract class LocutionAbstract
             ->setStatus($dto->getStatus())
             ->setEncodedFile($encodedFile)
             ->setOriginalFile($originalFile)
-            ->setCompany($dto->getCompany());
+            ->setCompany($fkTransformer->transform($dto->getCompany()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return LocutionDto
      */
@@ -215,11 +219,9 @@ abstract class LocutionAbstract
             'originalFileFileSize' => self::getOriginalFile()->getFileSize(),
             'originalFileMimeType' => self::getOriginalFile()->getMimeType(),
             'originalFileBaseName' => self::getOriginalFile()->getBaseName(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null
+            'companyId' => self::getCompany()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -227,9 +229,9 @@ abstract class LocutionAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 50, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -252,20 +254,20 @@ abstract class LocutionAbstract
     /**
      * Set status
      *
-     * @param string $status
+     * @param string $status | null
      *
-     * @return self
+     * @return static
      */
-    public function setStatus($status = null)
+    protected function setStatus($status = null)
     {
         if (!is_null($status)) {
             Assertion::maxLength($status, 20, 'status value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($status, array (
-          0 => 'pending',
-          1 => 'encoding',
-          2 => 'ready',
-          3 => 'error',
-        ), 'statusvalue "%s" is not an element of the valid values: %s');
+            Assertion::choice($status, [
+                LocutionInterface::STATUS_PENDING,
+                LocutionInterface::STATUS_ENCODING,
+                LocutionInterface::STATUS_READY,
+                LocutionInterface::STATUS_ERROR
+            ], 'statusvalue "%s" is not an element of the valid values: %s');
         }
 
         $this->status = $status;
@@ -276,7 +278,7 @@ abstract class LocutionAbstract
     /**
      * Get status
      *
-     * @return string
+     * @return string | null
      */
     public function getStatus()
     {
@@ -288,9 +290,9 @@ abstract class LocutionAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -312,12 +314,16 @@ abstract class LocutionAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Locution\EncodedFile $encodedFile
      *
-     * @return self
+     * @return static
      */
-    public function setEncodedFile(EncodedFile $encodedFile)
+    protected function setEncodedFile(EncodedFile $encodedFile)
     {
-        $this->encodedFile = $encodedFile;
+        $isEqual = $this->encodedFile && $this->encodedFile->equals($encodedFile);
+        if ($isEqual) {
+            return $this;
+        }
 
+        $this->encodedFile = $encodedFile;
         return $this;
     }
 
@@ -336,12 +342,16 @@ abstract class LocutionAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Locution\OriginalFile $originalFile
      *
-     * @return self
+     * @return static
      */
-    public function setOriginalFile(OriginalFile $originalFile)
+    protected function setOriginalFile(OriginalFile $originalFile)
     {
-        $this->originalFile = $originalFile;
+        $isEqual = $this->originalFile && $this->originalFile->equals($originalFile);
+        if ($isEqual) {
+            return $this;
+        }
 
+        $this->originalFile = $originalFile;
         return $this;
     }
 
@@ -354,7 +364,5 @@ abstract class LocutionAbstract
     {
         return $this->originalFile;
     }
-
     // @codeCoverageIgnoreEnd
 }
-

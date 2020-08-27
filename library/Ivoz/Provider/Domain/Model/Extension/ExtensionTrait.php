@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\Extension;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,7 +18,7 @@ trait ExtensionTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $users;
 
@@ -33,20 +32,29 @@ trait ExtensionTrait
         $this->users = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param ExtensionDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ExtensionDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getUsers()) {
-            $self->replaceUsers($dto->getUsers());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getUsers())) {
+            $self->replaceUsers(
+                $fkTransformer->transformCollection(
+                    $dto->getUsers()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -56,22 +64,30 @@ trait ExtensionTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param ExtensionDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ExtensionDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getUsers()) {
-            $this->replaceUsers($dto->getUsers());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getUsers())) {
+            $this->replaceUsers(
+                $fkTransformer->transformCollection(
+                    $dto->getUsers()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ExtensionDto
      */
@@ -91,14 +107,12 @@ trait ExtensionTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add user
      *
      * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
      *
-     * @return ExtensionTrait
+     * @return static
      */
     public function addUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user)
     {
@@ -120,10 +134,10 @@ trait ExtensionTrait
     /**
      * Replace users
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface[] $users
-     * @return self
+     * @param ArrayCollection $users of Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return static
      */
-    public function replaceUsers(Collection $users)
+    public function replaceUsers(ArrayCollection $users)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -153,7 +167,7 @@ trait ExtensionTrait
 
     /**
      * Get users
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\User\UserInterface[]
      */
     public function getUsers(Criteria $criteria = null)
@@ -164,7 +178,4 @@ trait ExtensionTrait
 
         return $this->users->toArray();
     }
-
-
 }
-

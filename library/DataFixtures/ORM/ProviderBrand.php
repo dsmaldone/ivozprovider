@@ -19,35 +19,43 @@ class ProviderBrand extends Fixture implements DependentFixtureInterface
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(Brand::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
     
-        $item1 = $this->createEntityInstanceWithPublicMethods(Brand::class);
-        $item1->setName("DemoBrand");
-        $item1->setDomainUsers("");
-        $item1->setRecordingsLimitEmail("");
-        $item1->setLogo(new Logo(null, null, null));
-        $item1->setInvoice(new Invoice('', '', '', '', '', '', ''));
-        $item1->setDomain($this->getReference('_reference_ProviderDomain6'));
-        $item1->setLanguage($this->getReference('_reference_ProviderLanguage1'));
-        $item1->setDefaultTimezone($this->getReference('_reference_ProviderTimezone145'));
+        $item1 = $this->createEntityInstance(Brand::class);
+        (function () use ($fixture) {
+            $this->setName("DemoBrand");
+            $this->setDomainUsers("");
+            $this->setRecordingsLimitEmail("");
+            $this->setLogo(new Logo(null, null, null));
+            $this->setInvoice(new Invoice('', '', '', '', '', '', ''));
+            $this->setDomain($fixture->getReference('_reference_ProviderDomain6'));
+            $this->setLanguage($fixture->getReference('_reference_ProviderLanguage1'));
+            $this->setDefaultTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+            $this->setCurrency($fixture->getReference('_reference_ProviderCurrency1'));
+        })->call($item1);
+
         $this->addReference('_reference_ProviderBrand1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);
 
-        $item2 = $this->createEntityInstanceWithPublicMethods(Brand::class);
-        $item2->setName("Irontec_e2e");
-        $item2->setDomainUsers("sip.irontec.com");
-        $item2->setLogo(new Logo(null, null, null));
-        $item2->setInvoice(new Invoice('', '', '', '', '', '', ''));
-        $item2->setDomain($this->getReference('_reference_ProviderDomain4'));
-        $item2->setLanguage($this->getReference('_reference_ProviderLanguage1'));
-        $item2->setDefaultTimezone($this->getReference('_reference_ProviderTimezone145'));
+        $item2 = $this->createEntityInstance(Brand::class);
+        (function () use ($fixture) {
+            $this->setName("Irontec_e2e");
+            $this->setDomainUsers("sip.irontec.com");
+            $this->setLogo(new Logo(null, null, null));
+            $this->setInvoice(new Invoice('', '', '', '', '', '', ''));
+            $this->setDomain($fixture->getReference('_reference_ProviderDomain4'));
+            $this->setLanguage($fixture->getReference('_reference_ProviderLanguage1'));
+            $this->setDefaultTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+            $this->setCurrency($fixture->getReference('_reference_ProviderCurrency2'));
+        })->call($item2);
+
         $this->addReference('_reference_ProviderBrand2', $item2);
         $this->sanitizeEntityValues($item2);
         $manager->persist($item2);
 
-    
         $manager->flush();
     }
 
@@ -56,7 +64,8 @@ class ProviderBrand extends Fixture implements DependentFixtureInterface
         return array(
             ProviderDomain::class,
             ProviderLanguage::class,
-            ProviderTimezone::class
+            ProviderTimezone::class,
+            ProviderCurrency::class
         );
     }
 }

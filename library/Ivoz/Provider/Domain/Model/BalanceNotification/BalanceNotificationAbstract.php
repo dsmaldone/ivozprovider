@@ -14,27 +14,32 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class BalanceNotificationAbstract
 {
     /**
-     * @var string
+     * @var string | null
      */
     protected $toAddress;
 
     /**
-     * @var string
+     * @var float | null
      */
     protected $threshold = 0;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | null
      */
     protected $lastSent;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     protected $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
+     */
+    protected $carrier;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     protected $notificationTemplate;
 
@@ -46,14 +51,14 @@ abstract class BalanceNotificationAbstract
      */
     protected function __construct()
     {
-
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "BalanceNotification",
             $this->getId()
         );
@@ -77,7 +82,8 @@ abstract class BalanceNotificationAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param BalanceNotificationInterface|null $entity
      * @param int $depth
      * @return BalanceNotificationDto|null
      */
@@ -97,19 +103,22 @@ abstract class BalanceNotificationAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var BalanceNotificationDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param BalanceNotificationDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto BalanceNotificationDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, BalanceNotificationDto::class);
 
         $self = new static();
@@ -118,41 +127,42 @@ abstract class BalanceNotificationAbstract
             ->setToAddress($dto->getToAddress())
             ->setThreshold($dto->getThreshold())
             ->setLastSent($dto->getLastSent())
-            ->setCompany($dto->getCompany())
-            ->setNotificationTemplate($dto->getNotificationTemplate())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()))
+            ->setNotificationTemplate($fkTransformer->transform($dto->getNotificationTemplate()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param BalanceNotificationDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto BalanceNotificationDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, BalanceNotificationDto::class);
 
         $this
             ->setToAddress($dto->getToAddress())
             ->setThreshold($dto->getThreshold())
             ->setLastSent($dto->getLastSent())
-            ->setCompany($dto->getCompany())
-            ->setNotificationTemplate($dto->getNotificationTemplate());
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setCarrier($fkTransformer->transform($dto->getCarrier()))
+            ->setNotificationTemplate($fkTransformer->transform($dto->getNotificationTemplate()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return BalanceNotificationDto
      */
@@ -163,6 +173,7 @@ abstract class BalanceNotificationAbstract
             ->setThreshold(self::getThreshold())
             ->setLastSent(self::getLastSent())
             ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
+            ->setCarrier(\Ivoz\Provider\Domain\Model\Carrier\Carrier::entityToDto(self::getCarrier(), $depth))
             ->setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate::entityToDto(self::getNotificationTemplate(), $depth));
     }
 
@@ -176,21 +187,20 @@ abstract class BalanceNotificationAbstract
             'threshold' => self::getThreshold(),
             'lastSent' => self::getLastSent(),
             'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
+            'carrierId' => self::getCarrier() ? self::getCarrier()->getId() : null,
             'notificationTemplateId' => self::getNotificationTemplate() ? self::getNotificationTemplate()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set toAddress
      *
-     * @param string $toAddress
+     * @param string $toAddress | null
      *
-     * @return self
+     * @return static
      */
-    public function setToAddress($toAddress = null)
+    protected function setToAddress($toAddress = null)
     {
         if (!is_null($toAddress)) {
             Assertion::maxLength($toAddress, 255, 'toAddress value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -204,7 +214,7 @@ abstract class BalanceNotificationAbstract
     /**
      * Get toAddress
      *
-     * @return string
+     * @return string | null
      */
     public function getToAddress()
     {
@@ -214,16 +224,15 @@ abstract class BalanceNotificationAbstract
     /**
      * Set threshold
      *
-     * @param string $threshold
+     * @param float $threshold | null
      *
-     * @return self
+     * @return static
      */
-    public function setThreshold($threshold = null)
+    protected function setThreshold($threshold = null)
     {
         if (!is_null($threshold)) {
-            if (!is_null($threshold)) {
-                Assertion::numeric($threshold);
-            }
+            Assertion::numeric($threshold);
+            $threshold = (float) $threshold;
         }
 
         $this->threshold = $threshold;
@@ -234,7 +243,7 @@ abstract class BalanceNotificationAbstract
     /**
      * Get threshold
      *
-     * @return string
+     * @return float | null
      */
     public function getThreshold()
     {
@@ -244,17 +253,21 @@ abstract class BalanceNotificationAbstract
     /**
      * Set lastSent
      *
-     * @param \DateTime $lastSent
+     * @param \DateTime $lastSent | null
      *
-     * @return self
+     * @return static
      */
-    public function setLastSent($lastSent = null)
+    protected function setLastSent($lastSent = null)
     {
         if (!is_null($lastSent)) {
-        $lastSent = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
-            $lastSent,
-            null
-        );
+            $lastSent = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
+                $lastSent,
+                null
+            );
+
+            if ($this->lastSent == $lastSent) {
+                return $this;
+            }
         }
 
         $this->lastSent = $lastSent;
@@ -265,21 +278,21 @@ abstract class BalanceNotificationAbstract
     /**
      * Get lastSent
      *
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getLastSent()
     {
-        return $this->lastSent;
+        return !is_null($this->lastSent) ? clone $this->lastSent : null;
     }
 
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
     {
         $this->company = $company;
 
@@ -289,7 +302,7 @@ abstract class BalanceNotificationAbstract
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany()
     {
@@ -297,13 +310,37 @@ abstract class BalanceNotificationAbstract
     }
 
     /**
+     * Set carrier
+     *
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier | null
+     *
+     * @return static
+     */
+    protected function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierInterface $carrier = null)
+    {
+        $this->carrier = $carrier;
+
+        return $this;
+    }
+
+    /**
+     * Get carrier
+     *
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierInterface | null
+     */
+    public function getCarrier()
+    {
+        return $this->carrier;
+    }
+
+    /**
      * Set notificationTemplate
      *
-     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate
+     * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate | null
      *
-     * @return self
+     * @return static
      */
-    public function setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate = null)
+    protected function setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate = null)
     {
         $this->notificationTemplate = $notificationTemplate;
 
@@ -313,15 +350,12 @@ abstract class BalanceNotificationAbstract
     /**
      * Get notificationTemplate
      *
-     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
      */
     public function getNotificationTemplate()
     {
         return $this->notificationTemplate;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

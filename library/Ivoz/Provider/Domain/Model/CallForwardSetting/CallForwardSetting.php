@@ -45,10 +45,17 @@ class CallForwardSetting extends CallForwardSettingAbstract implements CallForwa
         ];
 
         $this->sanitizeRouteValues();
+
+        // Timeout only makes sense in NoAnswer Call Forwards
+        if ($this->callForwardType != self::CALLFORWARDTYPE_NOANSWER) {
+            $this->setNoAnswerTimeout(0);
+        }
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @throws \InvalidArgumentException
      */
     public function setNumberValue($numberValue = null)
     {
@@ -60,11 +67,7 @@ class CallForwardSetting extends CallForwardSettingAbstract implements CallForwa
 
     public function toArrayPortal()
     {
-        /**
-         * @var CallAcl $this
-         */
-        $response = array();
-
+        $response = [];
         $response['id'] = $this->getId();
         $response['userId'] = $this->getUser()->getId();
 
@@ -124,4 +127,3 @@ class CallForwardSetting extends CallForwardSettingAbstract implements CallForwa
         return $this->getTargetType();
     }
 }
-

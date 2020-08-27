@@ -17,21 +17,28 @@ class ProviderRoutingPatternGroup extends Fixture implements DependentFixtureInt
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(RoutingPatternGroup::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
     
-        $item7 = $this->createEntityInstanceWithPublicMethods(RoutingPatternGroup::class);
-        $item7->setName("Europe");
-        $item7->setDescription("");
-        $item7->setBrand($this->getReference('_reference_ProviderBrand1'));
+        $item7 = $this->createEntityInstance(RoutingPatternGroup::class);
+        (function () use ($fixture) {
+            $this->setName("Europe");
+            $this->setDescription("");
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+        })->call($item7);
+
         $this->addReference('_reference_ProviderRoutingPatternGroup7', $item7);
         $this->sanitizeEntityValues($item7);
         $manager->persist($item7);
 
-        $item21 = $this->createEntityInstanceWithPublicMethods(RoutingPatternGroup::class);
-        $item21->setName("Empty");
-        $item21->setDescription("Empty");
-        $item21->setBrand($this->getReference('_reference_ProviderBrand1'));
+        $item21 = $this->createEntityInstance(RoutingPatternGroup::class);
+        (function () use ($fixture) {
+            $this->setName("Empty");
+            $this->setDescription("Empty");
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+        })->call($item21);
+
         $this->addReference('_reference_ProviderRoutingPatternGroup21', $item21);
         $this->sanitizeEntityValues($item21);
         $manager->persist($item21);

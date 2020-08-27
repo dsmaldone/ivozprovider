@@ -15,8 +15,9 @@ class CallForwardSettingDto extends CallForwardSettingDtoAbstract
 
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
 
         if ($context === self::CONTEXT_COLLECTION) {
@@ -48,5 +49,3 @@ class CallForwardSettingDto extends CallForwardSettingDtoAbstract
         return parent::getPropertyMap($context);
     }
 }
-
-

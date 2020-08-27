@@ -6,8 +6,9 @@ class QueueMemberDto extends QueueMemberDtoAbstract
 {
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return [
@@ -21,5 +22,3 @@ class QueueMemberDto extends QueueMemberDtoAbstract
         return parent::getPropertyMap(...func_get_args());
     }
 }
-
-

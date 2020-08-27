@@ -3,15 +3,18 @@
 namespace Worker;
 
 use GearmanJob;
-use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Core\Domain\Service\TempFile;
-use Ivoz\Kam\Domain\Model\TrunksCdr\TrunksCdrRepository;
+use Ivoz\Provider\Domain\Model\BillableCall\BillableCallRepository;
 use Ivoz\Provider\Domain\Model\Invoice\InvoiceDto;
+use Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface;
 use Ivoz\Provider\Domain\Model\Invoice\InvoiceRepository;
 use Ivoz\Provider\Domain\Service\Invoice\Generator;
 use Mmoreram\GearmanBundle\Driver\Gearman;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
+use Ivoz\Core\Domain\Service\DomainEventPublisher;
+use Ivoz\Core\Application\RequestId;
+use Ivoz\Core\Application\RegisterCommandTrait;
 
 /**
  * @Gearman\Work(
@@ -23,55 +26,31 @@ use Monolog\Logger;
  */
 class Invoices
 {
-    /**
-     * @var EntityPersisterInterface
-     */
-    protected $entityPersister;
+    use RegisterCommandTrait;
 
-    /**
-     * @var InvoiceRepository
-     */
-    protected $invoiceRepository;
+    private $eventPublisher;
+    private $requestId;
+    private $entityTools;
+    private $invoiceRepository;
+    private $billableCallRepository;
+    private $generator;
+    private $logger;
 
-    /**
-     * @var TrunksCdrRepository
-     */
-    protected $trunksCdrRepository;
-
-    /**
-     * @var Generator
-     */
-    protected $generator;
-
-    /**
-     * @var DtoAssembler
-     */
-    protected $dtoAssembler;
-
-    /**
-     * @var Logger
-     */
-    protected $logger;
-
-    /**
-     * Invoices constructor.
-     * @param EntityPersisterInterface $entityPersister
-     * @param InvoiceRepository $invoiceRepository
-     * @param Logger $logger
-     */
     public function __construct(
-        EntityPersisterInterface $entityPersister,
+        DomainEventPublisher $eventPublisher,
+        RequestId $requestId,
+        EntityTools $entityTools,
         InvoiceRepository $invoiceRepository,
-        TrunksCdrRepository $trunksCdrRepository,
+        BillableCallRepository $billableCallRepository,
         Generator $generator,
-        DtoAssembler $dtoAssembler,
-        Logger $logger
+        LoggerInterface $logger
     ) {
-        $this->entityPersister = $entityPersister;
+        $this->eventPublisher = $eventPublisher;
+        $this->requestId = $requestId;
+        $this->entityTools = $entityTools;
         $this->invoiceRepository = $invoiceRepository;
-        $this->trunksCdrRepository = $trunksCdrRepository;
+        $this->billableCallRepository = $billableCallRepository;
         $this->generator = $generator;
-        $this->dtoAssembler = $dtoAssembler;
         $this->logger = $logger;
     }
 
@@ -82,25 +61,38 @@ class Invoices
      * )
      *
      * @param GearmanJob $serializedJob Serialized object with job parameters
-     * @return bool
+     * @return bool | null
      */
     public function create(GearmanJob $serializedJob)
     {
         // Thanks Gearmand, you've done your job
-        $job = igbinary_unserialize($serializedJob->workload());
+        $serializedJob->sendComplete("DONE");
 
+        $job = igbinary_unserialize($serializedJob->workload());
         $id = $job->getId();
+
+        $this->registerCommand('Worker', 'invoices', ['id' => $id]);
+
         $this->logger->info("[INVOICER] ID = " . $id);
 
-        $this->trunksCdrRepository->resetInvoiceId($id);
+        $this->billableCallRepository->resetInvoiceId($id);
 
+        /** @var InvoiceInterface | null $invoice */
         $invoice = $this->invoiceRepository->find($id);
-        $invoice->setStatus("processing");
-        $this->entityPersister->persist($invoice, true);
+        if (!$invoice) {
+            $this->logger->error("Invoice #${id} was not found!");
+            return null;
+        }
 
-        $this->logger->info("[INVOICER] Status = processing");
+        /** @var InvoiceDto $invoiceDto */
+        $invoiceDto = $this->entityTools->entityToDto($invoice);
 
         try {
+            $invoiceDto->setStatus(InvoiceInterface::STATUS_PROCESSING);
+            $this->entityTools->persistDto($invoiceDto, $invoice, true);
+
+            $this->logger->info("[INVOICER] Status = processing");
+
             $content = $this->generator->getInvoicePDFContents($id);
             $tempPath = "/opt/irontec/ivozprovider/storage/invoice";
             if (!file_exists($tempPath)) {
@@ -111,25 +103,32 @@ class Invoices
 
             $totals = $this->generator->getTotals();
             /** @var InvoiceDto $invoiceDto */
-            $invoiceDto = $this->dtoAssembler->toDto($invoice);
             $invoiceDto
                 ->setPdfPath($tempPdf)
                 ->setPdfBaseName('invoice-' . $invoice->getNumber() . '.pdf')
                 ->setPdfMimeType('application/pdf; charset=binary')
                 ->setTotal($totals["totalPrice"])
                 ->setTotalWithTax($totals["totalWithTaxes"])
-                ->setStatus("created");
+                ->setStatus(InvoiceInterface::STATUS_CREATED);
 
-            $this->entityPersister->persistDto($invoiceDto, $invoice);
+            $this->entityTools->persistDto($invoiceDto, $invoice);
             $this->logger->info("[INVOICER] Status = created");
         } catch (\Exception $e) {
-            $invoice->setStatus("error");
-            $this->entityPersister->persist($invoice);
             $this->logger->info("[INVOICER] Status = error");
             $this->logger->info("[INVOICER] Error was: ".$e->getMessage());
+
+            $invoiceDto->setStatus(InvoiceInterface::STATUS_ERROR);
+            $invoiceDto->setStatusMsg(
+                $e->getMessage()
+            );
+
+            $this->entityTools->persistDto(
+                $invoiceDto,
+                $invoice,
+                true
+            );
         }
 
         return true;
     }
-
 }

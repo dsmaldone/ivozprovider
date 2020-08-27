@@ -6,7 +6,6 @@ use \Ivoz\Provider\Domain\Model\Company\Company;
 use \Ivoz\Provider\Domain\Model\Brand\CompanyDto;
 use \Ivoz\Provider\Domain\Model\Feature\Feature;
 
-
 class KlearCustomExtraAuthController extends Zend_Controller_Action
 {
     protected $_user;
@@ -22,11 +21,10 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
                 ->addActionContext('emulate', 'json')
                 ->initContext('json');
 
-        if (
-            !$this->_mainRouter = $this->getRequest()->getParam("mainRouter")
+        if (!$this->_mainRouter = $this->getRequest()->getParam("mainRouter")
             || !is_object($this->_mainRouter)
         ) {
-                throw New Zend_Exception(
+                throw new Zend_Exception(
                     $this->view->translate('Access denied'),
                     Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION
                 );
@@ -47,7 +45,13 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
         $dataGateway = \Zend_Registry::get('data_gateway');
         if ($type == 'brand') {
             if ($this->_user->canSeeMain) {
-                $html .= '<p>' . $this->view->translate('Select the brand you want to emulate.') . '</p></div>';
+                $html .=
+                    '<p>'
+                    . $this->view->translate('Select the brand you want to emulate.')
+                    . '</p>'
+                    . '<br/><span class="ui-silk inline ui-silk-error"></span><p>'
+                    . $this->view->translate('Notice that edition/creation tabs will be closed.')
+                    . '</p></div>';
                 $title = $this->view->translate('Select Brand');
 
                 $options = $dataGateway->findBy(
@@ -65,9 +69,15 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
         } elseif ($type == 'company') {
             if ($this->_user->canSeeBrand) {
                 if (is_null($this->_user->brandId)) {
-                    $html .= '<p>' . $this->view->translate('You have to emulate a brand to be able to emulate a company') . '</p></div>';
+                    $html .= '<p>' . $this->view->translate('You have to emulate a brand to be able to emulate a client') . '</p></div>';
                 } else {
-                    $html .= '<p>' . $this->view->translate('Select the company you want to emulate') . '</p></div>';
+                    $html .=
+                        '<p>'
+                        . $this->view->translate('Select the client you want to emulate')
+                        . '</p>'
+                        . '<span class="ui-icon ui-icon-circle-close"></span><p>'
+                        . $this->view->translate('Notice that edition/creation tabs will be closed.')
+                        . '</p></div>';
                     $options = $dataGateway->findBy(
                         Company::class,
                         ['Company.brand = ' . $this->_user->brandId],
@@ -81,7 +91,6 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
             } else {
                 return $this->_noPermission();
             }
-
         } else {
             return $this->_noPermission();
         }
@@ -96,11 +105,20 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
                 }
                 if ($type == 'brand') {
                     $html .= '<option value="'.$option->getId().'" '.$selected.'>'.$option->getName().'</option>';
-                } else if ($type == 'company') {
-                    switch($option->getType()) {
-                        case 'vpbx': $icon = "building"; break;
-                        case 'retail': $icon = "basket"; break;
-                        case 'wholesale': $icon = "cart"; break;
+                } elseif ($type == 'company') {
+                    switch ($option->getType()) {
+                        case 'vpbx':
+                            $icon = "building";
+                            break;
+                        case 'retail':
+                            $icon = "basket";
+                            break;
+                        case 'wholesale':
+                            $icon = "cart";
+                            break;
+                        case 'residential':
+                            $icon = "house";
+                            break;
                     }
                     $html .= '<option data-subtype="'.$option->getType()
                     .'" data-icon="ui-silk inline ui-silk-'.$icon
@@ -137,7 +155,6 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
 
         if ($type == 'brand') {
             if ($this->_user->canSeeMain) {
-
                 //TODO: verificar que existe y permisos
                 $oldBrandId = $this->_user->brandId;
                 $brandId = $this->getRequest()->getParam("remoteId");
@@ -154,13 +171,11 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
                 if ($oldBrandId != $brandId) {
                     $this->_user->unsetCompany();
                 }
-
             } else {
                 return $this->_noPermission();
             }
         } elseif ($type == 'company') {
             if ($this->_user->canSeeBrand) {
-
                 //TODO: verificar que existe y permisos
                 $companyId = $this->getRequest()->getParam("remoteId");
                 $remoteId = $companyId;
@@ -172,7 +187,6 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
                 );
 
                 $this->_enableFeatures($company);
-
             } else {
                 return $this->_noPermission();
             }
@@ -195,7 +209,6 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
         throw new Zend_Exception($this->view->translate('Access denied'), Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
     }
 
-
     public function emulateAction()
     {
         /** @var \Ivoz\Core\Application\Service\DataGateway $dataGateway */
@@ -208,9 +221,10 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
                 $type = "brand";
                 $entity = Brand::class;
                 break;
-            case "RetailClientsList":
+            case "ResidentialClientsList":
             case "CompaniesList":
             case "WholesaleClientsList":
+            case "RetailClientsList":
                 $type = "company";
                 $entity = Company::class;
                 break;
@@ -231,14 +245,18 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
     protected function _getEmulateDefaultData($type, $model)
     {
         $title = $this->view->translate('Emulate %s', $type);
-        $message = $this->view->translate('Are you sure that you want to emulate the %s "%2s"?', $type, $model->getName());
+        $message = $this->view->translate(
+            'Are you sure that you want to emulate the %s "%2s"?',
+            $type,
+            $model->getName()
+        );
 
         $data = array(
                 "title" => $title,
                 "message" => $message,
                 "options" => array('width'=>'300px'),
                 "buttons" => array(
-                        _("Accept") => array(
+                        $this->_helper->translate("Accept") => array(
                                 "recall" => true,
                                 "reloadParent" => false,
                                 "params" => array(
@@ -247,7 +265,7 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
                                         "remoteId" => $model->getId()
                                 ),
                         ),
-                        _("Cancel") => array(
+                        $this->_helper->translate("Cancel") => array(
                                 "recall" => false,
                                 "reloadParent" => false
                         )
@@ -261,14 +279,31 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
         $this->_getData();
         $title = $this->view->translate('%s emulated', ucfirst($type));
         $messageLiteral = 'The "%s" %2s has been emulated. <p>Refreshing tabs.</p>';
-        $messageLiteral .= '<script>$("#tabsList li").klearModule("reDispatch");$.klear.restart({}, false);</script>';
+        $messageLiteral .=
+            '<script>
+                $("#tabsList li")
+                    .filter(function () {
+                        var controller = $(this).data(\'controller\');
+                        return (controller == \'edit\' || controller == \'new\');
+                    })
+                    .klearModule("close", {forced: true});
+
+                $("#tabsList li")
+                    .filter(function () {
+                        var controller = $(this).data(\'controller\');
+                        return !controller || controller == \'list\';
+                    })
+                    .klearModule(\'reDispatch\');
+
+                $.klear.restart({}, false);
+            </script>';
         $message = $this->view->translate($messageLiteral, $model->getName(), $type);
         $data = array(
                 "title" => $title,
                 "message" => $message,
                 "options" => array('width'=>'300px'),
                 "buttons" => array(
-//                         _("Accept") => array(
+//                         $this->_helper->translate("Accept") => array(
 //                                 "recall" => false,
 //                                 "reloadParent" => true
 //                         )
@@ -299,7 +334,7 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
 
         /** @var \Ivoz\Provider\Domain\Model\Feature\FeatureDto[] $featureList */
         $featureList = $dataGateway->findAll(
-                Feature::class
+            Feature::class
         );
 
         foreach ($featureList as $feature) {
@@ -307,7 +342,7 @@ class KlearCustomExtraAuthController extends Zend_Controller_Action
             $featureId = $feature->getId();
 
             $enabled = $dataGateway->remoteProcedureCall(
-                substr(get_class($entity), 0,-3),
+                substr(get_class($entity), 0, -3),
                 $entity->getId(),
                 "hasFeature",
                 [$featureId]

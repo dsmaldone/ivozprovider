@@ -2,7 +2,7 @@ production:
   entity: \Ivoz\Provider\Domain\Model\CallAcl\CallAcl
   fields:
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       required: true
       source:
@@ -58,13 +58,13 @@ production:
           CallAclRelPattern.priority: asc
         options:
           dialogs:
-            callACLRelMatchListsDel_dialog: true
+            callACLRelMatchListsDel_dialog: ${auth.acls.CallAclRelMatchLists.delete}
           screens:
-            callACLRelMatchListsEdit_screen: true
+            callACLRelMatchListsEdit_screen: ${auth.acls.CallAclRelMatchLists.update}
           default:
       options:
         screens:
-          callACLRelMatchListsNew_screen: true
+          callACLRelMatchListsNew_screen: ${auth.acls.CallAclRelMatchLists.create}
 staging:
   _extends: production
 testing:

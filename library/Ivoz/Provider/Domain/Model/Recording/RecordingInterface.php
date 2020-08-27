@@ -2,10 +2,15 @@
 
 namespace Ivoz\Provider\Domain\Model\Recording;
 
+use Ivoz\Core\Domain\Service\FileContainerInterface;
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
-interface RecordingInterface extends LoggableEntityInterface
+interface RecordingInterface extends FileContainerInterface, LoggableEntityInterface
 {
+    const TYPE_ONDEMAND = 'ondemand';
+    const TYPE_DDI = 'ddi';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -15,32 +20,14 @@ interface RecordingInterface extends LoggableEntityInterface
     /**
      * @return array
      */
-    public function getFileObjects();
-
-    /**
-     * Set callid
-     *
-     * @param string $callid
-     *
-     * @return self
-     */
-    public function setCallid($callid = null);
+    public function getFileObjects(int $filter = null);
 
     /**
      * Get callid
      *
-     * @return string
+     * @return string | null
      */
     public function getCallid();
-
-    /**
-     * Set calldate
-     *
-     * @param \DateTime $calldate
-     *
-     * @return self
-     */
-    public function setCalldate($calldate);
 
     /**
      * Get calldate
@@ -50,29 +37,11 @@ interface RecordingInterface extends LoggableEntityInterface
     public function getCalldate();
 
     /**
-     * Set type
-     *
-     * @param string $type
-     *
-     * @return self
-     */
-    public function setType($type);
-
-    /**
      * Get type
      *
      * @return string
      */
     public function getType();
-
-    /**
-     * Set duration
-     *
-     * @param float $duration
-     *
-     * @return self
-     */
-    public function setDuration($duration);
 
     /**
      * Get duration
@@ -82,50 +51,23 @@ interface RecordingInterface extends LoggableEntityInterface
     public function getDuration();
 
     /**
-     * Set caller
-     *
-     * @param string $caller
-     *
-     * @return self
-     */
-    public function setCaller($caller = null);
-
-    /**
      * Get caller
      *
-     * @return string
+     * @return string | null
      */
     public function getCaller();
 
     /**
-     * Set callee
-     *
-     * @param string $callee
-     *
-     * @return self
-     */
-    public function setCallee($callee = null);
-
-    /**
      * Get callee
      *
-     * @return string
+     * @return string | null
      */
     public function getCallee();
 
     /**
-     * Set recorder
-     *
-     * @param string $recorder
-     *
-     * @return self
-     */
-    public function setRecorder($recorder = null);
-
-    /**
      * Get recorder
      *
-     * @return string
+     * @return string | null
      */
     public function getRecorder();
 
@@ -134,9 +76,9 @@ interface RecordingInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
+    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -146,33 +88,37 @@ interface RecordingInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set recordedFile
-     *
-     * @param \Ivoz\Provider\Domain\Model\Recording\RecordedFile $recordedFile
-     *
-     * @return self
-     */
-    public function setRecordedFile(\Ivoz\Provider\Domain\Model\Recording\RecordedFile $recordedFile);
-
-    /**
      * Get recordedFile
      *
      * @return \Ivoz\Provider\Domain\Model\Recording\RecordedFile
      */
     public function getRecordedFile();
 
+    /**
+     * @param string $fldName
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @return void
+     */
     public function addTmpFile($fldName, \Ivoz\Core\Domain\Service\TempFile $file);
 
     /**
-     * @return TempFile[]
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function removeTmpFile(\Ivoz\Core\Domain\Service\TempFile $file);
+
+    /**
+     * @return \Ivoz\Core\Domain\Service\TempFile[]
      */
     public function getTempFiles();
 
     /**
      * @var string $fldName
-     * @return null | TempFile
+     * @return null | \Ivoz\Core\Domain\Service\TempFile
      */
     public function getTempFileByFieldName($fldName);
-
 }
-

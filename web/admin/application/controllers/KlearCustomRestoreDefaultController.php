@@ -5,8 +5,8 @@ class KlearCustomRestoreDefaultController extends Zend_Controller_Action
 
     public function init()
     {
-        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter)) ) {
-            throw New Zend_Exception('',Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
+        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter))) {
+            throw new Zend_Exception('', Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
         }
 
         $this->_helper->ContextSwitch()
@@ -22,7 +22,8 @@ class KlearCustomRestoreDefaultController extends Zend_Controller_Action
         $this->restoreDefault('generic');
     }
 
-    public function restoreSpecificDefaultAction(){
+    public function restoreSpecificDefaultAction()
+    {
         $this->restoreDefault('specific');
     }
 
@@ -45,34 +46,33 @@ class KlearCustomRestoreDefaultController extends Zend_Controller_Action
             $file = fopen($filename, "r");
             $filecontent = fread($file, filesize($filename));
             $data = array(
-                'title' => _("Restore default template"),
+                'title' => $this->_helper->translate("Restore default template"),
                 'message' =>
-                    _("Loading")
+                    $this->_helper->translate("Loading")
                     . "<textarea style=\"display: none\">"
                     . str_replace("<br/>", "\n", $filecontent)
                     . "</textarea>"
             );
         } else {
             $existsBackup = file_exists($filename);
-            if($existsBackup){
-                $message = "Reset default template? ($filename)";
-            }
-            else {
-                $message = "No default template found ($filename)";
+            if ($existsBackup) {
+                $message = $this->_helper->translate("Reset default template?") . " ($filename)";
+            } else {
+                $message =  $this->_helper->translate("No default template found") . " ($filename)";
             }
 
             $data = array(
-                    'title' => _("Restore default template"),
-                    'message'=>_($message),
+                    'title' => $this->_helper->translate("Restore default template"),
+                    'message'=> $message,
                     'buttons'=>array(
-                            _('Accept') => array(
+                            $this->_helper->translate('Accept') => array(
                                     'reloadParent' => false,
                                     'recall' => $existsBackup,
                                     'params'=>array(
                                             "backup" => true
                                     )
                             ),
-                            _('Cancel') => array(
+                            $this->_helper->translate('Cancel') => array(
                                     'reloadParent' => false,
                                     'recall' => false,
                             )
@@ -89,4 +89,3 @@ class KlearCustomRestoreDefaultController extends Zend_Controller_Action
         $jsonResponse->attachView($this->view);
     }
 }
-

@@ -2,7 +2,8 @@
 
 namespace Ivoz\Provider\Domain\Service\Domain;
 
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Provider\Domain\Model\Company\CompanyDto;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
 use Ivoz\Provider\Domain\Model\Domain\Domain;
 use Ivoz\Provider\Domain\Model\Domain\DomainDto;
@@ -17,10 +18,12 @@ use Ivoz\Provider\Domain\Service\Company\CompanyLifecycleEventHandlerInterface;
  */
 class UpdateByCompany implements CompanyLifecycleEventHandlerInterface
 {
+    const POST_PERSIST_PRIORITY = 10;
+
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
      * @var DomainRepository
@@ -28,47 +31,71 @@ class UpdateByCompany implements CompanyLifecycleEventHandlerInterface
     protected $domainRepository;
 
     public function __construct(
-        EntityPersisterInterface $entityPersister,
+        EntityTools $entityTools,
         DomainRepository $domainRepository
     ) {
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
         $this->domainRepository = $domainRepository;
     }
 
     public static function getSubscribedEvents()
     {
         return [
-            self::EVENT_POST_PERSIST => 10
+            self::EVENT_POST_PERSIST => self::POST_PERSIST_PRIORITY
         ];
     }
 
-    public function execute(CompanyInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(CompanyInterface $company)
     {
-        $name = $entity->getDomainUsers();
+        $notVpbx = $company->getType() !== CompanyInterface::TYPE_VPBX;
+        if ($notVpbx) {
+            return;
+        }
+
+        $name = $company->getDomainUsers();
 
         // Empty domain field, do nothing
         if (empty($name)) {
             return;
         }
-        /**
-         * @var DomainInterface $domain
-         */
-        $domain = $entity->getDomain();
+
+        $domain = $company->getDomain();
 
         // If domain field is filled, look for Domain entity or create a new one
         $domainDto = is_null($domain)
             ? Domain::createDto()
-            : $domain->toDto();
+            : $this->entityTools->entityToDto($domain);
 
         /**
          * @var DomainDTO $domainDto
          */
         $domainDto
             ->setDomain($name)
-            ->setDescription($entity->getName() . ' proxyusers domain');
+            ->setDescription($company->getName() . ' proxyusers domain');
 
-        $domain = $this->entityPersister->persistDto($domainDto, $domain);
+        $domain = $this->entityTools
+            ->persistDto(
+                $domainDto,
+                $domain,
+                true
+            );
 
-        $entity->setDomain($domain);
+        /** @var CompanyDto $companyDto */
+        $companyDto = $this
+            ->entityTools
+            ->entityToDto($company);
+
+        $companyDto
+            ->setDomain($domainDto);
+
+        $this
+            ->entityTools
+            ->updateEntityByDto(
+                $company,
+                $companyDto
+            );
     }
 }

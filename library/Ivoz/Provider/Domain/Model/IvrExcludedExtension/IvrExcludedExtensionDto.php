@@ -6,8 +6,9 @@ class IvrExcludedExtensionDto extends IvrExcludedExtensionDtoAbstract
 {
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return [
@@ -20,5 +21,3 @@ class IvrExcludedExtensionDto extends IvrExcludedExtensionDtoAbstract
         return parent::getPropertyMap(...func_get_args());
     }
 }
-
-

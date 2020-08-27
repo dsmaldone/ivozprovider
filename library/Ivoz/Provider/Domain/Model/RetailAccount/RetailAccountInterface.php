@@ -3,15 +3,38 @@
 namespace Ivoz\Provider\Domain\Model\RetailAccount;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface RetailAccountInterface extends LoggableEntityInterface
 {
+    const TRANSPORT_UDP = 'udp';
+    const TRANSPORT_TCP = 'tcp';
+    const TRANSPORT_TLS = 'tls';
+
+
+    const DIRECTCONNECTIVITY_YES = 'yes';
+    const DIRECTCONNECTIVITY_NO = 'no';
+
+
+    const DDIIN_YES = 'yes';
+    const DDIIN_NO = 'no';
+
+
+    const T38PASSTHROUGH_YES = 'yes';
+    const T38PASSTHROUGH_NO = 'no';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
      */
     public function getChangeSet();
+
+    /**
+     * @return bool
+     */
+    public function isDirectConnectivity();
 
     /**
      * {@inheritDoc}
@@ -31,9 +54,9 @@ interface RetailAccountInterface extends LoggableEntityInterface
     public function setPort($port = null);
 
     /**
-     * @return string
+     * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface|mixed
      */
-    public function getContact();
+    public function getAstPsEndpoint();
 
     /**
      * @return string
@@ -41,34 +64,10 @@ interface RetailAccountInterface extends LoggableEntityInterface
     public function getSorcery();
 
     /**
-     * Obtain content for X-Info-Location header
-     *
-     * @param mixed $callee
-     * @return string
-     */
-    public function getRequestUri($callee);
-
-    /**
-     * @param $callee
-     * @return string
-     */
-    public function getRequestDirectUri($callee);
-
-    public function getAstPsEndpoint();
-
-    public function getLanguageCode();
-
-    /**
-     * Get Retail Account outgoingDdi
-     * If no Ddi is assigned, retrieve company's default Ddi
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface or NULL
-     */
-    public function getOutgoingDdi();
-
-    /**
      * Get Ddi associated with this retail Account
      *
-     * @return DdiInterface
+     * @param string $ddieE164
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     public function getDdi($ddieE164);
 
@@ -80,15 +79,6 @@ interface RetailAccountInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description);
-
-    /**
      * Get description
      *
      * @return string
@@ -96,162 +86,39 @@ interface RetailAccountInterface extends LoggableEntityInterface
     public function getDescription();
 
     /**
-     * Set transport
-     *
-     * @param string $transport
-     *
-     * @return self
-     */
-    public function setTransport($transport);
-
-    /**
      * Get transport
      *
-     * @return string
+     * @return string | null
      */
     public function getTransport();
 
     /**
      * Get ip
      *
-     * @return string
+     * @return string | null
      */
     public function getIp();
 
     /**
      * Get port
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPort();
 
     /**
-     * Set authNeeded
-     *
-     * @param string $authNeeded
-     *
-     * @return self
-     */
-    public function setAuthNeeded($authNeeded);
-
-    /**
-     * Get authNeeded
-     *
-     * @return string
-     */
-    public function getAuthNeeded();
-
-    /**
      * Get password
      *
-     * @return string
+     * @return string | null
      */
     public function getPassword();
 
     /**
-     * Set disallow
-     *
-     * @param string $disallow
-     *
-     * @return self
-     */
-    public function setDisallow($disallow);
-
-    /**
-     * Get disallow
-     *
-     * @return string
-     */
-    public function getDisallow();
-
-    /**
-     * Set allow
-     *
-     * @param string $allow
-     *
-     * @return self
-     */
-    public function setAllow($allow);
-
-    /**
-     * Get allow
-     *
-     * @return string
-     */
-    public function getAllow();
-
-    /**
-     * Set directMediaMethod
-     *
-     * @param string $directMediaMethod
-     *
-     * @return self
-     */
-    public function setDirectMediaMethod($directMediaMethod);
-
-    /**
-     * Get directMediaMethod
-     *
-     * @return string
-     */
-    public function getDirectMediaMethod();
-
-    /**
-     * Set calleridUpdateHeader
-     *
-     * @param string $calleridUpdateHeader
-     *
-     * @return self
-     */
-    public function setCalleridUpdateHeader($calleridUpdateHeader);
-
-    /**
-     * Get calleridUpdateHeader
-     *
-     * @return string
-     */
-    public function getCalleridUpdateHeader();
-
-    /**
-     * Set updateCallerid
-     *
-     * @param string $updateCallerid
-     *
-     * @return self
-     */
-    public function setUpdateCallerid($updateCallerid);
-
-    /**
-     * Get updateCallerid
-     *
-     * @return string
-     */
-    public function getUpdateCallerid();
-
-    /**
-     * Set fromDomain
-     *
-     * @param string $fromDomain
-     *
-     * @return self
-     */
-    public function setFromDomain($fromDomain = null);
-
-    /**
      * Get fromDomain
      *
-     * @return string
+     * @return string | null
      */
     public function getFromDomain();
-
-    /**
-     * Set directConnectivity
-     *
-     * @param string $directConnectivity
-     *
-     * @return self
-     */
-    public function setDirectConnectivity($directConnectivity);
 
     /**
      * Get directConnectivity
@@ -261,13 +128,27 @@ interface RetailAccountInterface extends LoggableEntityInterface
     public function getDirectConnectivity();
 
     /**
+     * Get ddiIn
+     *
+     * @return string
+     */
+    public function getDdiIn();
+
+    /**
+     * Get t38Passthrough
+     *
+     * @return string
+     */
+    public function getT38Passthrough();
+
+    /**
      * Set brand
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null);
+    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand);
 
     /**
      * Get brand
@@ -279,27 +160,18 @@ interface RetailAccountInterface extends LoggableEntityInterface
     /**
      * Set domain
      *
-     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain
+     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain | null
      *
-     * @return self
+     * @return static
      */
     public function setDomain(\Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain = null);
 
     /**
      * Get domain
      *
-     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     public function getDomain();
-
-    /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -309,52 +181,25 @@ interface RetailAccountInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set transformationRuleSet
-     *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet
-     *
-     * @return self
-     */
-    public function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null);
-
-    /**
      * Get transformationRuleSet
      *
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     public function getTransformationRuleSet();
 
     /**
-     * Set outgoingDdi
+     * Get outgoingDdi
      *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
-    public function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null);
-
-    /**
-     * Set language
-     *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
-     *
-     * @return self
-     */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null);
-
-    /**
-     * Get language
-     *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
-     */
-    public function getLanguage();
+    public function getOutgoingDdi();
 
     /**
      * Add psEndpoint
      *
      * @param \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $psEndpoint
      *
-     * @return RetailAccountTrait
+     * @return static
      */
     public function addPsEndpoint(\Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $psEndpoint);
 
@@ -368,14 +213,14 @@ interface RetailAccountInterface extends LoggableEntityInterface
     /**
      * Replace psEndpoints
      *
-     * @param \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface[] $psEndpoints
-     * @return self
+     * @param ArrayCollection $psEndpoints of Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface
+     * @return static
      */
-    public function replacePsEndpoints(Collection $psEndpoints);
+    public function replacePsEndpoints(ArrayCollection $psEndpoints);
 
     /**
      * Get psEndpoints
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface[]
      */
     public function getPsEndpoints(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -385,7 +230,7 @@ interface RetailAccountInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi
      *
-     * @return RetailAccountTrait
+     * @return static
      */
     public function addDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $ddi);
 
@@ -399,17 +244,46 @@ interface RetailAccountInterface extends LoggableEntityInterface
     /**
      * Replace ddis
      *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface[] $ddis
-     * @return self
+     * @param ArrayCollection $ddis of Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return static
      */
-    public function replaceDdis(Collection $ddis);
+    public function replaceDdis(ArrayCollection $ddis);
 
     /**
      * Get ddis
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface[]
      */
     public function getDdis(\Doctrine\Common\Collections\Criteria $criteria = null);
 
-}
+    /**
+     * Add callForwardSetting
+     *
+     * @param \Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface $callForwardSetting
+     *
+     * @return static
+     */
+    public function addCallForwardSetting(\Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface $callForwardSetting);
 
+    /**
+     * Remove callForwardSetting
+     *
+     * @param \Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface $callForwardSetting
+     */
+    public function removeCallForwardSetting(\Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface $callForwardSetting);
+
+    /**
+     * Replace callForwardSettings
+     *
+     * @param ArrayCollection $callForwardSettings of Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface
+     * @return static
+     */
+    public function replaceCallForwardSettings(ArrayCollection $callForwardSettings);
+
+    /**
+     * Get callForwardSettings
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface[]
+     */
+    public function getCallForwardSettings(\Doctrine\Common\Collections\Criteria $criteria = null);
+}

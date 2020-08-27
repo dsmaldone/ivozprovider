@@ -16,7 +16,7 @@ production:
       title: _("List of %s %2s", ngettext('Conference room', 'Conference rooms', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/company/conference_rooms.html"
+        href: "/doc/en/administration_portal/client/vpbx/routing_endpoints/conference_rooms.html"
       forcedValues:
         <<: *forcedCompany
       fields: &conferenceRooms_fieldsLink
@@ -28,16 +28,16 @@ production:
         options:
           title: _("Options")
           screens:
-            conferenceRoomsEdit_screen: true
+            conferenceRoomsEdit_screen: ${auth.acls.ConferenceRooms.update}
           dialogs:
-            conferenceRoomsDel_dialog: true
+            conferenceRoomsDel_dialog: ${auth.acls.ConferenceRooms.delete}
           default: conferenceRoomsEdit_screen
       options:
         title: _("Options")
         screens:
-          conferenceRoomsNew_screen: true
+          conferenceRoomsNew_screen: ${auth.acls.ConferenceRooms.create}
         dialogs:
-          conferenceRoomsDel_dialog: true
+          conferenceRoomsDel_dialog: ${auth.acls.ConferenceRooms.delete}
     conferenceRoomsNew_screen: &conferenceRoomsNew_screenLink
       <<: *ConferenceRooms
       controller: new

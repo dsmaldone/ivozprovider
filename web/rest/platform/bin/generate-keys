@@ -1,0 +1,17 @@
+#!/bin/bash
+pushd /opt/irontec/ivozprovider/storage/
+    mkdir -p jwt
+
+    if [ $1 == '--initial' ]; then
+        openssl genrsa -out jwt/private.pem -passout pass:changeme -aes256 4096
+        openssl rsa -pubout -in jwt/private.pem -out jwt/public.pem -passin pass:changeme
+    elif [ $1 == '--test' ]; then
+        openssl genrsa -out jwt/private-test.pem -passout pass:changeme -aes256 4096
+        openssl rsa -pubout -in jwt/private-test.pem -out jwt/public-test.pem -passin pass:changeme
+    else
+        openssl genrsa -out jwt/private.pem -aes256 4096
+        openssl rsa -pubout -in jwt/private.pem -out jwt/public.pem
+    fi
+
+    chmod o+r -R jwt
+popd

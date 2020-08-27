@@ -20,15 +20,6 @@ interface FaxInterface extends LoggableEntityInterface
     public function getOutgoingDdi();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
-
-    /**
      * Get name
      *
      * @return string
@@ -36,18 +27,9 @@ interface FaxInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set email
-     *
-     * @param string $email
-     *
-     * @return self
-     */
-    public function setEmail($email = null);
-
-    /**
      * Get email
      *
-     * @return string
+     * @return string | null
      */
     public function getEmail();
 
@@ -59,29 +41,9 @@ interface FaxInterface extends LoggableEntityInterface
     public function getSendByEmail();
 
     /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
-
-    /**
      * Get company
      *
      * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
      */
     public function getCompany();
-
-    /**
-     * Set outgoingDdi
-     *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi
-     *
-     * @return self
-     */
-    public function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null);
-
 }
-

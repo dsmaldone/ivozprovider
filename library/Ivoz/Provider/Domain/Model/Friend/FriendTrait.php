@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\Friend;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,12 +18,12 @@ trait FriendTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $psEndpoints;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $patterns;
 
@@ -39,24 +38,37 @@ trait FriendTrait
         $this->patterns = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param FriendDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FriendDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getPsEndpoints()) {
-            $self->replacePsEndpoints($dto->getPsEndpoints());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getPsEndpoints())) {
+            $self->replacePsEndpoints(
+                $fkTransformer->transformCollection(
+                    $dto->getPsEndpoints()
+                )
+            );
         }
 
-        if ($dto->getPatterns()) {
-            $self->replacePatterns($dto->getPatterns());
+        if (!is_null($dto->getPatterns())) {
+            $self->replacePatterns(
+                $fkTransformer->transformCollection(
+                    $dto->getPatterns()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -66,25 +78,37 @@ trait FriendTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param FriendDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FriendDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getPsEndpoints()) {
-            $this->replacePsEndpoints($dto->getPsEndpoints());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getPsEndpoints())) {
+            $this->replacePsEndpoints(
+                $fkTransformer->transformCollection(
+                    $dto->getPsEndpoints()
+                )
+            );
         }
-        if ($dto->getPatterns()) {
-            $this->replacePatterns($dto->getPatterns());
+        if (!is_null($dto->getPatterns())) {
+            $this->replacePatterns(
+                $fkTransformer->transformCollection(
+                    $dto->getPatterns()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return FriendDto
      */
@@ -104,14 +128,12 @@ trait FriendTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add psEndpoint
      *
      * @param \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $psEndpoint
      *
-     * @return FriendTrait
+     * @return static
      */
     public function addPsEndpoint(\Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface $psEndpoint)
     {
@@ -133,10 +155,10 @@ trait FriendTrait
     /**
      * Replace psEndpoints
      *
-     * @param \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface[] $psEndpoints
-     * @return self
+     * @param ArrayCollection $psEndpoints of Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface
+     * @return static
      */
-    public function replacePsEndpoints(Collection $psEndpoints)
+    public function replacePsEndpoints(ArrayCollection $psEndpoints)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -166,7 +188,7 @@ trait FriendTrait
 
     /**
      * Get psEndpoints
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface[]
      */
     public function getPsEndpoints(Criteria $criteria = null)
@@ -183,7 +205,7 @@ trait FriendTrait
      *
      * @param \Ivoz\Provider\Domain\Model\FriendsPattern\FriendsPatternInterface $pattern
      *
-     * @return FriendTrait
+     * @return static
      */
     public function addPattern(\Ivoz\Provider\Domain\Model\FriendsPattern\FriendsPatternInterface $pattern)
     {
@@ -205,10 +227,10 @@ trait FriendTrait
     /**
      * Replace patterns
      *
-     * @param \Ivoz\Provider\Domain\Model\FriendsPattern\FriendsPatternInterface[] $patterns
-     * @return self
+     * @param ArrayCollection $patterns of Ivoz\Provider\Domain\Model\FriendsPattern\FriendsPatternInterface
+     * @return static
      */
-    public function replacePatterns(Collection $patterns)
+    public function replacePatterns(ArrayCollection $patterns)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -238,7 +260,7 @@ trait FriendTrait
 
     /**
      * Get patterns
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\FriendsPattern\FriendsPatternInterface[]
      */
     public function getPatterns(Criteria $criteria = null)
@@ -249,7 +271,4 @@ trait FriendTrait
 
         return $this->patterns->toArray();
     }
-
-
 }
-

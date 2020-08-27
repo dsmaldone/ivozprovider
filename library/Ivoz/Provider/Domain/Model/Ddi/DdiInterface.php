@@ -6,6 +6,24 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface DdiInterface extends LoggableEntityInterface
 {
+    const RECORDCALLS_NONE = 'none';
+    const RECORDCALLS_ALL = 'all';
+    const RECORDCALLS_INBOUND = 'inbound';
+    const RECORDCALLS_OUTBOUND = 'outbound';
+
+
+    const ROUTETYPE_USER = 'user';
+    const ROUTETYPE_IVR = 'ivr';
+    const ROUTETYPE_HUNTGROUP = 'huntGroup';
+    const ROUTETYPE_FAX = 'fax';
+    const ROUTETYPE_CONFERENCEROOM = 'conferenceRoom';
+    const ROUTETYPE_FRIEND = 'friend';
+    const ROUTETYPE_QUEUE = 'queue';
+    const ROUTETYPE_CONDITIONAL = 'conditional';
+    const ROUTETYPE_RESIDENTIAL = 'residential';
+    const ROUTETYPE_RETAIL = 'retail';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -18,7 +36,7 @@ interface DdiInterface extends LoggableEntityInterface
     public function setDdi($ddi);
 
     /**
-     * @return string Domain
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     public function getDomain();
 
@@ -26,6 +44,9 @@ interface DdiInterface extends LoggableEntityInterface
 
     public function setRouteType($routeType = null);
 
+    /**
+     * @return string
+     */
     public function getDdie164();
 
     /**
@@ -36,24 +57,6 @@ interface DdiInterface extends LoggableEntityInterface
     public function getDdi();
 
     /**
-     * Set ddie164
-     *
-     * @param string $ddie164
-     *
-     * @return self
-     */
-    public function setDdie164($ddie164 = null);
-
-    /**
-     * Set recordCalls
-     *
-     * @param string $recordCalls
-     *
-     * @return self
-     */
-    public function setRecordCalls($recordCalls);
-
-    /**
      * Get recordCalls
      *
      * @return string
@@ -61,36 +64,18 @@ interface DdiInterface extends LoggableEntityInterface
     public function getRecordCalls();
 
     /**
-     * Set displayName
-     *
-     * @param string $displayName
-     *
-     * @return self
-     */
-    public function setDisplayName($displayName = null);
-
-    /**
      * Get displayName
      *
-     * @return string
+     * @return string | null
      */
     public function getDisplayName();
 
     /**
      * Get routeType
      *
-     * @return string
+     * @return string | null
      */
     public function getRouteType();
-
-    /**
-     * Set billInboundCalls
-     *
-     * @param boolean $billInboundCalls
-     *
-     * @return self
-     */
-    public function setBillInboundCalls($billInboundCalls);
 
     /**
      * Get billInboundCalls
@@ -100,18 +85,9 @@ interface DdiInterface extends LoggableEntityInterface
     public function getBillInboundCalls();
 
     /**
-     * Set friendValue
-     *
-     * @param string $friendValue
-     *
-     * @return self
-     */
-    public function setFriendValue($friendValue = null);
-
-    /**
      * Get friendValue
      *
-     * @return string
+     * @return string | null
      */
     public function getFriendValue();
 
@@ -120,9 +96,9 @@ interface DdiInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
+    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -132,15 +108,6 @@ interface DdiInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand);
-
-    /**
      * Get brand
      *
      * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
@@ -148,157 +115,67 @@ interface DdiInterface extends LoggableEntityInterface
     public function getBrand();
 
     /**
-     * Set conferenceRoom
-     *
-     * @param \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface $conferenceRoom
-     *
-     * @return self
-     */
-    public function setConferenceRoom(\Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface $conferenceRoom = null);
-
-    /**
      * Get conferenceRoom
      *
-     * @return \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface
+     * @return \Ivoz\Provider\Domain\Model\ConferenceRoom\ConferenceRoomInterface | null
      */
     public function getConferenceRoom();
 
     /**
-     * Set language
-     *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
-     *
-     * @return self
-     */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null);
-
-    /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage();
 
     /**
-     * Set queue
-     *
-     * @param \Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue
-     *
-     * @return self
-     */
-    public function setQueue(\Ivoz\Provider\Domain\Model\Queue\QueueInterface $queue = null);
-
-    /**
      * Get queue
      *
-     * @return \Ivoz\Provider\Domain\Model\Queue\QueueInterface
+     * @return \Ivoz\Provider\Domain\Model\Queue\QueueInterface | null
      */
     public function getQueue();
 
     /**
-     * Set externalCallFilter
-     *
-     * @param \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $externalCallFilter
-     *
-     * @return self
-     */
-    public function setExternalCallFilter(\Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface $externalCallFilter = null);
-
-    /**
      * Get externalCallFilter
      *
-     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface
+     * @return \Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilterInterface | null
      */
     public function getExternalCallFilter();
 
     /**
-     * Set user
-     *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
-     *
-     * @return self
-     */
-    public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null);
-
-    /**
      * Get user
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getUser();
 
     /**
-     * Set ivr
-     *
-     * @param \Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr
-     *
-     * @return self
-     */
-    public function setIvr(\Ivoz\Provider\Domain\Model\Ivr\IvrInterface $ivr = null);
-
-    /**
      * Get ivr
      *
-     * @return \Ivoz\Provider\Domain\Model\Ivr\IvrInterface
+     * @return \Ivoz\Provider\Domain\Model\Ivr\IvrInterface | null
      */
     public function getIvr();
 
     /**
-     * Set huntGroup
-     *
-     * @param \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup
-     *
-     * @return self
-     */
-    public function setHuntGroup(\Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface $huntGroup = null);
-
-    /**
      * Get huntGroup
      *
-     * @return \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface
+     * @return \Ivoz\Provider\Domain\Model\HuntGroup\HuntGroupInterface | null
      */
     public function getHuntGroup();
 
     /**
-     * Set fax
-     *
-     * @param \Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax
-     *
-     * @return self
-     */
-    public function setFax(\Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax = null);
-
-    /**
      * Get fax
      *
-     * @return \Ivoz\Provider\Domain\Model\Fax\FaxInterface
+     * @return \Ivoz\Provider\Domain\Model\Fax\FaxInterface | null
      */
     public function getFax();
 
     /**
-     * Set peeringContract
+     * Get ddiProvider
      *
-     * @param \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\DdiProvider\DdiProviderInterface | null
      */
-    public function setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface $peeringContract = null);
-
-    /**
-     * Get peeringContract
-     *
-     * @return \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractInterface
-     */
-    public function getPeeringContract();
-
-    /**
-     * Set country
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $country
-     *
-     * @return self
-     */
-    public function setCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $country);
+    public function getDdiProvider();
 
     /**
      * Get country
@@ -308,42 +185,47 @@ interface DdiInterface extends LoggableEntityInterface
     public function getCountry();
 
     /**
+     * Set residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice | null
+     *
+     * @return static
+     */
+    public function setResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice = null);
+
+    /**
+     * Get residentialDevice
+     *
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
+     */
+    public function getResidentialDevice();
+
+    /**
+     * Get conditionalRoute
+     *
+     * @return \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface | null
+     */
+    public function getConditionalRoute();
+
+    /**
      * Set retailAccount
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount | null
      *
-     * @return self
+     * @return static
      */
     public function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount = null);
 
     /**
      * Get retailAccount
      *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
     public function getRetailAccount();
-
-    /**
-     * Set conditionalRoute
-     *
-     * @param \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute
-     *
-     * @return self
-     */
-    public function setConditionalRoute(\Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface $conditionalRoute = null);
-
-    /**
-     * Get conditionalRoute
-     *
-     * @return \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface
-     */
-    public function getConditionalRoute();
 
     /**
      * @param string $prefix
      * @return null|string
      */
     public function getTarget(string $prefix = '');
-
 }
-

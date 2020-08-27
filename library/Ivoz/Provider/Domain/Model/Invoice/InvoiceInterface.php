@@ -2,11 +2,19 @@
 
 namespace Ivoz\Provider\Domain\Model\Invoice;
 
+use Ivoz\Core\Domain\Service\FileContainerInterface;
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
-interface InvoiceInterface extends LoggableEntityInterface
+interface InvoiceInterface extends FileContainerInterface, LoggableEntityInterface
 {
+    const STATUS_WAITING = 'waiting';
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_CREATED = 'created';
+    const STATUS_ERROR = 'error';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -16,140 +24,81 @@ interface InvoiceInterface extends LoggableEntityInterface
     /**
      * @return array
      */
-    public function getFileObjects();
+    public function getFileObjects(int $filter = null);
 
     /**
-     * @inheritdoc
+     * @return bool
      */
-    public function setStatus($status = null);
+    public function isWaiting();
 
-    /**
-     * Set number
-     *
-     * @param string $number
-     *
-     * @return self
-     */
-    public function setNumber($number);
+    public function setNumber($number = null);
+
+    public function mustRunInvoicer();
+
+    public function mustCheckValidity();
 
     /**
      * Get number
      *
-     * @return string
+     * @return string | null
      */
     public function getNumber();
 
     /**
-     * Set inDate
-     *
-     * @param \DateTime $inDate
-     *
-     * @return self
-     */
-    public function setInDate($inDate = null);
-
-    /**
      * Get inDate
      *
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getInDate();
 
     /**
-     * Set outDate
-     *
-     * @param \DateTime $outDate
-     *
-     * @return self
-     */
-    public function setOutDate($outDate = null);
-
-    /**
      * Get outDate
      *
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getOutDate();
 
     /**
-     * Set total
-     *
-     * @param string $total
-     *
-     * @return self
-     */
-    public function setTotal($total = null);
-
-    /**
      * Get total
      *
-     * @return string
+     * @return float | null
      */
     public function getTotal();
 
     /**
-     * Set taxRate
-     *
-     * @param string $taxRate
-     *
-     * @return self
-     */
-    public function setTaxRate($taxRate = null);
-
-    /**
      * Get taxRate
      *
-     * @return string
+     * @return float | null
      */
     public function getTaxRate();
 
     /**
-     * Set totalWithTax
-     *
-     * @param string $totalWithTax
-     *
-     * @return self
-     */
-    public function setTotalWithTax($totalWithTax = null);
-
-    /**
      * Get totalWithTax
      *
-     * @return string
+     * @return float | null
      */
     public function getTotalWithTax();
 
     /**
      * Get status
      *
-     * @return string
+     * @return string | null
      */
     public function getStatus();
 
     /**
-     * Set invoiceTemplate
+     * Get statusMsg
      *
-     * @param \Ivoz\Provider\Domain\Model\InvoiceTemplate\InvoiceTemplateInterface $invoiceTemplate
-     *
-     * @return self
+     * @return string | null
      */
-    public function setInvoiceTemplate(\Ivoz\Provider\Domain\Model\InvoiceTemplate\InvoiceTemplateInterface $invoiceTemplate = null);
+    public function getStatusMsg();
 
     /**
      * Get invoiceTemplate
      *
-     * @return \Ivoz\Provider\Domain\Model\InvoiceTemplate\InvoiceTemplateInterface
+     * @return \Ivoz\Provider\Domain\Model\InvoiceTemplate\InvoiceTemplateInterface | null
      */
     public function getInvoiceTemplate();
-
-    /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand);
 
     /**
      * Get brand
@@ -159,15 +108,6 @@ interface InvoiceInterface extends LoggableEntityInterface
     public function getBrand();
 
     /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
-
-    /**
      * Get company
      *
      * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
@@ -175,13 +115,18 @@ interface InvoiceInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set pdf
+     * Get numberSequence
      *
-     * @param \Ivoz\Provider\Domain\Model\Invoice\Pdf $pdf
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\InvoiceNumberSequence\InvoiceNumberSequenceInterface | null
      */
-    public function setPdf(\Ivoz\Provider\Domain\Model\Invoice\Pdf $pdf);
+    public function getNumberSequence();
+
+    /**
+     * Get scheduler
+     *
+     * @return \Ivoz\Provider\Domain\Model\InvoiceScheduler\InvoiceSchedulerInterface | null
+     */
+    public function getScheduler();
 
     /**
      * Get pdf
@@ -195,7 +140,7 @@ interface InvoiceInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\FixedCostsRelInvoice\FixedCostsRelInvoiceInterface $relFixedCost
      *
-     * @return InvoiceTrait
+     * @return static
      */
     public function addRelFixedCost(\Ivoz\Provider\Domain\Model\FixedCostsRelInvoice\FixedCostsRelInvoiceInterface $relFixedCost);
 
@@ -209,30 +154,43 @@ interface InvoiceInterface extends LoggableEntityInterface
     /**
      * Replace relFixedCosts
      *
-     * @param \Ivoz\Provider\Domain\Model\FixedCostsRelInvoice\FixedCostsRelInvoiceInterface[] $relFixedCosts
-     * @return self
+     * @param ArrayCollection $relFixedCosts of Ivoz\Provider\Domain\Model\FixedCostsRelInvoice\FixedCostsRelInvoiceInterface
+     * @return static
      */
-    public function replaceRelFixedCosts(Collection $relFixedCosts);
+    public function replaceRelFixedCosts(ArrayCollection $relFixedCosts);
 
     /**
      * Get relFixedCosts
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\FixedCostsRelInvoice\FixedCostsRelInvoiceInterface[]
      */
     public function getRelFixedCosts(\Doctrine\Common\Collections\Criteria $criteria = null);
 
+    /**
+     * @param string $fldName
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @return void
+     */
     public function addTmpFile($fldName, \Ivoz\Core\Domain\Service\TempFile $file);
 
     /**
-     * @return TempFile[]
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function removeTmpFile(\Ivoz\Core\Domain\Service\TempFile $file);
+
+    /**
+     * @return \Ivoz\Core\Domain\Service\TempFile[]
      */
     public function getTempFiles();
 
     /**
      * @var string $fldName
-     * @return null | TempFile
+     * @return null | \Ivoz\Core\Domain\Service\TempFile
      */
     public function getTempFileByFieldName($fldName);
-
 }
-

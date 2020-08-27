@@ -3,24 +3,21 @@
 namespace Ivoz\Provider\Domain\Model\RoutingTag;
 
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
 interface RoutingTagInterface extends LoggableEntityInterface
 {
     /**
-     * @RoutingTagoverageIgnore
+     * @codeCoverageIgnore
      * @return array
      */
     public function getChangeSet();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
+     * @return string
      */
-    public function setName($name);
+    public function getCgrSubject();
 
     /**
      * Get name
@@ -30,29 +27,11 @@ interface RoutingTagInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set tag
-     *
-     * @param string $tag
-     *
-     * @return self
-     */
-    public function setTag($tag);
-
-    /**
      * Get tag
      *
      * @return string
      */
     public function getTag();
-
-    /**
-     * Set brand
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
-     */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand);
 
     /**
      * Get brand
@@ -66,7 +45,7 @@ interface RoutingTagInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting
      *
-     * @return RoutingTagTrait
+     * @return static
      */
     public function addOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting);
 
@@ -80,14 +59,14 @@ interface RoutingTagInterface extends LoggableEntityInterface
     /**
      * Replace outgoingRoutings
      *
-     * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[] $outgoingRoutings
-     * @return self
+     * @param ArrayCollection $outgoingRoutings of Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface
+     * @return static
      */
-    public function replaceOutgoingRoutings(Collection $outgoingRoutings);
+    public function replaceOutgoingRoutings(ArrayCollection $outgoingRoutings);
 
     /**
      * Get outgoingRoutings
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[]
      */
     public function getOutgoingRoutings(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -97,7 +76,7 @@ interface RoutingTagInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface $relCompany
      *
-     * @return RoutingTagTrait
+     * @return static
      */
     public function addRelCompany(\Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface $relCompany);
 
@@ -111,17 +90,15 @@ interface RoutingTagInterface extends LoggableEntityInterface
     /**
      * Replace relCompanies
      *
-     * @param \Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface[] $relCompanies
-     * @return self
+     * @param ArrayCollection $relCompanies of Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface
+     * @return static
      */
-    public function replaceRelCompanies(Collection $relCompanies);
+    public function replaceRelCompanies(ArrayCollection $relCompanies);
 
     /**
      * Get relCompanies
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\CompanyRelRoutingTag\CompanyRelRoutingTagInterface[]
      */
     public function getRelCompanies(\Doctrine\Common\Collections\Criteria $criteria = null);
-
 }
-

@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\NotificationTemplate;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,7 +18,7 @@ trait NotificationTemplateTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $contents;
 
@@ -33,20 +32,29 @@ trait NotificationTemplateTrait
         $this->contents = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param NotificationTemplateDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto NotificationTemplateDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getContents()) {
-            $self->replaceContents($dto->getContents());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getContents())) {
+            $self->replaceContents(
+                $fkTransformer->transformCollection(
+                    $dto->getContents()
+                )
+            );
         }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -56,22 +64,30 @@ trait NotificationTemplateTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param NotificationTemplateDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto NotificationTemplateDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getContents()) {
-            $this->replaceContents($dto->getContents());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getContents())) {
+            $this->replaceContents(
+                $fkTransformer->transformCollection(
+                    $dto->getContents()
+                )
+            );
         }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return NotificationTemplateDto
      */
@@ -91,14 +107,12 @@ trait NotificationTemplateTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add content
      *
      * @param \Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface $content
      *
-     * @return NotificationTemplateTrait
+     * @return static
      */
     public function addContent(\Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface $content)
     {
@@ -120,10 +134,10 @@ trait NotificationTemplateTrait
     /**
      * Replace contents
      *
-     * @param \Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface[] $contents
-     * @return self
+     * @param ArrayCollection $contents of Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface
+     * @return static
      */
-    public function replaceContents(Collection $contents)
+    public function replaceContents(ArrayCollection $contents)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -153,7 +167,7 @@ trait NotificationTemplateTrait
 
     /**
      * Get contents
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\NotificationTemplateContent\NotificationTemplateContentInterface[]
      */
     public function getContents(Criteria $criteria = null)
@@ -164,7 +178,4 @@ trait NotificationTemplateTrait
 
         return $this->contents->toArray();
     }
-
-
 }
-

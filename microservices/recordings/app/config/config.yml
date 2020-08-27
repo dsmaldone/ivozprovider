@@ -1,4 +1,0 @@
-imports:
-  - { resource: "@CoreBundle/Resources/config/config.yml" }
-  - { resource: "@CoreBundle/Resources/config/logger.yml" }
-  - { resource: "services.yml" }

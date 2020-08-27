@@ -9,7 +9,8 @@ use Prophecy\Argument;
 
 class TransformationRuleSpec extends ObjectBehavior
 {
-    function let() {
+    function let()
+    {
 
         $dto = new TransformationRuleDto();
         $dto->setType('callerin')
@@ -17,7 +18,7 @@ class TransformationRuleSpec extends ObjectBehavior
 
         $this->beConstructedThrough(
             'fromDto',
-            [$dto]
+            [$dto, new \spec\DtoToEntityFakeTransformer()]
         );
     }
 

@@ -2,18 +2,16 @@
 
 namespace Ivoz\Provider\Application\Service\Invoice;
 
+use Assert\Assertion;
+use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Application\Service\Assembler\CustomDtoAssemblerInterface;
 use Ivoz\Core\Application\Service\StoragePathResolverCollection;
 use Ivoz\Core\Domain\Model\EntityInterface;
-use Ivoz\Core\Application\Service\Assembler\CustomDtoAssemblerInterface;
 use Ivoz\Provider\Domain\Model\Invoice\InvoiceDto;
 use Ivoz\Provider\Domain\Model\Invoice\InvoiceInterface;
-use Assert\Assertion;
 
 class InvoiceDtoAssembler implements CustomDtoAssemblerInterface
 {
-    /**
-     * @var StoragePathResolverCollection
-     */
     protected $storagePathResolver;
 
     public function __construct(
@@ -23,29 +21,28 @@ class InvoiceDtoAssembler implements CustomDtoAssemblerInterface
     }
 
     /**
-     * @param InvoiceInterface $entity
-     * @param integer $depth
-     * @return InvoiceDTO
+     * @param InvoiceInterface $invoice
+     * @throws \Exception
      */
-    public function toDto(EntityInterface $entity, $depth = 0)
+    public function toDto(EntityInterface $invoice, int $depth = 0, string $context = null): DataTransferObjectInterface
     {
-        Assertion::isInstanceOf($entity, InvoiceInterface::class);
+        Assertion::isInstanceOf($invoice, InvoiceInterface::class);
 
-        /** @var InvoiceDTO $dto */
-        $dto = $entity->toDto($depth);
-        $id = $entity->getId();
+        /** @var InvoiceDto $dto */
+        $dto = $invoice->toDto($depth);
+        $id = $invoice->getId();
 
         if (!$id) {
             return $dto;
         }
 
-        if ($entity->getPdf()->getFileSize()) {
+        if ($invoice->getPdf()->getFileSize()) {
             $pathResolver = $this
                 ->storagePathResolver
                 ->getPathResolver('Pdf');
 
             $dto->setPdfPath(
-                $pathResolver->getFilePath($entity)
+                $pathResolver->getFilePath($invoice)
             );
         }
 

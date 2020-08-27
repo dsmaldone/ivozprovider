@@ -2,28 +2,13 @@
 
 namespace Ivoz\Kam\Domain\Model\UsersAddress;
 
-use Ivoz\Core\Domain\Model\LoggableEntityInterface;
+use Ivoz\Core\Domain\Model\EntityInterface;
 
-interface UsersAddressInterface extends LoggableEntityInterface
+interface UsersAddressInterface extends EntityInterface
 {
-    /**
-     * @codeCoverageIgnore
-     * @return array
-     */
-    public function getChangeSet();
-
     public function setIpAddr($ipAddr = null);
 
     public function setMask($mask = null);
-
-    /**
-     * Set sourceAddress
-     *
-     * @param string $sourceAddress
-     *
-     * @return self
-     */
-    public function setSourceAddress($sourceAddress);
 
     /**
      * Get sourceAddress
@@ -35,7 +20,7 @@ interface UsersAddressInterface extends LoggableEntityInterface
     /**
      * Get ipAddr
      *
-     * @return string
+     * @return string | null
      */
     public function getIpAddr();
 
@@ -47,15 +32,6 @@ interface UsersAddressInterface extends LoggableEntityInterface
     public function getMask();
 
     /**
-     * Set port
-     *
-     * @param integer $port
-     *
-     * @return self
-     */
-    public function setPort($port);
-
-    /**
      * Get port
      *
      * @return integer
@@ -63,45 +39,18 @@ interface UsersAddressInterface extends LoggableEntityInterface
     public function getPort();
 
     /**
-     * Set tag
-     *
-     * @param string $tag
-     *
-     * @return self
-     */
-    public function setTag($tag = null);
-
-    /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
-
-    /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -109,6 +58,4 @@ interface UsersAddressInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
      */
     public function getCompany();
-
 }
-

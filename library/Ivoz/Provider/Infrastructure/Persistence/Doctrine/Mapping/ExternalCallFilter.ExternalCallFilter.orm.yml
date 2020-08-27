@@ -1,6 +1,7 @@
 Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilter:
   repositoryClass: Ivoz\Provider\Infrastructure\Persistence\Doctrine\ExternalCallFilterDoctrineRepository
   type: entity
+  changeTrackingPolicy: DEFERRED_EXPLICIT
   table: ExternalCallFilters
   id:
     id:
@@ -15,6 +16,8 @@ Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilter:
     blackLists:
       targetEntity: Ivoz\Provider\Domain\Model\ExternalCallFilterBlackList\ExternalCallFilterBlackListInterface
       mappedBy: filter
+      cascade: ['persist']
+      orphanRemoval: true
     whiteLists:
       targetEntity: Ivoz\Provider\Domain\Model\ExternalCallFilterWhiteList\ExternalCallFilterWhiteListInterface
       mappedBy: filter
@@ -28,3 +31,5 @@ Ivoz\Provider\Domain\Model\ExternalCallFilter\ExternalCallFilter:
     calendars:
       targetEntity: Ivoz\Provider\Domain\Model\ExternalCallFilterRelCalendar\ExternalCallFilterRelCalendar
       mappedBy: filter
+      cascade: ['persist']
+      orphanRemoval: true

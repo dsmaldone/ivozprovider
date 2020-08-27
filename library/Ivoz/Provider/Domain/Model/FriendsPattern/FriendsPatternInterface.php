@@ -13,29 +13,11 @@ interface FriendsPatternInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
-
-    /**
      * Get name
      *
      * @return string
      */
     public function getName();
-
-    /**
-     * Set regExp
-     *
-     * @param string $regExp
-     *
-     * @return self
-     */
-    public function setRegExp($regExp);
 
     /**
      * Get regExp
@@ -49,9 +31,9 @@ interface FriendsPatternInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend
      *
-     * @return self
+     * @return static
      */
-    public function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend = null);
+    public function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend);
 
     /**
      * Get friend
@@ -59,6 +41,4 @@ interface FriendsPatternInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface
      */
     public function getFriend();
-
 }
-

@@ -22,21 +22,25 @@ trait IvrExcludedExtensionTrait
     protected function __construct()
     {
         parent::__construct(...func_get_args());
-
     }
+
+    abstract protected function sanitizeValues();
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param IvrExcludedExtensionDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto IvrExcludedExtensionDto
-         */
-        $self = parent::fromDto($dto);
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
 
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -46,20 +50,24 @@ trait IvrExcludedExtensionTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param IvrExcludedExtensionDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto IvrExcludedExtensionDto
-         */
-        parent::updateFromDto($dto);
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+
+        $this->sanitizeValues();
 
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return IvrExcludedExtensionDto
      */
@@ -79,7 +87,4 @@ trait IvrExcludedExtensionTrait
             'id' => self::getId()
         ];
     }
-
-
 }
-

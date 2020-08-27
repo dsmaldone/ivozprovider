@@ -2,10 +2,17 @@
 
 namespace Ivoz\Provider\Domain\Model\MusicOnHold;
 
+use Ivoz\Core\Domain\Service\FileContainerInterface;
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
-interface MusicOnHoldInterface extends LoggableEntityInterface
+interface MusicOnHoldInterface extends FileContainerInterface, LoggableEntityInterface
 {
+    const STATUS_PENDING = 'pending';
+    const STATUS_ENCODING = 'encoding';
+    const STATUS_READY = 'ready';
+    const STATUS_ERROR = 'error';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -15,7 +22,7 @@ interface MusicOnHoldInterface extends LoggableEntityInterface
     /**
      * @return array
      */
-    public function getFileObjects();
+    public function getFileObjects(int $filter = null);
 
     /**
      * @return string
@@ -25,19 +32,10 @@ interface MusicOnHoldInterface extends LoggableEntityInterface
     /**
      * Add TempFile and set status to pending
      *
-     * @param $fldName
-     * @param TempFile $file
+     * @param string $fldName
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
      */
     public function addTmpFile($fldName, \Ivoz\Core\Domain\Service\TempFile $file);
-
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
 
     /**
      * Get name
@@ -47,61 +45,43 @@ interface MusicOnHoldInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set status
-     *
-     * @param string $status
-     *
-     * @return self
-     */
-    public function setStatus($status = null);
-
-    /**
      * Get status
      *
-     * @return string
+     * @return string | null
      */
     public function getStatus();
 
     /**
      * Set brand
      *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
+     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand | null
      *
-     * @return self
+     * @return static
      */
     public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null);
 
     /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand();
 
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
     public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
 
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany();
-
-    /**
-     * Set originalFile
-     *
-     * @param \Ivoz\Provider\Domain\Model\MusicOnHold\OriginalFile $originalFile
-     *
-     * @return self
-     */
-    public function setOriginalFile(\Ivoz\Provider\Domain\Model\MusicOnHold\OriginalFile $originalFile);
 
     /**
      * Get originalFile
@@ -111,15 +91,6 @@ interface MusicOnHoldInterface extends LoggableEntityInterface
     public function getOriginalFile();
 
     /**
-     * Set encodedFile
-     *
-     * @param \Ivoz\Provider\Domain\Model\MusicOnHold\EncodedFile $encodedFile
-     *
-     * @return self
-     */
-    public function setEncodedFile(\Ivoz\Provider\Domain\Model\MusicOnHold\EncodedFile $encodedFile);
-
-    /**
      * Get encodedFile
      *
      * @return \Ivoz\Provider\Domain\Model\MusicOnHold\EncodedFile
@@ -127,15 +98,22 @@ interface MusicOnHoldInterface extends LoggableEntityInterface
     public function getEncodedFile();
 
     /**
-     * @return TempFile[]
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function removeTmpFile(\Ivoz\Core\Domain\Service\TempFile $file);
+
+    /**
+     * @return \Ivoz\Core\Domain\Service\TempFile[]
      */
     public function getTempFiles();
 
     /**
      * @var string $fldName
-     * @return null | TempFile
+     * @return null | \Ivoz\Core\Domain\Service\TempFile
      */
     public function getTempFileByFieldName($fldName);
-
 }
-

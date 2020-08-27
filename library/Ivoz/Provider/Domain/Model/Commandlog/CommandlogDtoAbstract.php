@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Commandlog;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -13,7 +11,7 @@ use Ivoz\Core\Application\Model\DtoNormalizer;
 abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
 {
     /**
-     * @var guid
+     * @var string
      */
     private $requestId;
 
@@ -33,7 +31,12 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     private $arguments;
 
     /**
-     * @var \DateTime
+     * @var array
+     */
+    private $agent;
+
+    /**
+     * @var \DateTime | string
      */
     private $createdOn;
 
@@ -43,7 +46,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     private $microtime;
 
     /**
-     * @var guid
+     * @var string
      */
     private $id;
 
@@ -58,7 +61,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -69,6 +72,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
             'class' => 'class',
             'method' => 'method',
             'arguments' => 'arguments',
+            'agent' => 'agent',
             'createdOn' => 'createdOn',
             'microtime' => 'microtime',
             'id' => 'id'
@@ -80,35 +84,33 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'requestId' => $this->getRequestId(),
             'class' => $this->getClass(),
             'method' => $this->getMethod(),
             'arguments' => $this->getArguments(),
+            'agent' => $this->getAgent(),
             'createdOn' => $this->getCreatedOn(),
             'microtime' => $this->getMicrotime(),
             'id' => $this->getId()
         ];
+
+        if (!$hideSensitiveData) {
+            return $response;
+        }
+
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
+
+        return $response;
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
-    }
-
-    /**
-     * @param guid $requestId
+     * @param string $requestId
      *
      * @return static
      */
@@ -120,7 +122,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return guid
+     * @return string | null
      */
     public function getRequestId()
     {
@@ -140,7 +142,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getClass()
     {
@@ -160,7 +162,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getMethod()
     {
@@ -180,11 +182,31 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getArguments()
     {
         return $this->arguments;
+    }
+
+    /**
+     * @param array $agent
+     *
+     * @return static
+     */
+    public function setAgent($agent = null)
+    {
+        $this->agent = $agent;
+
+        return $this;
+    }
+
+    /**
+     * @return array | null
+     */
+    public function getAgent()
+    {
+        return $this->agent;
     }
 
     /**
@@ -200,7 +222,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getCreatedOn()
     {
@@ -220,7 +242,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getMicrotime()
     {
@@ -228,7 +250,7 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param guid $id
+     * @param string $id
      *
      * @return static
      */
@@ -240,12 +262,10 @@ abstract class CommandlogDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return guid
+     * @return string | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

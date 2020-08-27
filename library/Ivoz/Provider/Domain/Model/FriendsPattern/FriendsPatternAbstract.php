@@ -44,7 +44,8 @@ abstract class FriendsPatternAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "FriendsPattern",
             $this->getId()
         );
@@ -68,7 +69,8 @@ abstract class FriendsPatternAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param FriendsPatternInterface|null $entity
      * @param int $depth
      * @return FriendsPatternDto|null
      */
@@ -88,58 +90,61 @@ abstract class FriendsPatternAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var FriendsPatternDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FriendsPatternDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FriendsPatternDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FriendsPatternDto::class);
 
         $self = new static(
             $dto->getName(),
-            $dto->getRegExp());
+            $dto->getRegExp()
+        );
 
         $self
-            ->setFriend($dto->getFriend())
+            ->setFriend($fkTransformer->transform($dto->getFriend()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FriendsPatternDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FriendsPatternDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FriendsPatternDto::class);
 
         $this
             ->setName($dto->getName())
             ->setRegExp($dto->getRegExp())
-            ->setFriend($dto->getFriend());
+            ->setFriend($fkTransformer->transform($dto->getFriend()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return FriendsPatternDto
      */
@@ -159,11 +164,9 @@ abstract class FriendsPatternAbstract
         return [
             'name' => self::getName(),
             'regExp' => self::getRegExp(),
-            'friendId' => self::getFriend() ? self::getFriend()->getId() : null
+            'friendId' => self::getFriend()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -171,9 +174,9 @@ abstract class FriendsPatternAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 50, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -198,9 +201,9 @@ abstract class FriendsPatternAbstract
      *
      * @param string $regExp
      *
-     * @return self
+     * @return static
      */
-    public function setRegExp($regExp)
+    protected function setRegExp($regExp)
     {
         Assertion::notNull($regExp, 'regExp value "%s" is null, but non null value was expected.');
         Assertion::maxLength($regExp, 255, 'regExp value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -225,9 +228,9 @@ abstract class FriendsPatternAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend
      *
-     * @return self
+     * @return static
      */
-    public function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend = null)
+    public function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend)
     {
         $this->friend = $friend;
 
@@ -244,8 +247,5 @@ abstract class FriendsPatternAbstract
         return $this->friend;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

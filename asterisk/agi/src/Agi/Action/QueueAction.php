@@ -5,7 +5,6 @@ namespace Agi\Action;
 use Agi\Wrapper;
 use Ivoz\Provider\Domain\Model\Queue\QueueInterface;
 
-
 class QueueAction
 {
     /**
@@ -14,7 +13,7 @@ class QueueAction
     protected $agi;
 
     /**
-     * @var QueueInterface
+     * @var QueueInterface|null
      */
     protected $queue;
 
@@ -25,8 +24,7 @@ class QueueAction
      */
     public function __construct(
         Wrapper $agi
-    )
-    {
+    ) {
         $this->agi = $agi;
     }
 
@@ -62,5 +60,4 @@ class QueueAction
         // Redirect to the calling dialplan context
         $this->agi->redirect('call-queue');
     }
-
 }

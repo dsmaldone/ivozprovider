@@ -12,8 +12,18 @@ class BrandServiceLifecycleServiceCollection implements LifecycleServiceCollecti
 {
     use LifecycleServiceCollectionTrait;
 
-    protected function addService(BrandServiceLifecycleEventHandlerInterface $service)
+    public static $bindedBaseServices = [
+        "post_remove" =>
+        [
+            \Ivoz\Provider\Domain\Service\CompanyService\RemoveByBrandService::class => 10,
+        ],
+    ];
+
+    /**
+     * @return void
+     */
+    protected function addService(string $event, BrandServiceLifecycleEventHandlerInterface $service)
     {
-        $this->services[] = $service;
+        $this->services[$event][] = $service;
     }
 }

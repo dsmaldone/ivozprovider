@@ -2,21 +2,21 @@
 
 namespace Ivoz\Provider\Domain\Service\Company;
 
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
-use Ivoz\Core\Infrastructure\Domain\Service\DoctrineEntityPersister;
+use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Provider\Domain\Model\Company\CompanyDto;
 use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
-use Symfony\Bridge\Monolog\Logger;
 use Ivoz\Provider\Domain\Model\Company\CompanyRepository;
+use Psr\Log\LoggerInterface;
 
 class SyncBalances
 {
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     protected $logger;
 
@@ -31,17 +31,20 @@ class SyncBalances
     protected $companyRepository;
 
     public function __construct(
-        DoctrineEntityPersister $entityPersister,
-        Logger $logger,
+        EntityTools $entityTools,
+        LoggerInterface $logger,
         CompanyBalanceServiceInterface $client,
         CompanyRepository $companyRepository
     ) {
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
         $this->logger = $logger;
         $this->client = $client;
         $this->companyRepository = $companyRepository;
     }
 
+    /**
+     * @return void
+     */
     public function updateAll()
     {
         $this->logger->info('Companies balances are about to be synced');
@@ -53,7 +56,7 @@ class SyncBalances
     }
 
     /**
-     * @param $brandId
+     * @param int $brandId
      * @param array $companyIds
      * @return bool
      */
@@ -62,17 +65,16 @@ class SyncBalances
         try {
             $response = $this->client->getBalances($brandId, $companyIds);
 
-            if ($response->error) {
+            if (isset($response->error) && $response->error) {
                 $this->logger->error(
                     'There was an error while retrieving brand#' . $brandId . ' company balances'
                 );
-                throw new \Exception ($response->error);
+                throw new \Exception($response->error);
             }
 
             $this->persistBalances($response->result);
 
             return true;
-
         } catch (\Exception $exception) {
             $this->logger->error($exception->getMessage());
 
@@ -99,11 +101,14 @@ class SyncBalances
         return $response;
     }
 
+    /**
+     * @return void
+     */
     private function persistBalances(array $companiesBalance)
     {
         foreach ($companiesBalance as $companyId => $balance) {
 
-            /** @var CompanyInterface $company */
+            /** @var CompanyInterface | null $company */
             $company = $this->companyRepository->find($companyId);
             if (!$company) {
                 $this->logger->error(
@@ -112,8 +117,11 @@ class SyncBalances
                 continue;
             }
 
-            $company->setBalance($balance);
-            $this->entityPersister->persist($company);
+            /** @var CompanyDto $companyDto */
+            $companyDto = $this->entityTools->entityToDto($company);
+            $companyDto->setBalance($balance);
+
+            $this->entityTools->persistDto($companyDto, $company);
         }
     }
 }

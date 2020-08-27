@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\UsersLocationAttr;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -35,7 +33,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     /**
      * @var integer
      */
-    private $atype = '0';
+    private $atype = 0;
 
     /**
      * @var string
@@ -43,7 +41,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     private $avalue = '';
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $lastModified = '1900-01-01 00:00:01';
 
@@ -63,7 +61,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -86,7 +84,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'ruid' => $this->getRuid(),
             'username' => $this->getUsername(),
             'domain' => $this->getDomain(),
@@ -96,22 +94,19 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
             'lastModified' => $this->getLastModified(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -127,7 +122,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getRuid()
     {
@@ -147,7 +142,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getUsername()
     {
@@ -167,7 +162,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDomain()
     {
@@ -187,7 +182,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getAname()
     {
@@ -207,7 +202,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getAtype()
     {
@@ -227,7 +222,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getAvalue()
     {
@@ -247,7 +242,7 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getLastModified()
     {
@@ -267,12 +262,10 @@ abstract class UsersLocationAttrDtoAbstract implements DataTransferObjectInterfa
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

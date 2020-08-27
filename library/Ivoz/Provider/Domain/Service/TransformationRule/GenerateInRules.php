@@ -20,6 +20,9 @@ class GenerateInRules
         $this->entityPersister = $entityPersister;
     }
 
+    /**
+     * @return void
+     */
     public function execute(TransformationRuleSetInterface $entity, $type)
     {
         // Get RuleSet data
@@ -30,8 +33,8 @@ class GenerateInRules
         $nationalLen = $entity->getNationalLen();
         $nationalSubscriberLen = $nationalLen - strlen($areaCode);
 
-        $ruleDTO = new TransformationRuleDto();
-        $ruleDTO
+        $ruleDto = new TransformationRuleDto();
+        $ruleDto
             ->setTransformationRuleSetId($entity->getId())
             ->setType($type)
             ->setDescription("From international to e164")
@@ -39,11 +42,11 @@ class GenerateInRules
             ->setMatchExpr('^(\+|' . $internationalCode . ')([0-9]+)$')
             ->setReplaceExpr('+\2');
 
-        $this->entityPersister->persistDto($ruleDTO);
+        $this->entityPersister->persistDto($ruleDto);
 
-        if (!empty($trunkPrefix)) {
-            $ruleDTO = new TransformationRuleDto();
-            $ruleDTO
+        if (strlen($trunkPrefix) > 0) {
+            $ruleDto = new TransformationRuleDto();
+            $ruleDto
                 ->setTransformationRuleSetId($entity->getId())
                 ->setType($type)
                 ->setDescription("From out of area national to e164")
@@ -51,31 +54,42 @@ class GenerateInRules
                 ->setMatchExpr('^' . $trunkPrefix . '([0-9]{' . $nationalLen . '})$')
                 ->setReplaceExpr($countryCode . '\1');
 
-            $this->entityPersister->persistDto($ruleDTO);
+            $this->entityPersister->persistDto($ruleDto);
         }
 
-        if (!empty($areaCode)) {
-            $ruleDTO = new TransformationRuleDto();
-            $ruleDTO
+        if (strlen($areaCode) > 0) {
+            $ruleDto = new TransformationRuleDto();
+            $ruleDto
                 ->setTransformationRuleSetId($entity->getId())
                 ->setType($type)
-                ->setDescription("From within national to e164")
+                ->setDescription("From within area national to e164")
                 ->setPriority(3)
                 ->setMatchExpr('^([0-9]{' . $nationalSubscriberLen . '})$')
                 ->setReplaceExpr($countryCode . $areaCode . '\1');
 
-            $this->entityPersister->persistDto($ruleDTO);
+            $this->entityPersister->persistDto($ruleDto);
         }
 
-        $ruleDTO = new TransformationRuleDto();
-        $ruleDTO
+        $ruleDto = new TransformationRuleDto();
+        $ruleDto
             ->setTransformationRuleSetId($entity->getId())
             ->setType($type)
-            ->setDescription("From special national to e164")
+            ->setDescription("From national in e164 without plus to e164")
             ->setPriority(4)
+            ->setMatchExpr("^34([0-9]+)$")
+            ->setReplaceExpr($countryCode . '\1');
+
+        $this->entityPersister->persistDto($ruleDto);
+
+        $ruleDto = new TransformationRuleDto();
+        $ruleDto
+            ->setTransformationRuleSetId($entity->getId())
+            ->setType($type)
+            ->setDescription("From national to e164")
+            ->setPriority(5)
             ->setMatchExpr("^([0-9]+)$")
             ->setReplaceExpr($countryCode . '\1');
 
-        $this->entityPersister->persistDto($ruleDTO);
+        $this->entityPersister->persistDto($ruleDto);
     }
 }

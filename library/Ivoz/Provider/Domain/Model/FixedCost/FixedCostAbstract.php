@@ -19,12 +19,12 @@ abstract class FixedCostAbstract
     protected $name;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $description;
 
     /**
-     * @var string
+     * @var float | null
      */
     protected $cost;
 
@@ -48,7 +48,8 @@ abstract class FixedCostAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "FixedCost",
             $this->getId()
         );
@@ -72,7 +73,8 @@ abstract class FixedCostAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param FixedCostInterface|null $entity
      * @param int $depth
      * @return FixedCostDto|null
      */
@@ -92,60 +94,63 @@ abstract class FixedCostAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var FixedCostDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FixedCostDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FixedCostDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FixedCostDto::class);
 
         $self = new static(
-            $dto->getName());
+            $dto->getName()
+        );
 
         $self
             ->setDescription($dto->getDescription())
             ->setCost($dto->getCost())
-            ->setBrand($dto->getBrand())
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FixedCostDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FixedCostDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FixedCostDto::class);
 
         $this
             ->setName($dto->getName())
             ->setDescription($dto->getDescription())
             ->setCost($dto->getCost())
-            ->setBrand($dto->getBrand());
+            ->setBrand($fkTransformer->transform($dto->getBrand()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return FixedCostDto
      */
@@ -167,11 +172,9 @@ abstract class FixedCostAbstract
             'name' => self::getName(),
             'description' => self::getDescription(),
             'cost' => self::getCost(),
-            'brandId' => self::getBrand() ? self::getBrand()->getId() : null
+            'brandId' => self::getBrand()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -179,9 +182,9 @@ abstract class FixedCostAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 255, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -204,15 +207,12 @@ abstract class FixedCostAbstract
     /**
      * Set description
      *
-     * @param string $description
+     * @param string $description | null
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description = null)
+    protected function setDescription($description = null)
     {
-        if (!is_null($description)) {
-        }
-
         $this->description = $description;
 
         return $this;
@@ -221,7 +221,7 @@ abstract class FixedCostAbstract
     /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -231,16 +231,15 @@ abstract class FixedCostAbstract
     /**
      * Set cost
      *
-     * @param string $cost
+     * @param float $cost | null
      *
-     * @return self
+     * @return static
      */
-    public function setCost($cost = null)
+    protected function setCost($cost = null)
     {
         if (!is_null($cost)) {
-            if (!is_null($cost)) {
-                Assertion::numeric($cost);
-            }
+            Assertion::numeric($cost);
+            $cost = (float) $cost;
         }
 
         $this->cost = $cost;
@@ -251,7 +250,7 @@ abstract class FixedCostAbstract
     /**
      * Get cost
      *
-     * @return string
+     * @return float | null
      */
     public function getCost()
     {
@@ -263,9 +262,9 @@ abstract class FixedCostAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
+    protected function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
     {
         $this->brand = $brand;
 
@@ -282,8 +281,5 @@ abstract class FixedCostAbstract
         return $this->brand;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

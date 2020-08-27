@@ -2,19 +2,19 @@
 
 namespace Ivoz\Ast\Domain\Service\PsEndpoint;
 
+use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpoint;
+use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointDto;
 use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointRepository;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface;
 use Ivoz\Provider\Domain\Service\RetailAccount\RetailAccountLifecycleEventHandlerInterface;
-use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpoint;
-use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface;
 
 class UpdateByRetailAccount implements RetailAccountLifecycleEventHandlerInterface
 {
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
      * @var PsEndpointRepository
@@ -22,62 +22,69 @@ class UpdateByRetailAccount implements RetailAccountLifecycleEventHandlerInterfa
     protected $psEndpointRepository;
 
     public function __construct(
-        EntityPersisterInterface $entityPersister,
+        EntityTools $entityTools,
         PsEndpointRepository $psEndpointRepository
     ) {
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
         $this->psEndpointRepository = $psEndpointRepository;
     }
 
     public static function getSubscribedEvents()
     {
         return [
-            self::EVENT_POST_PERSIST => 10
+            self::EVENT_POST_PERSIST => self::PRIORITY_NORMAL
         ];
     }
 
     /**
      * @param RetailAccountInterface $entity
+     *
+     * @return void
      */
-    public function execute(RetailAccountInterface $entity, $isNew)
+    public function execute(RetailAccountInterface $entity)
     {
-        /**
-         * @var PsEndpointInterface $endpoint
-         */
-        $endpoint = $this->psEndpointRepository->findOneBy([
-            'retailAccount' => $entity->getId()
-        ]);
+        $endpoint = $this->psEndpointRepository->findOneByRetailAccountId(
+            $entity->getId()
+        );
 
         // If not found create a new one
         if (is_null($endpoint)) {
-
-            $endpointDTO = PsEndpoint::createDto();
-            $endpointDTO
+            $endpointDto = PsEndpoint::createDto();
+            $endpointDto
                 ->setContext('retail')
                 ->setSendDiversion('yes')
                 ->setSendPai('yes');
         } else {
-            $endpointDTO  = $endpoint->toDto();
+            /** @var PsEndpointDto $endpointDto */
+            $endpointDto  = $this->entityTools->entityToDto($endpoint);
         }
 
-        // Use company domain if retail from-domain not set
+        // Use company domain if retail account from-domain not set
         $fromDomain = $entity->getFromDomain()
             ? $entity->getFromDomain()
             : $entity->getDomain()->getDomain();
 
         // Update/Insert endpoint data
-        $endpointDTO
+        $endpointDto
             ->setRetailAccountId($entity->getId())
             ->setSorceryId($entity->getSorcery())
             ->setFromDomain($fromDomain)
             ->setAors($entity->getSorcery())
-            ->setDisallow($entity->getDisallow())
-            ->setAllow($entity->getAllow())
-            ->setDirectmediaMethod($entity->getDirectmediaMethod())
+            ->setDisallow("all")
+            ->setAllow("alaw,g729,ulaw")
+            ->setDirectmediaMethod('invite')
             ->setTrustIdInbound('yes')
             ->setOutboundProxy('sip:users.ivozprovider.local^3Blr')
+            ->setT38Udptl($entity->getT38Passthrough())
             ->setDirectMediaMethod('invite');
 
-        $this->entityPersister->persistDto($endpointDTO, $endpoint);
+        // Disable direct media for T.38 capable devices
+        if ($entity->getT38Passthrough() === RetailAccountInterface::T38PASSTHROUGH_YES) {
+            $endpointDto->setDirectMedia('no');
+        } else {
+            $endpointDto->setDirectMedia('yes');
+        }
+
+        $this->entityTools->persistDto($endpointDto, $endpoint);
     }
 }

@@ -19,15 +19,9 @@ abstract class MediaRelaySetAbstract
     protected $name = '0';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $description;
-
-    /**
-     * comment: enum:rtpengine|rtpproxy
-     * @var string
-     */
-    protected $type = 'rtpproxy';
 
 
     use ChangelogTrait;
@@ -35,17 +29,17 @@ abstract class MediaRelaySetAbstract
     /**
      * Constructor
      */
-    protected function __construct($name, $type)
+    protected function __construct($name)
     {
         $this->setName($name);
-        $this->setType($type);
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "MediaRelaySet",
             $this->getId()
         );
@@ -69,7 +63,8 @@ abstract class MediaRelaySetAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param MediaRelaySetInterface|null $entity
      * @param int $depth
      * @return MediaRelaySetDto|null
      */
@@ -89,58 +84,59 @@ abstract class MediaRelaySetAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var MediaRelaySetDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param MediaRelaySetDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto MediaRelaySetDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, MediaRelaySetDto::class);
 
         $self = new static(
-            $dto->getName(),
-            $dto->getType());
+            $dto->getName()
+        );
 
         $self
             ->setDescription($dto->getDescription())
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param MediaRelaySetDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto MediaRelaySetDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, MediaRelaySetDto::class);
 
         $this
             ->setName($dto->getName())
-            ->setDescription($dto->getDescription())
-            ->setType($dto->getType());
+            ->setDescription($dto->getDescription());
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return MediaRelaySetDto
      */
@@ -148,8 +144,7 @@ abstract class MediaRelaySetAbstract
     {
         return self::createDto()
             ->setName(self::getName())
-            ->setDescription(self::getDescription())
-            ->setType(self::getType());
+            ->setDescription(self::getDescription());
     }
 
     /**
@@ -159,12 +154,9 @@ abstract class MediaRelaySetAbstract
     {
         return [
             'name' => self::getName(),
-            'description' => self::getDescription(),
-            'type' => self::getType()
+            'description' => self::getDescription()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -172,9 +164,9 @@ abstract class MediaRelaySetAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 32, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -197,11 +189,11 @@ abstract class MediaRelaySetAbstract
     /**
      * Set description
      *
-     * @param string $description
+     * @param string $description | null
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description = null)
+    protected function setDescription($description = null)
     {
         if (!is_null($description)) {
             Assertion::maxLength($description, 200, 'description value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -215,46 +207,12 @@ abstract class MediaRelaySetAbstract
     /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
         return $this->description;
     }
 
-    /**
-     * Set type
-     *
-     * @param string $type
-     *
-     * @return self
-     */
-    public function setType($type)
-    {
-        Assertion::notNull($type, 'type value "%s" is null, but non null value was expected.');
-        Assertion::maxLength($type, 64, 'type value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($type, array (
-          0 => 'rtpengine',
-          1 => 'rtpproxy',
-        ), 'typevalue "%s" is not an element of the valid values: %s');
-
-        $this->type = $type;
-
-        return $this;
-    }
-
-    /**
-     * Get type
-     *
-     * @return string
-     */
-    public function getType()
-    {
-        return $this->type;
-    }
-
-
-
     // @codeCoverageIgnoreEnd
 }
-

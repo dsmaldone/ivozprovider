@@ -6,6 +6,10 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface NotificationTemplateContentInterface extends LoggableEntityInterface
 {
+    const BODYTYPE_TEXTPLAIN = 'text/plain';
+    const BODYTYPE_TEXTHTML = 'text/html';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -13,45 +17,18 @@ interface NotificationTemplateContentInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set fromName
-     *
-     * @param string $fromName
-     *
-     * @return self
-     */
-    public function setFromName($fromName = null);
-
-    /**
      * Get fromName
      *
-     * @return string
+     * @return string | null
      */
     public function getFromName();
 
     /**
-     * Set fromAddress
-     *
-     * @param string $fromAddress
-     *
-     * @return self
-     */
-    public function setFromAddress($fromAddress = null);
-
-    /**
      * Get fromAddress
      *
-     * @return string
+     * @return string | null
      */
     public function getFromAddress();
-
-    /**
-     * Set subject
-     *
-     * @param string $subject
-     *
-     * @return self
-     */
-    public function setSubject($subject);
 
     /**
      * Get subject
@@ -61,15 +38,6 @@ interface NotificationTemplateContentInterface extends LoggableEntityInterface
     public function getSubject();
 
     /**
-     * Set body
-     *
-     * @param string $body
-     *
-     * @return self
-     */
-    public function setBody($body);
-
-    /**
      * Get body
      *
      * @return string
@@ -77,13 +45,20 @@ interface NotificationTemplateContentInterface extends LoggableEntityInterface
     public function getBody();
 
     /**
+     * Get bodyType
+     *
+     * @return string
+     */
+    public function getBodyType();
+
+    /**
      * Set notificationTemplate
      *
      * @param \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate
      *
-     * @return self
+     * @return static
      */
-    public function setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate = null);
+    public function setNotificationTemplate(\Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface $notificationTemplate);
 
     /**
      * Get notificationTemplate
@@ -93,20 +68,9 @@ interface NotificationTemplateContentInterface extends LoggableEntityInterface
     public function getNotificationTemplate();
 
     /**
-     * Set language
-     *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
-     *
-     * @return self
-     */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null);
-
-    /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage();
-
 }
-

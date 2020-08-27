@@ -3,13 +3,14 @@
 namespace Dialplan;
 
 use Agi\Action\ExternalFaxCallAction;
+use Agi\Agents\FaxAgent;
 use Agi\ChannelInfo;
 use Agi\Wrapper;
 use Doctrine\ORM\EntityManagerInterface;
 use Ivoz\Core\Application\Service\CommonStoragePathResolver;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOut;
-use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutDTO;
+use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutDto;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutInterface;
 use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutRepository;
 use RouteHandlerAbstract;
@@ -33,9 +34,9 @@ class FaxDial extends RouteHandlerAbstract
     protected $em;
 
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     /**
      * @var CommonStoragePathResolver
@@ -52,7 +53,7 @@ class FaxDial extends RouteHandlerAbstract
      * @param Wrapper $agi
      * @param ChannelInfo $channelInfo
      * @param EntityManagerInterface $em
-     * @param EntityPersisterInterface $entityPersister
+     * @param EntityTools $entityTools
      * @param CommonStoragePathResolver $faxStoragePathResolver
      * @param ExternalFaxCallAction $externalFaxCallAction
      */
@@ -60,15 +61,14 @@ class FaxDial extends RouteHandlerAbstract
         Wrapper $agi,
         ChannelInfo $channelInfo,
         EntityManagerInterface $em,
-        EntityPersisterInterface $entityPersister,
+        EntityTools $entityTools,
         CommonStoragePathResolver $faxStoragePathResolver,
         ExternalFaxCallAction $externalFaxCallAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->channelInfo = $channelInfo;
         $this->em = $em;
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
         $this->faxStoragePathResolver = $faxStoragePathResolver;
         $this->externalFaxCallAction = $externalFaxCallAction;
     }
@@ -81,7 +81,7 @@ class FaxDial extends RouteHandlerAbstract
         /** @var FaxesInOutRepository $faxInOutRepository */
         $faxInOutRepository = $this->em->getRepository(FaxesInOut::class);
 
-        /** @var FaxesInOutInterface $faxOut */
+        /** @var FaxesInOutInterface|null $faxOut */
         $faxOut = $faxInOutRepository->find($faxId);
         if (is_null($faxOut)) {
             $this->agi->error("Faxfile %d not found in database", $faxId);
@@ -110,22 +110,24 @@ class FaxDial extends RouteHandlerAbstract
         ]);
         $process->mustRun();
 
-        /** @var FaxesInOutDTO $faxOutDto */
-        $faxOutDto = $faxOut->toDTO();
+        /** @var FaxesInOutDto $faxOutDto */
+        $faxOutDto = $this->entityTools->entityToDto($faxOut);
 
         // Execute conversion command
         if ($process->getExitCode() != 0) {
             $this->agi->error("Unable to convert fax file %s to TIFF.", $faxOut);
             $faxOutDto->setStatus('error');
-            $this->entityPersister->persistDto($faxOutDto, $faxOut);
+            $this->entityTools->persistDto($faxOutDto, $faxOut);
             return;
         } else {
             $faxOutDto->setStatus('inprogress');
-            $this->entityPersister->persistDto($faxOutDto, $faxOut);
+            $this->entityTools->persistDto($faxOutDto, $faxOut);
         }
 
         // Set the virtual fax as caller
-        $this->channelInfo->setChannelCaller($faxOut->getFax());
+        $caller = new FaxAgent($this->agi, $faxOut->getFax());
+        $this->channelInfo->setChannelCaller($caller);
+        $this->channelInfo->setChannelOrigin($caller);
 
         // ProcessDialStatus
         $this->externalFaxCallAction
@@ -133,5 +135,4 @@ class FaxDial extends RouteHandlerAbstract
             ->setDestination($faxOut->getDstE164())
             ->process();
     }
-
 }

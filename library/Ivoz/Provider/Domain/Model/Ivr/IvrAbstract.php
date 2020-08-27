@@ -31,27 +31,27 @@ abstract class IvrAbstract
     /**
      * @var boolean
      */
-    protected $allowExtensions = '0';
+    protected $allowExtensions = false;
 
     /**
      * comment: enum:number|extension|voicemail
-     * @var string
+     * @var string | null
      */
     protected $noInputRouteType;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $noInputNumberValue;
 
     /**
      * comment: enum:number|extension|voicemail
-     * @var string
+     * @var string | null
      */
     protected $errorRouteType;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $errorNumberValue;
 
@@ -61,52 +61,52 @@ abstract class IvrAbstract
     protected $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     protected $welcomeLocution;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     protected $noInputLocution;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     protected $errorLocution;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @var \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     protected $successLocution;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     protected $noInputExtension;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @var \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     protected $errorExtension;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     protected $noInputVoiceMailUser;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @var \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     protected $errorVoiceMailUser;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     protected $noInputNumberCountry;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     protected $errorNumberCountry;
 
@@ -132,7 +132,8 @@ abstract class IvrAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Ivr",
             $this->getId()
         );
@@ -156,7 +157,8 @@ abstract class IvrAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param IvrInterface|null $entity
      * @param int $depth
      * @return IvrDto|null
      */
@@ -176,60 +178,63 @@ abstract class IvrAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var IvrDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param IvrDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto IvrDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, IvrDto::class);
 
         $self = new static(
             $dto->getName(),
             $dto->getTimeout(),
             $dto->getMaxDigits(),
-            $dto->getAllowExtensions());
+            $dto->getAllowExtensions()
+        );
 
         $self
             ->setNoInputRouteType($dto->getNoInputRouteType())
             ->setNoInputNumberValue($dto->getNoInputNumberValue())
             ->setErrorRouteType($dto->getErrorRouteType())
             ->setErrorNumberValue($dto->getErrorNumberValue())
-            ->setCompany($dto->getCompany())
-            ->setWelcomeLocution($dto->getWelcomeLocution())
-            ->setNoInputLocution($dto->getNoInputLocution())
-            ->setErrorLocution($dto->getErrorLocution())
-            ->setSuccessLocution($dto->getSuccessLocution())
-            ->setNoInputExtension($dto->getNoInputExtension())
-            ->setErrorExtension($dto->getErrorExtension())
-            ->setNoInputVoiceMailUser($dto->getNoInputVoiceMailUser())
-            ->setErrorVoiceMailUser($dto->getErrorVoiceMailUser())
-            ->setNoInputNumberCountry($dto->getNoInputNumberCountry())
-            ->setErrorNumberCountry($dto->getErrorNumberCountry())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setWelcomeLocution($fkTransformer->transform($dto->getWelcomeLocution()))
+            ->setNoInputLocution($fkTransformer->transform($dto->getNoInputLocution()))
+            ->setErrorLocution($fkTransformer->transform($dto->getErrorLocution()))
+            ->setSuccessLocution($fkTransformer->transform($dto->getSuccessLocution()))
+            ->setNoInputExtension($fkTransformer->transform($dto->getNoInputExtension()))
+            ->setErrorExtension($fkTransformer->transform($dto->getErrorExtension()))
+            ->setNoInputVoiceMailUser($fkTransformer->transform($dto->getNoInputVoiceMailUser()))
+            ->setErrorVoiceMailUser($fkTransformer->transform($dto->getErrorVoiceMailUser()))
+            ->setNoInputNumberCountry($fkTransformer->transform($dto->getNoInputNumberCountry()))
+            ->setErrorNumberCountry($fkTransformer->transform($dto->getErrorNumberCountry()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param IvrDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto IvrDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, IvrDto::class);
 
         $this
@@ -241,25 +246,25 @@ abstract class IvrAbstract
             ->setNoInputNumberValue($dto->getNoInputNumberValue())
             ->setErrorRouteType($dto->getErrorRouteType())
             ->setErrorNumberValue($dto->getErrorNumberValue())
-            ->setCompany($dto->getCompany())
-            ->setWelcomeLocution($dto->getWelcomeLocution())
-            ->setNoInputLocution($dto->getNoInputLocution())
-            ->setErrorLocution($dto->getErrorLocution())
-            ->setSuccessLocution($dto->getSuccessLocution())
-            ->setNoInputExtension($dto->getNoInputExtension())
-            ->setErrorExtension($dto->getErrorExtension())
-            ->setNoInputVoiceMailUser($dto->getNoInputVoiceMailUser())
-            ->setErrorVoiceMailUser($dto->getErrorVoiceMailUser())
-            ->setNoInputNumberCountry($dto->getNoInputNumberCountry())
-            ->setErrorNumberCountry($dto->getErrorNumberCountry());
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setWelcomeLocution($fkTransformer->transform($dto->getWelcomeLocution()))
+            ->setNoInputLocution($fkTransformer->transform($dto->getNoInputLocution()))
+            ->setErrorLocution($fkTransformer->transform($dto->getErrorLocution()))
+            ->setSuccessLocution($fkTransformer->transform($dto->getSuccessLocution()))
+            ->setNoInputExtension($fkTransformer->transform($dto->getNoInputExtension()))
+            ->setErrorExtension($fkTransformer->transform($dto->getErrorExtension()))
+            ->setNoInputVoiceMailUser($fkTransformer->transform($dto->getNoInputVoiceMailUser()))
+            ->setErrorVoiceMailUser($fkTransformer->transform($dto->getErrorVoiceMailUser()))
+            ->setNoInputNumberCountry($fkTransformer->transform($dto->getNoInputNumberCountry()))
+            ->setErrorNumberCountry($fkTransformer->transform($dto->getErrorNumberCountry()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return IvrDto
      */
@@ -301,7 +306,7 @@ abstract class IvrAbstract
             'noInputNumberValue' => self::getNoInputNumberValue(),
             'errorRouteType' => self::getErrorRouteType(),
             'errorNumberValue' => self::getErrorNumberValue(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
+            'companyId' => self::getCompany()->getId(),
             'welcomeLocutionId' => self::getWelcomeLocution() ? self::getWelcomeLocution()->getId() : null,
             'noInputLocutionId' => self::getNoInputLocution() ? self::getNoInputLocution()->getId() : null,
             'errorLocutionId' => self::getErrorLocution() ? self::getErrorLocution()->getId() : null,
@@ -314,8 +319,6 @@ abstract class IvrAbstract
             'errorNumberCountryId' => self::getErrorNumberCountry() ? self::getErrorNumberCountry()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -323,9 +326,9 @@ abstract class IvrAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 50, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -350,15 +353,15 @@ abstract class IvrAbstract
      *
      * @param integer $timeout
      *
-     * @return self
+     * @return static
      */
-    public function setTimeout($timeout)
+    protected function setTimeout($timeout)
     {
         Assertion::notNull($timeout, 'timeout value "%s" is null, but non null value was expected.');
         Assertion::integerish($timeout, 'timeout value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($timeout, 0, 'timeout provided "%s" is not greater or equal than "%s".');
 
-        $this->timeout = $timeout;
+        $this->timeout = (int) $timeout;
 
         return $this;
     }
@@ -378,15 +381,15 @@ abstract class IvrAbstract
      *
      * @param integer $maxDigits
      *
-     * @return self
+     * @return static
      */
-    public function setMaxDigits($maxDigits)
+    protected function setMaxDigits($maxDigits)
     {
         Assertion::notNull($maxDigits, 'maxDigits value "%s" is null, but non null value was expected.');
         Assertion::integerish($maxDigits, 'maxDigits value "%s" is not an integer or a number castable to integer.');
         Assertion::greaterOrEqualThan($maxDigits, 0, 'maxDigits provided "%s" is not greater or equal than "%s".');
 
-        $this->maxDigits = $maxDigits;
+        $this->maxDigits = (int) $maxDigits;
 
         return $this;
     }
@@ -406,12 +409,13 @@ abstract class IvrAbstract
      *
      * @param boolean $allowExtensions
      *
-     * @return self
+     * @return static
      */
-    public function setAllowExtensions($allowExtensions)
+    protected function setAllowExtensions($allowExtensions)
     {
         Assertion::notNull($allowExtensions, 'allowExtensions value "%s" is null, but non null value was expected.');
         Assertion::between(intval($allowExtensions), 0, 1, 'allowExtensions provided "%s" is not a valid boolean value.');
+        $allowExtensions = (bool) $allowExtensions;
 
         $this->allowExtensions = $allowExtensions;
 
@@ -431,19 +435,19 @@ abstract class IvrAbstract
     /**
      * Set noInputRouteType
      *
-     * @param string $noInputRouteType
+     * @param string $noInputRouteType | null
      *
-     * @return self
+     * @return static
      */
-    public function setNoInputRouteType($noInputRouteType = null)
+    protected function setNoInputRouteType($noInputRouteType = null)
     {
         if (!is_null($noInputRouteType)) {
             Assertion::maxLength($noInputRouteType, 25, 'noInputRouteType value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($noInputRouteType, array (
-          0 => 'number',
-          1 => 'extension',
-          2 => 'voicemail',
-        ), 'noInputRouteTypevalue "%s" is not an element of the valid values: %s');
+            Assertion::choice($noInputRouteType, [
+                IvrInterface::NOINPUTROUTETYPE_NUMBER,
+                IvrInterface::NOINPUTROUTETYPE_EXTENSION,
+                IvrInterface::NOINPUTROUTETYPE_VOICEMAIL
+            ], 'noInputRouteTypevalue "%s" is not an element of the valid values: %s');
         }
 
         $this->noInputRouteType = $noInputRouteType;
@@ -454,7 +458,7 @@ abstract class IvrAbstract
     /**
      * Get noInputRouteType
      *
-     * @return string
+     * @return string | null
      */
     public function getNoInputRouteType()
     {
@@ -464,11 +468,11 @@ abstract class IvrAbstract
     /**
      * Set noInputNumberValue
      *
-     * @param string $noInputNumberValue
+     * @param string $noInputNumberValue | null
      *
-     * @return self
+     * @return static
      */
-    public function setNoInputNumberValue($noInputNumberValue = null)
+    protected function setNoInputNumberValue($noInputNumberValue = null)
     {
         if (!is_null($noInputNumberValue)) {
             Assertion::maxLength($noInputNumberValue, 25, 'noInputNumberValue value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -482,7 +486,7 @@ abstract class IvrAbstract
     /**
      * Get noInputNumberValue
      *
-     * @return string
+     * @return string | null
      */
     public function getNoInputNumberValue()
     {
@@ -492,19 +496,19 @@ abstract class IvrAbstract
     /**
      * Set errorRouteType
      *
-     * @param string $errorRouteType
+     * @param string $errorRouteType | null
      *
-     * @return self
+     * @return static
      */
-    public function setErrorRouteType($errorRouteType = null)
+    protected function setErrorRouteType($errorRouteType = null)
     {
         if (!is_null($errorRouteType)) {
             Assertion::maxLength($errorRouteType, 25, 'errorRouteType value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($errorRouteType, array (
-          0 => 'number',
-          1 => 'extension',
-          2 => 'voicemail',
-        ), 'errorRouteTypevalue "%s" is not an element of the valid values: %s');
+            Assertion::choice($errorRouteType, [
+                IvrInterface::ERRORROUTETYPE_NUMBER,
+                IvrInterface::ERRORROUTETYPE_EXTENSION,
+                IvrInterface::ERRORROUTETYPE_VOICEMAIL
+            ], 'errorRouteTypevalue "%s" is not an element of the valid values: %s');
         }
 
         $this->errorRouteType = $errorRouteType;
@@ -515,7 +519,7 @@ abstract class IvrAbstract
     /**
      * Get errorRouteType
      *
-     * @return string
+     * @return string | null
      */
     public function getErrorRouteType()
     {
@@ -525,11 +529,11 @@ abstract class IvrAbstract
     /**
      * Set errorNumberValue
      *
-     * @param string $errorNumberValue
+     * @param string $errorNumberValue | null
      *
-     * @return self
+     * @return static
      */
-    public function setErrorNumberValue($errorNumberValue = null)
+    protected function setErrorNumberValue($errorNumberValue = null)
     {
         if (!is_null($errorNumberValue)) {
             Assertion::maxLength($errorNumberValue, 25, 'errorNumberValue value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -543,7 +547,7 @@ abstract class IvrAbstract
     /**
      * Get errorNumberValue
      *
-     * @return string
+     * @return string | null
      */
     public function getErrorNumberValue()
     {
@@ -555,9 +559,9 @@ abstract class IvrAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -577,11 +581,11 @@ abstract class IvrAbstract
     /**
      * Set welcomeLocution
      *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $welcomeLocution
+     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $welcomeLocution | null
      *
-     * @return self
+     * @return static
      */
-    public function setWelcomeLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $welcomeLocution = null)
+    protected function setWelcomeLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $welcomeLocution = null)
     {
         $this->welcomeLocution = $welcomeLocution;
 
@@ -591,7 +595,7 @@ abstract class IvrAbstract
     /**
      * Get welcomeLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getWelcomeLocution()
     {
@@ -601,11 +605,11 @@ abstract class IvrAbstract
     /**
      * Set noInputLocution
      *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $noInputLocution
+     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $noInputLocution | null
      *
-     * @return self
+     * @return static
      */
-    public function setNoInputLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $noInputLocution = null)
+    protected function setNoInputLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $noInputLocution = null)
     {
         $this->noInputLocution = $noInputLocution;
 
@@ -615,7 +619,7 @@ abstract class IvrAbstract
     /**
      * Get noInputLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getNoInputLocution()
     {
@@ -625,11 +629,11 @@ abstract class IvrAbstract
     /**
      * Set errorLocution
      *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $errorLocution
+     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $errorLocution | null
      *
-     * @return self
+     * @return static
      */
-    public function setErrorLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $errorLocution = null)
+    protected function setErrorLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $errorLocution = null)
     {
         $this->errorLocution = $errorLocution;
 
@@ -639,7 +643,7 @@ abstract class IvrAbstract
     /**
      * Get errorLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getErrorLocution()
     {
@@ -649,11 +653,11 @@ abstract class IvrAbstract
     /**
      * Set successLocution
      *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $successLocution
+     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $successLocution | null
      *
-     * @return self
+     * @return static
      */
-    public function setSuccessLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $successLocution = null)
+    protected function setSuccessLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $successLocution = null)
     {
         $this->successLocution = $successLocution;
 
@@ -663,7 +667,7 @@ abstract class IvrAbstract
     /**
      * Get successLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getSuccessLocution()
     {
@@ -673,11 +677,11 @@ abstract class IvrAbstract
     /**
      * Set noInputExtension
      *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $noInputExtension
+     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $noInputExtension | null
      *
-     * @return self
+     * @return static
      */
-    public function setNoInputExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $noInputExtension = null)
+    protected function setNoInputExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $noInputExtension = null)
     {
         $this->noInputExtension = $noInputExtension;
 
@@ -687,7 +691,7 @@ abstract class IvrAbstract
     /**
      * Get noInputExtension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getNoInputExtension()
     {
@@ -697,11 +701,11 @@ abstract class IvrAbstract
     /**
      * Set errorExtension
      *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $errorExtension
+     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $errorExtension | null
      *
-     * @return self
+     * @return static
      */
-    public function setErrorExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $errorExtension = null)
+    protected function setErrorExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $errorExtension = null)
     {
         $this->errorExtension = $errorExtension;
 
@@ -711,7 +715,7 @@ abstract class IvrAbstract
     /**
      * Get errorExtension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getErrorExtension()
     {
@@ -721,11 +725,11 @@ abstract class IvrAbstract
     /**
      * Set noInputVoiceMailUser
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $noInputVoiceMailUser
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $noInputVoiceMailUser | null
      *
-     * @return self
+     * @return static
      */
-    public function setNoInputVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $noInputVoiceMailUser = null)
+    protected function setNoInputVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $noInputVoiceMailUser = null)
     {
         $this->noInputVoiceMailUser = $noInputVoiceMailUser;
 
@@ -735,7 +739,7 @@ abstract class IvrAbstract
     /**
      * Get noInputVoiceMailUser
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getNoInputVoiceMailUser()
     {
@@ -745,11 +749,11 @@ abstract class IvrAbstract
     /**
      * Set errorVoiceMailUser
      *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $errorVoiceMailUser
+     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $errorVoiceMailUser | null
      *
-     * @return self
+     * @return static
      */
-    public function setErrorVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $errorVoiceMailUser = null)
+    protected function setErrorVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $errorVoiceMailUser = null)
     {
         $this->errorVoiceMailUser = $errorVoiceMailUser;
 
@@ -759,7 +763,7 @@ abstract class IvrAbstract
     /**
      * Get errorVoiceMailUser
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getErrorVoiceMailUser()
     {
@@ -769,11 +773,11 @@ abstract class IvrAbstract
     /**
      * Set noInputNumberCountry
      *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $noInputNumberCountry
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $noInputNumberCountry | null
      *
-     * @return self
+     * @return static
      */
-    public function setNoInputNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $noInputNumberCountry = null)
+    protected function setNoInputNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $noInputNumberCountry = null)
     {
         $this->noInputNumberCountry = $noInputNumberCountry;
 
@@ -783,7 +787,7 @@ abstract class IvrAbstract
     /**
      * Get noInputNumberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getNoInputNumberCountry()
     {
@@ -793,11 +797,11 @@ abstract class IvrAbstract
     /**
      * Set errorNumberCountry
      *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $errorNumberCountry
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $errorNumberCountry | null
      *
-     * @return self
+     * @return static
      */
-    public function setErrorNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $errorNumberCountry = null)
+    protected function setErrorNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $errorNumberCountry = null)
     {
         $this->errorNumberCountry = $errorNumberCountry;
 
@@ -807,15 +811,12 @@ abstract class IvrAbstract
     /**
      * Get errorNumberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getErrorNumberCountry()
     {
         return $this->errorNumberCountry;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

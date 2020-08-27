@@ -7,7 +7,6 @@ use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 use Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingInterface;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
 
-
 class UserCallAction
 {
     /**
@@ -31,6 +30,11 @@ class UserCallAction
     protected $userStatusAction;
 
     /**
+     * @var boolean
+     */
+    protected $allowCallForwards;
+
+    /**
      * UserCallAction constructor.
      *
      * @param Wrapper $agi
@@ -41,11 +45,17 @@ class UserCallAction
         Wrapper $agi,
         RouterAction $routerAction,
         UserStatusAction $userStatusAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->routerAction = $routerAction;
         $this->userStatusAction = $userStatusAction;
+        $this->allowCallForwards = true;
+    }
+
+    public function setAllowCallForwards($allowCallForwards)
+    {
+        $this->allowCallForwards = $allowCallForwards;
+        return $this;
     }
 
     public function setUser($user)
@@ -84,30 +94,34 @@ class UserCallAction
             return;
         }
 
-        // Some verbose dolan pls
         $this->agi->notice("Preparing call to user <green>%s</green> (<cyan>%s</cyan>)", $user, $terminal);
 
-        // Check if user has call forwarding enabled
-        $forwarded = $this->userStatusAction
-                        ->setUser($this->user)
-                        ->setDialStatus(UserStatusAction::Forwarded)
-                        ->process();
+        if ($this->allowCallForwards) {
+            // Check if user has call forwarding enabled
+            $forwarded = $this->userStatusAction
+                ->setUser($this->user)
+                ->setDialStatus(UserStatusAction::Forwarded)
+                ->process();
 
-        if ($forwarded) {
-            return;
+            if ($forwarded) {
+                return;
+            }
         }
 
         // User requested peace
         if ($user->getDoNotDisturb()) {
             $this->agi->verbose("User %s has DND enabled.", $user);
 
-            $this->userStatusAction
-                ->setUser($this->user)
-                ->setDialStatus(UserStatusAction::Busy)
-                ->process();
+            if ($this->allowCallForwards) {
+                $this->userStatusAction
+                    ->setUser($this->user)
+                    ->setDialStatus(UserStatusAction::Busy)
+                    ->process();
+            }
 
             return;
         }
+
 
         // Check if this user is a boss
         if ($user->getIsBoss() && !$this->canCallBoss($user, $this->agi->getCallerIdNum())) {
@@ -127,7 +141,11 @@ class UserCallAction
 
         // Configure Dial options
         $timeout = $this->getDialTimeout();
-        $options = "i";
+        $options = "";
+
+        if (!$this->allowCallForwards) {
+            $options .= "i";
+        }
 
         if ($this->getUserStatusRequired()) {
             $options .= "g";
@@ -146,8 +164,11 @@ class UserCallAction
         $this->agi->setVariable("DIAL_OPTS", $options);
 
         // Redirect to the calling dialplan context
-        $this->agi->redirect('call-user', $extension->getNumber());
-
+        if ($this->allowCallForwards) {
+            $this->agi->redirect('call-user-cfw', $extension->getNumber());
+        } else {
+            $this->agi->redirect('call-user', $extension->getNumber());
+        }
     }
 
     /**
@@ -188,6 +209,11 @@ class UserCallAction
      */
     private function getDialTimeout()
     {
+        // Ignore user timeout if User call forwards are disabled
+        if (!$this->allowCallForwards) {
+            return "";
+        }
+
         $timeout = null;
 
         // Get active NoAnswer call forwards
@@ -219,21 +245,30 @@ class UserCallAction
      */
     private function getUserStatusRequired()
     {
+        // Ignore user status if User call forwards are disabled
+        if (!$this->allowCallForwards) {
+            return false;
+        }
+
         // internal or external call
         $callType = $this->agi->getCallType();
 
         // Build the criteria to look for call forward settings
         $criteria = [
-            'or' => array(
-                array('callForwardType', 'eq', 'noAnswer'),
-                array('callForwardType', 'eq', 'busy'),
-                array('callForwardType', 'eq', 'userNotRegistered'),
-            ),
-            'or' => array(
-                array('callTypeFilter', 'eq', 'both'),
-                array('callTypeFilter', 'eq', $callType),
-            ),
-            array('enabled', 'eq', '1')
+            [
+                'or' => [
+                    ['callForwardType', 'eq', 'noAnswer'],
+                    ['callForwardType', 'eq', 'busy'],
+                    ['callForwardType', 'eq', 'userNotRegistered'],
+                ]
+            ],
+            [
+                'or' => [
+                    ['callTypeFilter', 'eq', 'both'],
+                    ['callTypeFilter', 'eq', $callType],
+                ]
+            ],
+            ['enabled', 'eq', '1']
         ];
 
         /** @var CallForwardSettingInterface[] $cfwSettings */
@@ -243,5 +278,4 @@ class UserCallAction
         $settingNotEmpty = !empty($cfwSettings);
         return $settingNotEmpty;
     }
-
 }

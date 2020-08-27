@@ -29,9 +29,9 @@ interface CompanyServiceInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
+    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -41,20 +41,9 @@ interface CompanyServiceInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set service
-     *
-     * @param \Ivoz\Provider\Domain\Model\Service\ServiceInterface $service
-     *
-     * @return self
-     */
-    public function setService(\Ivoz\Provider\Domain\Model\Service\ServiceInterface $service);
-
-    /**
      * Get service
      *
      * @return \Ivoz\Provider\Domain\Model\Service\ServiceInterface
      */
     public function getService();
-
 }
-

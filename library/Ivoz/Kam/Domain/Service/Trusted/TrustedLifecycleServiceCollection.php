@@ -12,8 +12,19 @@ class TrustedLifecycleServiceCollection implements LifecycleServiceCollectionInt
 {
     use LifecycleServiceCollectionTrait;
 
-    protected function addService(TrustedLifecycleEventHandlerInterface $service)
+    public static $bindedBaseServices = [
+        "on_commit" =>
+        [
+            \Ivoz\Kam\Infrastructure\Domain\Service\Trusted\SendUsersPermissionsReloadRequest::class => 100,
+            \Ivoz\Kam\Infrastructure\Domain\Service\Trusted\SendTrunksPermissionsReloadRequest::class => 300,
+        ],
+    ];
+
+    /**
+     * @return void
+     */
+    protected function addService(string $event, TrustedLifecycleEventHandlerInterface $service)
     {
-        $this->services[] = $service;
+        $this->services[$event][] = $service;
     }
 }

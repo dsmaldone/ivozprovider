@@ -8,7 +8,7 @@ use Ivoz\Core\Domain\Service\FileContainerInterface;
 /**
  * FaxesInOut
  */
-class FaxesInOut extends FaxesInOutAbstract implements FaxesInOutInterface, FileContainerInterface
+class FaxesInOut extends FaxesInOutAbstract implements FileContainerInterface, FaxesInOutInterface
 {
     use FaxesInOutTrait;
     use TempFileContainnerTrait;
@@ -25,11 +25,19 @@ class FaxesInOut extends FaxesInOutAbstract implements FaxesInOutInterface, File
     /**
      * @return array
      */
-    public function getFileObjects()
+    public function getFileObjects(int $filter = null)
     {
-        return [
-            'file'
+        $fileObjects = [
+            'file' => [
+                FileContainerInterface::DOWNLOADABLE_FILE,
+                FileContainerInterface::UPDALOADABLE_FILE,
+            ]
         ];
+
+        return $this->filterFileObjects(
+            $fileObjects,
+            $filter
+        );
     }
 
     /**
@@ -45,14 +53,14 @@ class FaxesInOut extends FaxesInOutAbstract implements FaxesInOutInterface, File
     /**
      * Set calldate
      *
-     * @param \DateTime $calldate
+     * @param \DateTime | null $calldate
      *
      * @return self
      */
-    public function setCalldate($calldate)
+    public function setCalldate($calldate = null)
     {
         if (!$calldate) {
-            $calldate = new \DateTime();
+            $calldate = new \DateTime(null, new \DateTimeZone('UTC'));
         }
 
         return parent::setCalldate($calldate);
@@ -74,4 +82,3 @@ class FaxesInOut extends FaxesInOutAbstract implements FaxesInOutInterface, File
             $this->getDst();
     }
 }
-

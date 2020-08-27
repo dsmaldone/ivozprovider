@@ -2,7 +2,7 @@ production:
   entity: Ivoz\Provider\Domain\Model\Fax\Fax
   fields: 
     company:
-      title: ngettext('Company', 'Companies', 1)
+      title: ngettext('Client', 'Clients', 1)
       type: select
       required: true
       source:
@@ -44,7 +44,7 @@ production:
             title: _("Yes")
             visualFilter:
               show: ["email"]
-    outgoingDDI:
+    outgoingDdi:
       title: _('Outgoing DDI')
       type: select
       source:
@@ -58,7 +58,7 @@ production:
             template: '%ddie164%'
           order:
             Ddi.ddie164: asc
-        'null': _("Company's default")
+        'null': _("Client's default")
 staging:
   _extends: production
 testing:

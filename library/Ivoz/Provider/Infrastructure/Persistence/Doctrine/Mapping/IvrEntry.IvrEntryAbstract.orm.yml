@@ -60,7 +60,8 @@ Ivoz\Provider\Domain\Model\IvrEntry\IvrEntryAbstract:
       joinColumns:
         extensionId:
           referencedColumnName: id
-          onDelete: set null
+          onDelete: cascade
+          nullable: true
       orphanRemoval: false
     voiceMailUser:
       targetEntity: \Ivoz\Provider\Domain\Model\User\UserInterface
@@ -71,7 +72,8 @@ Ivoz\Provider\Domain\Model\IvrEntry\IvrEntryAbstract:
       joinColumns:
         voiceMailUserId:
           referencedColumnName: id
-          onDelete: set null
+          onDelete: cascade
+          nullable: true
       orphanRemoval: false
     conditionalRoute:
       targetEntity: \Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface
@@ -82,7 +84,8 @@ Ivoz\Provider\Domain\Model\IvrEntry\IvrEntryAbstract:
       joinColumns:
         conditionalRouteId:
           referencedColumnName: id
-          onDelete: set null
+          onDelete: cascade
+          nullable: true
       orphanRemoval: false
     numberCountry:
       targetEntity: \Ivoz\Provider\Domain\Model\Country\CountryInterface

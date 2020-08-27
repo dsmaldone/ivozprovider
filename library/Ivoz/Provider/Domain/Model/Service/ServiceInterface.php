@@ -18,15 +18,6 @@ interface ServiceInterface extends LoggableEntityInterface
     public function setDefaultCode($defaultCode);
 
     /**
-     * Set iden
-     *
-     * @param string $iden
-     *
-     * @return self
-     */
-    public function setIden($iden);
-
-    /**
      * Get iden
      *
      * @return string
@@ -41,29 +32,11 @@ interface ServiceInterface extends LoggableEntityInterface
     public function getDefaultCode();
 
     /**
-     * Set extraArgs
-     *
-     * @param boolean $extraArgs
-     *
-     * @return self
-     */
-    public function setExtraArgs($extraArgs);
-
-    /**
      * Get extraArgs
      *
      * @return boolean
      */
     public function getExtraArgs();
-
-    /**
-     * Set name
-     *
-     * @param \Ivoz\Provider\Domain\Model\Service\Name $name
-     *
-     * @return self
-     */
-    public function setName(\Ivoz\Provider\Domain\Model\Service\Name $name);
 
     /**
      * Get name
@@ -73,20 +46,9 @@ interface ServiceInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set description
-     *
-     * @param \Ivoz\Provider\Domain\Model\Service\Description $description
-     *
-     * @return self
-     */
-    public function setDescription(\Ivoz\Provider\Domain\Model\Service\Description $description);
-
-    /**
      * Get description
      *
      * @return \Ivoz\Provider\Domain\Model\Service\Description
      */
     public function getDescription();
-
 }
-

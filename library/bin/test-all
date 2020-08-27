@@ -1,0 +1,11 @@
+#!/bin/bash
+
+pushd /opt/irontec/ivozprovider
+    ./library/bin/test-codestyle
+
+    ./library/bin/test-phpspec
+
+    ./schema/bin/test-orm
+
+    ./library/bin/test-api
+popd

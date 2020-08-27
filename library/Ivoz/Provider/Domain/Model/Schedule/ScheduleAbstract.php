@@ -29,39 +29,39 @@ abstract class ScheduleAbstract
     protected $timeout;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
-    protected $monday = '0';
+    protected $monday = false;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
-    protected $tuesday = '0';
+    protected $tuesday = false;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
-    protected $wednesday = '0';
+    protected $wednesday = false;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
-    protected $thursday = '0';
+    protected $thursday = false;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
-    protected $friday = '0';
+    protected $friday = false;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
-    protected $saturday = '0';
+    protected $saturday = false;
 
     /**
-     * @var boolean
+     * @var boolean | null
      */
-    protected $sunday = '0';
+    protected $sunday = false;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
@@ -85,7 +85,8 @@ abstract class ScheduleAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Schedule",
             $this->getId()
         );
@@ -109,7 +110,8 @@ abstract class ScheduleAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param ScheduleInterface|null $entity
      * @param int $depth
      * @return ScheduleDto|null
      */
@@ -129,25 +131,29 @@ abstract class ScheduleAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var ScheduleDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ScheduleDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ScheduleDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ScheduleDto::class);
 
         $self = new static(
             $dto->getName(),
             $dto->getTimeIn(),
-            $dto->getTimeout());
+            $dto->getTimeout()
+        );
 
         $self
             ->setMonday($dto->getMonday())
@@ -157,24 +163,23 @@ abstract class ScheduleAbstract
             ->setFriday($dto->getFriday())
             ->setSaturday($dto->getSaturday())
             ->setSunday($dto->getSunday())
-            ->setCompany($dto->getCompany())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param ScheduleDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto ScheduleDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, ScheduleDto::class);
 
         $this
@@ -188,15 +193,15 @@ abstract class ScheduleAbstract
             ->setFriday($dto->getFriday())
             ->setSaturday($dto->getSaturday())
             ->setSunday($dto->getSunday())
-            ->setCompany($dto->getCompany());
+            ->setCompany($fkTransformer->transform($dto->getCompany()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return ScheduleDto
      */
@@ -232,11 +237,9 @@ abstract class ScheduleAbstract
             'friday' => self::getFriday(),
             'saturday' => self::getSaturday(),
             'sunday' => self::getSunday(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null
+            'companyId' => self::getCompany()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -244,9 +247,9 @@ abstract class ScheduleAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 50, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -271,9 +274,9 @@ abstract class ScheduleAbstract
      *
      * @param \DateTime $timeIn
      *
-     * @return self
+     * @return static
      */
-    public function setTimeIn($timeIn)
+    protected function setTimeIn($timeIn)
     {
         Assertion::notNull($timeIn, 'timeIn value "%s" is null, but non null value was expected.');
 
@@ -297,9 +300,9 @@ abstract class ScheduleAbstract
      *
      * @param \DateTime $timeout
      *
-     * @return self
+     * @return static
      */
-    public function setTimeout($timeout)
+    protected function setTimeout($timeout)
     {
         Assertion::notNull($timeout, 'timeout value "%s" is null, but non null value was expected.');
 
@@ -321,14 +324,15 @@ abstract class ScheduleAbstract
     /**
      * Set monday
      *
-     * @param boolean $monday
+     * @param boolean $monday | null
      *
-     * @return self
+     * @return static
      */
-    public function setMonday($monday = null)
+    protected function setMonday($monday = null)
     {
         if (!is_null($monday)) {
             Assertion::between(intval($monday), 0, 1, 'monday provided "%s" is not a valid boolean value.');
+            $monday = (bool) $monday;
         }
 
         $this->monday = $monday;
@@ -339,7 +343,7 @@ abstract class ScheduleAbstract
     /**
      * Get monday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getMonday()
     {
@@ -349,14 +353,15 @@ abstract class ScheduleAbstract
     /**
      * Set tuesday
      *
-     * @param boolean $tuesday
+     * @param boolean $tuesday | null
      *
-     * @return self
+     * @return static
      */
-    public function setTuesday($tuesday = null)
+    protected function setTuesday($tuesday = null)
     {
         if (!is_null($tuesday)) {
             Assertion::between(intval($tuesday), 0, 1, 'tuesday provided "%s" is not a valid boolean value.');
+            $tuesday = (bool) $tuesday;
         }
 
         $this->tuesday = $tuesday;
@@ -367,7 +372,7 @@ abstract class ScheduleAbstract
     /**
      * Get tuesday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getTuesday()
     {
@@ -377,14 +382,15 @@ abstract class ScheduleAbstract
     /**
      * Set wednesday
      *
-     * @param boolean $wednesday
+     * @param boolean $wednesday | null
      *
-     * @return self
+     * @return static
      */
-    public function setWednesday($wednesday = null)
+    protected function setWednesday($wednesday = null)
     {
         if (!is_null($wednesday)) {
             Assertion::between(intval($wednesday), 0, 1, 'wednesday provided "%s" is not a valid boolean value.');
+            $wednesday = (bool) $wednesday;
         }
 
         $this->wednesday = $wednesday;
@@ -395,7 +401,7 @@ abstract class ScheduleAbstract
     /**
      * Get wednesday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getWednesday()
     {
@@ -405,14 +411,15 @@ abstract class ScheduleAbstract
     /**
      * Set thursday
      *
-     * @param boolean $thursday
+     * @param boolean $thursday | null
      *
-     * @return self
+     * @return static
      */
-    public function setThursday($thursday = null)
+    protected function setThursday($thursday = null)
     {
         if (!is_null($thursday)) {
             Assertion::between(intval($thursday), 0, 1, 'thursday provided "%s" is not a valid boolean value.');
+            $thursday = (bool) $thursday;
         }
 
         $this->thursday = $thursday;
@@ -423,7 +430,7 @@ abstract class ScheduleAbstract
     /**
      * Get thursday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getThursday()
     {
@@ -433,14 +440,15 @@ abstract class ScheduleAbstract
     /**
      * Set friday
      *
-     * @param boolean $friday
+     * @param boolean $friday | null
      *
-     * @return self
+     * @return static
      */
-    public function setFriday($friday = null)
+    protected function setFriday($friday = null)
     {
         if (!is_null($friday)) {
             Assertion::between(intval($friday), 0, 1, 'friday provided "%s" is not a valid boolean value.');
+            $friday = (bool) $friday;
         }
 
         $this->friday = $friday;
@@ -451,7 +459,7 @@ abstract class ScheduleAbstract
     /**
      * Get friday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getFriday()
     {
@@ -461,14 +469,15 @@ abstract class ScheduleAbstract
     /**
      * Set saturday
      *
-     * @param boolean $saturday
+     * @param boolean $saturday | null
      *
-     * @return self
+     * @return static
      */
-    public function setSaturday($saturday = null)
+    protected function setSaturday($saturday = null)
     {
         if (!is_null($saturday)) {
             Assertion::between(intval($saturday), 0, 1, 'saturday provided "%s" is not a valid boolean value.');
+            $saturday = (bool) $saturday;
         }
 
         $this->saturday = $saturday;
@@ -479,7 +488,7 @@ abstract class ScheduleAbstract
     /**
      * Get saturday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getSaturday()
     {
@@ -489,14 +498,15 @@ abstract class ScheduleAbstract
     /**
      * Set sunday
      *
-     * @param boolean $sunday
+     * @param boolean $sunday | null
      *
-     * @return self
+     * @return static
      */
-    public function setSunday($sunday = null)
+    protected function setSunday($sunday = null)
     {
         if (!is_null($sunday)) {
             Assertion::between(intval($sunday), 0, 1, 'sunday provided "%s" is not a valid boolean value.');
+            $sunday = (bool) $sunday;
         }
 
         $this->sunday = $sunday;
@@ -507,7 +517,7 @@ abstract class ScheduleAbstract
     /**
      * Get sunday
      *
-     * @return boolean
+     * @return boolean | null
      */
     public function getSunday()
     {
@@ -519,9 +529,9 @@ abstract class ScheduleAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
+    protected function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -538,8 +548,5 @@ abstract class ScheduleAbstract
         return $this->company;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

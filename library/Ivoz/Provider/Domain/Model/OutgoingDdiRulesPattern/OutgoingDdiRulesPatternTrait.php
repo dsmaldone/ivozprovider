@@ -22,21 +22,25 @@ trait OutgoingDdiRulesPatternTrait
     protected function __construct()
     {
         parent::__construct(...func_get_args());
-
     }
+
+    abstract protected function sanitizeValues();
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param OutgoingDdiRulesPatternDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto OutgoingDdiRulesPatternDto
-         */
-        $self = parent::fromDto($dto);
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
 
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -46,20 +50,24 @@ trait OutgoingDdiRulesPatternTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param OutgoingDdiRulesPatternDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto OutgoingDdiRulesPatternDto
-         */
-        parent::updateFromDto($dto);
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+
+        $this->sanitizeValues();
 
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return OutgoingDdiRulesPatternDto
      */
@@ -79,7 +87,4 @@ trait OutgoingDdiRulesPatternTrait
             'id' => self::getId()
         ];
     }
-
-
 }
-

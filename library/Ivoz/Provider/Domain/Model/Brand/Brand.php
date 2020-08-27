@@ -4,12 +4,11 @@ namespace Ivoz\Provider\Domain\Model\Brand;
 
 use Ivoz\Core\Domain\Model\TempFileContainnerTrait;
 use Ivoz\Core\Domain\Service\FileContainerInterface;
-use Ivoz\Provider\Domain\Model\Company\CompanyInterface;
 
 /**
  * Brand
  */
-class Brand extends BrandAbstract implements BrandInterface, FileContainerInterface
+class Brand extends BrandAbstract implements FileContainerInterface, BrandInterface
 {
     use BrandTrait;
     use TempFileContainnerTrait;
@@ -26,11 +25,19 @@ class Brand extends BrandAbstract implements BrandInterface, FileContainerInterf
     /**
      * @return array
      */
-    public function getFileObjects()
+    public function getFileObjects(int $filter = null)
     {
-        return [
-            'Logo'
+        $fileObjects = [
+            'Logo' => [
+                FileContainerInterface::DOWNLOADABLE_FILE,
+                FileContainerInterface::UPDALOADABLE_FILE,
+            ]
         ];
+
+        return $this->filterFileObjects(
+            $fileObjects,
+            $filter
+        );
     }
 
     /**
@@ -45,12 +52,16 @@ class Brand extends BrandAbstract implements BrandInterface, FileContainerInterf
 
     /**
      * @inheritdoc
+     * @see BrandAbstract::setDomainUsers
      */
     public function setDomainUsers($domainUsers = null)
     {
         return parent::setDomainUsers(trim($domainUsers));
     }
 
+    /**
+     * @return string
+     */
     public function getLanguageCode()
     {
         $language = $this->getLanguage();
@@ -61,21 +72,20 @@ class Brand extends BrandAbstract implements BrandInterface, FileContainerInterf
         return $language->getIden();
     }
 
-    public function willUseExternallyRating(CompanyInterface $company, $destination=null)
+    /**
+     * @return string
+     */
+    public function getCurrencySymbol()
     {
-        $outgoingRoutings = $company->getOutgoingRoutings();
+        return $this->getCurrency()->getSymbol();
+    }
 
-        /**
-         * @var $outgoingRouting OutgoingRoutingInterface
-         */
-        foreach ($outgoingRoutings as $outgoingRouting) {
-            if (!$outgoingRouting->getPeeringContract()->getExternallyRated()) {
-                return false;
-            }
-        }
-
-        // This call will be rated using externally rater
-        return true;
+    /**
+     * @return string
+     */
+    public function getCurrencyIden()
+    {
+        return $this->getCurrency()->getIden();
     }
 
     /**
@@ -87,9 +97,6 @@ class Brand extends BrandAbstract implements BrandInterface, FileContainerInterf
         // Get the sum of all the companies usages
         $total = 0;
 
-        /**
-         * @var $company CompanyInterface
-         */
         foreach ($this->getCompanies() as $company) {
             $total += $company->getRecordingsDiskUsage();
         }
@@ -106,14 +113,11 @@ class Brand extends BrandAbstract implements BrandInterface, FileContainerInterf
     }
 
     /**
-     * @return FeatureInterface[]
+     * @return \Ivoz\Provider\Domain\Model\Feature\FeatureInterface[]
      */
     public function getFeatures()
     {
         $features = array();
-        /**
-         * @var $relFeature FeaturesRelBrandInterface
-         */
         foreach ($this->getRelFeatures() as $relFeature) {
             array_push($features, $relFeature->getFeature());
         }
@@ -122,19 +126,78 @@ class Brand extends BrandAbstract implements BrandInterface, FileContainerInterf
     }
 
     /**
-     * @param $featureId
+     * @param int $featureId
      * @return bool
      */
     public function hasFeature($featureId)
     {
         foreach ($this->getFeatures() as $feature) {
             if ($feature->getId() == $featureId) {
-
                 return true;
             }
         }
 
         return false;
     }
-}
 
+    public function hasFeatureByIden(string $iden): bool
+    {
+        foreach ($this->getFeatures() as $feature) {
+            if ($feature->getIden() === $iden) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Return Brand Cgrates tenant code
+     *
+     * @return string
+     */
+    public function getCgrTenant()
+    {
+        return sprintf(
+            "b%d",
+            $this->getId()
+        );
+    }
+
+    /**
+     * @param string $exten
+     * @return \Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface|null
+     */
+    public function getService($exten)
+    {
+        $code = substr($exten, 1);
+
+        // Get company services
+        $services = $this->getServices();
+
+        // Look for an exact match in service name
+        foreach ($services as $service) {
+            if ($service->getService()->getExtraArgs()) {
+                continue;
+            }
+            if (strlen($code) !== strlen($service->getCode())) {
+                continue;
+            }
+            if ($code === $service->getCode()) {
+                return $service;
+            }
+        }
+
+        // Look for a partial service match
+        foreach ($services as $service) {
+            if (!$service->getService()->getExtraArgs()) {
+                continue;
+            }
+            if (!strncmp($code, $service->getCode(), strlen($service->getCode()))) {
+                return $service;
+            }
+        }
+
+        // Extension doesn't match any service
+        return null;
+    }
+}

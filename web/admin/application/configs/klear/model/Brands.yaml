@@ -29,7 +29,7 @@ production:
         type: box
         position: left
         icon: help
-        text: _("Limits both user generated and external received calls to this value (0 for unlimited).")
+        text: _("Limits external incoming and outgoing calls to this value (0 for unlimited).")
         label: _("Need help?")
     defaultTimezone:
       title: _('Default timezone')
@@ -46,6 +46,19 @@ production:
             template: '%tz%'
           order:
             Timezone.tz: asc
+    currency:
+      title: ngettext('Currency', 'Currencies', 1)
+      type: select
+      required: true
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\Currency\Currency
+          fieldName:
+            fields:
+              - name${lang}
+              - symbol
+            template: '%name${lang}% (%symbol%)'
     logo:
       title: _('Logo')
       type: file
@@ -198,13 +211,20 @@ production:
               retail:
                 toggle:
                   - domainUsers
+              residential:
+                toggle:
+                  - domainUsers
               recordings:
                 toggle:
                   - recordingsLimitMB
                   - recordingsDiskUsage
                   - recordingsLimitEmail
-              billing:
+              faxes:
                 toggle:
+                  - faxNotificationTemplate
+              invoices:
+                toggle:
+                  - invoiceNotificationTemplate
                   - invoice.PostalAddress
                   - invoice.PostalCode
                   - invoice.Town
@@ -213,6 +233,77 @@ production:
                   - invoice.RegistryData
           order:
             Feature.name: asc
+    relProxyTrunks:
+      title: _('Proxy Trunks')
+      type: multiselect
+      source:
+        data: mapper
+        config:
+          extraDataAttributes:
+            feature: id
+          relation: \Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrand
+          relationProperty: brand
+          relatedProperty: proxyTrunk
+          related: \Ivoz\Provider\Domain\Model\ProxyTrunk\ProxyTrunk
+          relatedFieldName:
+            fields:
+            - name
+            - ip
+            template: '%name% (%ip%)'
+          order:
+            ProxyTrunk.name: asc
+    voicemailNotificationTemplate:
+      title: ngettext('Voicemail Notification', 'Voicemail Notifications', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate
+          filterClass: IvozProvider_Klear_Filter_NotificationTemplateVoicemail
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+        'null': _("Use generic template")
+    faxNotificationTemplate:
+      title: ngettext('Fax Notification', 'Fax Notifications', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate
+          filterClass: IvozProvider_Klear_Filter_NotificationTemplateFax
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+        'null': _("Use generic template")
+    invoiceNotificationTemplate:
+      title: ngettext('Invoice Notification', 'Invoice Notifications', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate
+          filterClass: IvozProvider_Klear_Filter_NotificationTemplateInvoice
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+        'null': _("Use generic template")
+    callCsvNotificationTemplate:
+      title: ngettext('Call CSV Notification', 'Call CSV Notifications', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate
+          filterClass: IvozProvider_Klear_Filter_NotificationTemplateCallCsv
+          fieldName:
+            fields:
+            - name
+            template: '%name%'
+        'null': _("Use generic template")
 staging:
   _extends: production
 testing:

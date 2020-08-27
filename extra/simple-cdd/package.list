@@ -4,6 +4,7 @@ ivozprovider-asterisk-agi
 ivozprovider-asterisk-config
 ivozprovider-asterisk-sounds
 ivozprovider-balances
+ivozprovider-scheduler
 ivozprovider-common-library
 ivozprovider-async-workers
 ivozprovider-doc
@@ -20,15 +21,17 @@ ivozprovider-kamailio-websocket-modules:#ARCH#
 ivozprovider-kamailio-extra-modules:#ARCH#
 ivozprovider-kamailio-xml-modules:#ARCH#
 ivozprovider-kamailio-presence-modules:#ARCH#
+ivozprovider-kamailio-utils-modules:#ARCH#
+ivozprovider-kamailio-redis-modules:#ARCH#
 ivozprovider-profile-as
 ivozprovider-profile-common
 ivozprovider-profile-data
 ivozprovider-profile-portal
 ivozprovider-profile-proxy
 ivozprovider-recordings
-ivozprovider-rtpproxy:#ARCH#
+ivozprovider-realtime
 ivozprovider-rtpengine:#ARCH#
-ivozprovider-scheme
+ivozprovider-schema
 ivozprovider-web-admin
 ivozprovider-web-rest
 ivozprovider-web-user
@@ -45,4 +48,6 @@ mysql-common:#ARCH#
 mysql-community-client:#ARCH#
 mysql-community-server:#ARCH#
 mysql-server:#ARCH#
+php-redis
+php-swoole
 zendframework

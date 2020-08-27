@@ -2,28 +2,175 @@
 
 namespace spec;
 
+use Prophecy\Argument;
+use Prophecy\Prophecy\ObjectProphecy;
+
 trait HelperTrait
 {
-    protected function getterProphecy($double, array $values)
-    {
-        foreach ($values as $method => $value) {
+    protected $prophet;
 
-            $double
-                ->{$method}()
-                ->willReturn($value)
-                ->shouldBeCalled();
+    /**
+     * @var ObjectProphecy[]
+     */
+    protected $collaborators = [];
+
+    protected function getInstance(
+        string $fqdn,
+        array $data = []
+    ) {
+        $reflection = new \ReflectionClass($fqdn);
+
+        $instance =  $reflection
+            ->newInstanceWithoutConstructor();
+
+        return $this->updateInstance(
+            $instance,
+            $data
+        );
+    }
+
+    protected function updateInstance($instance, array $data = [])
+    {
+        (function (array $data) {
+            foreach ($data as $key => $value) {
+                if (!property_exists($this, $key)) {
+                    throw new \Exception(
+                        "Attribute $key was not found on "
+                        . get_class($this)
+                    );
+                }
+
+                $this->$key = $value;
+            }
+        })->call($instance, $data);
+
+        return $instance;
+    }
+
+    protected function getTestDouble(
+        string $fqdn,
+        $allowAnyCall = true
+    ) {
+        if (!$this->prophet) {
+            $this->prophet = new \Prophecy\Prophet;
+        }
+
+        $collaborator = $this->prophet->prophesize(
+            $fqdn
+        );
+        $this->collaborators[] = $collaborator;
+
+        if (!$allowAnyCall) {
+            return $collaborator;
+        }
+
+        $publicMethods = (new \ReflectionClass($fqdn))
+                ->getMethods(\ReflectionMethod::IS_PUBLIC);
+
+        foreach ($publicMethods as $publicMethod) {
+            $methodName = $publicMethod->getName();
+            if (strpos($methodName, '__') === 0) {
+                continue;
+            }
+
+            $methodArguments = $publicMethod->getParameters();
+
+            $arguments = [];
+            foreach ($methodArguments as $item) {
+                $arguments[] = Argument::any();
+            }
+
+            if (strpos($methodName, 'set') === 0) {
+                $collaborator
+                    ->{$methodName}(...$arguments)
+                    ->willReturn(
+                        $collaborator
+                    );
+            } else {
+                $collaborator
+                    ->{$methodName}(...$arguments)
+                    ->willReturn();
+            }
+        }
+
+        return $collaborator;
+    }
+
+    public function letGo()
+    {
+        foreach ($this->collaborators as $collaborator) {
+            $collaborator->checkProphecyMethodsPredictions();
         }
     }
 
-    protected function fluentSetterProphecy($double, array $values)
+    protected function getterProphecy($double, array $values, $shouldBeCalled = true)
     {
         foreach ($values as $method => $value) {
+            if (is_callable($value)) {
+                list($arguments, $returnValue) = $value();
+                $prophecy = $double
+                    ->{$method}(...$arguments)
+                    ->willReturn($returnValue);
 
-            $double
-                ->{$method}($value)
-                ->willReturn($double)
-                ->shouldBeCalled();
+                if ($shouldBeCalled) {
+                    $prophecy->shouldBeCalled();
+                }
+
+                continue;
+            }
+
+            $prophecy = $double
+                ->{$method}()
+                ->willReturn($value);
+
+            if ($shouldBeCalled) {
+                $prophecy->shouldBeCalled();
+            }
         }
+    }
+
+    protected function setterProphecy($double, array $values, $shouldBeCalled = true)
+    {
+        foreach ($values as $method => $value) {
+            if (is_callable($value)) {
+                list($arguments, $returnValue) = $value();
+                $prophecy = $double
+                    ->{$method}(...$arguments)
+                    ->willReturn($returnValue);
+            } else {
+                $prophecy = $double
+                    ->{$method}($value)
+                    ->willReturn(null);
+            }
+
+            if ($shouldBeCalled) {
+                $prophecy->shouldBeCalled();
+            }
+        }
+    }
+
+    protected function fluentSetterProphecy($double, array $values, $shouldBeCalled = true)
+    {
+        foreach ($values as $method => $value) {
+            if (!is_callable($value)) {
+                $values[$method] = function () use ($double, $value) {
+                    return [[$value], $double];
+                };
+            }
+        }
+
+        $this->setterProphecy($double, $values, $shouldBeCalled);
+    }
+
+    protected function resetProphecies($double, string $method)
+    {
+        $reflection = new \ReflectionClass($double);
+        $property = $this->getProperty($reflection, 'methodProphecies');
+        $property->setAccessible(true);
+        $values = $property->getValue($double);
+        unset($values[strtolower($method)]);
+        $property->setValue($double, $values);
+        $property->setAccessible(false);
     }
 
     protected function hydrate($object, $values)
@@ -47,7 +194,6 @@ trait HelperTrait
         }
 
         if ($reflection->getParentClass()) {
-
             return $this->getProperty(
                 $reflection->getParentClass(),
                 $propertyName
@@ -57,7 +203,5 @@ trait HelperTrait
         throw new \Exception(
             'Property ' . $propertyName . ' does not exist'
         );
-
-
     }
 }

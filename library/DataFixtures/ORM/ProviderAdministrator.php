@@ -17,61 +17,160 @@ class ProviderAdministrator extends Fixture implements DependentFixtureInterface
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(Administrator::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
-    
-        $item1 = $this->createEntityInstanceWithPublicMethods(Administrator::class);
-        $item1->setUsername("admin");
-        $item1->setPass('changeme');
-        $item1->setEmail("admin@example.com");
-        $item1->setActive(true);
-        $item1->setName("admin");
-        $item1->setLastname("ivozprovider");
-        $item1->setTimezone($this->getReference('_reference_ProviderTimezone145'));
+
+        $manager->getConnection()->exec(
+            'INSERT INTO Administrators (id, username, pass, active) VALUES (0, "privateAdmin", "", 0)'
+        );
+
+        $item1 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("admin");
+            $this->setPass('changeme');
+            $this->setEmail("admin@example.com");
+            $this->setActive(true);
+            $this->setName("admin");
+            $this->setLastname("ivozprovider");
+            $this->setTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+        })->call($item1);
+
         $this->addReference('_reference_ProviderAdministrator1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);
 
-        $item2 = $this->createEntityInstanceWithPublicMethods(Administrator::class);
-        $item2->setUsername("test admin");
-        $item2->setPass("changeme");
-        $item2->setEmail("nightwatch@irontec.com");
-        $item2->setActive(true);
-        $item2->setName("night");
-        $item2->setLastname("watch");
-        $item2->setBrand($this->getReference('_reference_ProviderBrand1'));
-        $item2->setTimezone($this->getReference('_reference_ProviderTimezone145'));
+        $item2 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("test_brand_admin");
+            $this->setPass("changeme");
+            $this->setEmail("nightwatch@irontec.com");
+            $this->setActive(true);
+            $this->setName("night");
+            $this->setLastname("watch");
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+        })->call($item2);
+
         $this->addReference('_reference_ProviderAdministrator2', $item2);
         $this->sanitizeEntityValues($item2);
         $manager->persist($item2);
 
-        $item3 = $this->createEntityInstanceWithPublicMethods(Administrator::class);
-        $item3->setUsername("irontec");
-        $item3->setPass("changeme");
-        $item3->setEmail("vozip@irontec.com");
-        $item3->setActive(true);
-        $item3->setName("irontec");
-        $item3->setLastname("ivozprovider");
-        $item3->setTimezone($this->getReference('_reference_ProviderTimezone145'));
+        $item3 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("irontec");
+            $this->setPass("changeme");
+            $this->setEmail("vozip@irontec.com");
+            $this->setActive(true);
+            $this->setName("irontec");
+            $this->setLastname("ivozprovider");
+            $this->setTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+        })->call($item3);
+
         $this->addReference('_reference_ProviderAdministrator3', $item3);
         $this->sanitizeEntityValues($item3);
         $manager->persist($item3);
 
-        $item4 = $this->createEntityInstanceWithPublicMethods(Administrator::class);
-        $item4->setUsername("test_company_admin");
-        $item4->setPass("changeme");
-        $item4->setEmail("test@irontec.com");
-        $item4->setActive(true);
-        $item4->setName("Admin Name");
-        $item4->setLastname("Admin Lastname");
-        $item4->setBrand($this->getReference('_reference_ProviderBrand1'));
-        $item4->setCompany($this->getReference('_reference_ProviderCompany1'));
-        $item4->setTimezone($this->getReference('_reference_ProviderTimezone145'));
+        $item4 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("test_company_admin");
+            $this->setPass("changeme");
+            $this->setEmail("test@irontec.com");
+            $this->setActive(true);
+            $this->setName("Admin Name");
+            $this->setLastname("Admin Lastname");
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany1'));
+            $this->setTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+        })->call($item4);
+
         $this->addReference('_reference_ProviderAdministrator4', $item4);
         $this->sanitizeEntityValues($item4);
         $manager->persist($item4);
 
-    
+        $item5 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("utcAdmin");
+            $this->setPass("changeme");
+            $this->setEmail("utc@irontec.com");
+            $this->setActive(true);
+            $this->setRestricted(true);
+            $this->setName("Admin in UTC timezone");
+            $this->setLastname("Admin Lastname");
+            $this->setTimezone(null);
+        })->call($item5);
+
+        $this->addReference('_reference_ProviderAdministrator5', $item5);
+        $this->sanitizeEntityValues($item5);
+        $manager->persist($item5);
+
+        $item6 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("restrictedBrandAdmin");
+            $this->setPass("changeme");
+            $this->setEmail("restrictedAdmin@irontec.com");
+            $this->setActive(true);
+            $this->setRestricted(true);
+            $this->setName("RestrictedAdmin");
+            $this->setLastname("Lastname");
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+        })->call($item6);
+
+        $this->addReference('_reference_ProviderAdministrator6', $item6);
+        $this->sanitizeEntityValues($item6);
+        $manager->persist($item6);
+
+        $item7 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("restrictedCompanyAdmin");
+            $this->setPass("changeme");
+            $this->setEmail("test@irontec.com");
+            $this->setActive(true);
+            $this->setRestricted(true);
+            $this->setName("Admin Name");
+            $this->setLastname("Admin Lastname");
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany1'));
+            $this->setTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+        })->call($item7);
+
+        $this->addReference('_reference_ProviderAdministrator7', $item7);
+        $this->sanitizeEntityValues($item7);
+        $manager->persist($item7);
+
+        $item8 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("test_residential_admin");
+            $this->setPass("changeme");
+            $this->setEmail("test@irontec.com");
+            $this->setActive(true);
+            $this->setName("Admin Name");
+            $this->setLastname("Admin Lastname");
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany4'));
+            $this->setTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+        })->call($item8);
+        $this->addReference('_reference_ProviderAdministrator8', $item8);
+        $this->sanitizeEntityValues($item8);
+        $manager->persist($item8);
+
+
+        $item9 = $this->createEntityInstance(Administrator::class);
+        (function () use ($fixture) {
+            $this->setUsername("test_retail_admin");
+            $this->setPass("changeme");
+            $this->setEmail("test@irontec.com");
+            $this->setActive(true);
+            $this->setName("Admin Name");
+            $this->setLastname("Admin Lastname");
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany3'));
+            $this->setTimezone($fixture->getReference('_reference_ProviderTimezone145'));
+        })->call($item9);
+        $this->addReference('_reference_ProviderAdministrator9', $item9);
+        $this->sanitizeEntityValues($item9);
+        $manager->persist($item9);
+
         $manager->flush();
     }
 

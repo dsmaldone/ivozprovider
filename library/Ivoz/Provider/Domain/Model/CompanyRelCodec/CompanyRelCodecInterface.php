@@ -15,27 +15,18 @@ interface CompanyRelCodecInterface extends LoggableEntityInterface
     /**
      * Set company
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company | null
      *
-     * @return self
+     * @return static
      */
     public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
 
     /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany();
-
-    /**
-     * Set codec
-     *
-     * @param \Ivoz\Provider\Domain\Model\Codec\CodecInterface $codec
-     *
-     * @return self
-     */
-    public function setCodec(\Ivoz\Provider\Domain\Model\Codec\CodecInterface $codec);
 
     /**
      * Get codec
@@ -43,6 +34,4 @@ interface CompanyRelCodecInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\Codec\CodecInterface
      */
     public function getCodec();
-
 }
-

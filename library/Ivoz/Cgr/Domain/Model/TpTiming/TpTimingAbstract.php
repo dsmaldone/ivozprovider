@@ -19,7 +19,7 @@ abstract class TpTimingAbstract
     protected $tpid = 'ivozprovider';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $tag;
 
@@ -56,6 +56,11 @@ abstract class TpTimingAbstract
      */
     protected $createdAt;
 
+    /**
+     * @var \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanInterface
+     */
+    protected $ratingPlan;
+
 
     use ChangelogTrait;
 
@@ -84,7 +89,8 @@ abstract class TpTimingAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TpTiming",
             $this->getId()
         );
@@ -108,7 +114,8 @@ abstract class TpTimingAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TpTimingInterface|null $entity
      * @param int $depth
      * @return TpTimingDto|null
      */
@@ -128,19 +135,22 @@ abstract class TpTimingAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TpTimingDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpTimingDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpTimingDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpTimingDto::class);
 
         $self = new static(
@@ -150,27 +160,28 @@ abstract class TpTimingAbstract
             $dto->getMonthDays(),
             $dto->getWeekDays(),
             $dto->getTime(),
-            $dto->getCreatedAt());
+            $dto->getCreatedAt()
+        );
 
         $self
             ->setTag($dto->getTag())
+            ->setRatingPlan($fkTransformer->transform($dto->getRatingPlan()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpTimingDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpTimingDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpTimingDto::class);
 
         $this
@@ -181,15 +192,16 @@ abstract class TpTimingAbstract
             ->setMonthDays($dto->getMonthDays())
             ->setWeekDays($dto->getWeekDays())
             ->setTime($dto->getTime())
-            ->setCreatedAt($dto->getCreatedAt());
+            ->setCreatedAt($dto->getCreatedAt())
+            ->setRatingPlan($fkTransformer->transform($dto->getRatingPlan()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TpTimingDto
      */
@@ -203,7 +215,8 @@ abstract class TpTimingAbstract
             ->setMonthDays(self::getMonthDays())
             ->setWeekDays(self::getWeekDays())
             ->setTime(self::getTime())
-            ->setCreatedAt(self::getCreatedAt());
+            ->setCreatedAt(self::getCreatedAt())
+            ->setRatingPlan(\Ivoz\Provider\Domain\Model\RatingPlan\RatingPlan::entityToDto(self::getRatingPlan(), $depth));
     }
 
     /**
@@ -219,11 +232,10 @@ abstract class TpTimingAbstract
             'month_days' => self::getMonthDays(),
             'week_days' => self::getWeekDays(),
             'time' => self::getTime(),
-            'created_at' => self::getCreatedAt()
+            'created_at' => self::getCreatedAt(),
+            'ratingPlanId' => self::getRatingPlan()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -231,9 +243,9 @@ abstract class TpTimingAbstract
      *
      * @param string $tpid
      *
-     * @return self
+     * @return static
      */
-    public function setTpid($tpid)
+    protected function setTpid($tpid)
     {
         Assertion::notNull($tpid, 'tpid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($tpid, 64, 'tpid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -256,11 +268,11 @@ abstract class TpTimingAbstract
     /**
      * Set tag
      *
-     * @param string $tag
+     * @param string $tag | null
      *
-     * @return self
+     * @return static
      */
-    public function setTag($tag = null)
+    protected function setTag($tag = null)
     {
         if (!is_null($tag)) {
             Assertion::maxLength($tag, 64, 'tag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -274,7 +286,7 @@ abstract class TpTimingAbstract
     /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -286,9 +298,9 @@ abstract class TpTimingAbstract
      *
      * @param string $years
      *
-     * @return self
+     * @return static
      */
-    public function setYears($years)
+    protected function setYears($years)
     {
         Assertion::notNull($years, 'years value "%s" is null, but non null value was expected.');
         Assertion::maxLength($years, 255, 'years value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -313,9 +325,9 @@ abstract class TpTimingAbstract
      *
      * @param string $months
      *
-     * @return self
+     * @return static
      */
-    public function setMonths($months)
+    protected function setMonths($months)
     {
         Assertion::notNull($months, 'months value "%s" is null, but non null value was expected.');
         Assertion::maxLength($months, 255, 'months value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -340,9 +352,9 @@ abstract class TpTimingAbstract
      *
      * @param string $monthDays
      *
-     * @return self
+     * @return static
      */
-    public function setMonthDays($monthDays)
+    protected function setMonthDays($monthDays)
     {
         Assertion::notNull($monthDays, 'monthDays value "%s" is null, but non null value was expected.');
         Assertion::maxLength($monthDays, 255, 'monthDays value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -367,9 +379,9 @@ abstract class TpTimingAbstract
      *
      * @param string $weekDays
      *
-     * @return self
+     * @return static
      */
-    public function setWeekDays($weekDays)
+    protected function setWeekDays($weekDays)
     {
         Assertion::notNull($weekDays, 'weekDays value "%s" is null, but non null value was expected.');
         Assertion::maxLength($weekDays, 255, 'weekDays value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -394,9 +406,9 @@ abstract class TpTimingAbstract
      *
      * @param string $time
      *
-     * @return self
+     * @return static
      */
-    public function setTime($time)
+    protected function setTime($time)
     {
         Assertion::notNull($time, 'time value "%s" is null, but non null value was expected.');
         Assertion::maxLength($time, 32, 'time value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -421,15 +433,19 @@ abstract class TpTimingAbstract
      *
      * @param \DateTime $createdAt
      *
-     * @return self
+     * @return static
      */
-    public function setCreatedAt($createdAt)
+    protected function setCreatedAt($createdAt)
     {
         Assertion::notNull($createdAt, 'createdAt value "%s" is null, but non null value was expected.');
         $createdAt = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $createdAt,
             'CURRENT_TIMESTAMP'
         );
+
+        if ($this->createdAt == $createdAt) {
+            return $this;
+        }
 
         $this->createdAt = $createdAt;
 
@@ -443,11 +459,32 @@ abstract class TpTimingAbstract
      */
     public function getCreatedAt()
     {
-        return $this->createdAt;
+        return clone $this->createdAt;
     }
 
+    /**
+     * Set ratingPlan
+     *
+     * @param \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanInterface $ratingPlan
+     *
+     * @return static
+     */
+    public function setRatingPlan(\Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanInterface $ratingPlan)
+    {
+        $this->ratingPlan = $ratingPlan;
 
+        return $this;
+    }
+
+    /**
+     * Get ratingPlan
+     *
+     * @return \Ivoz\Provider\Domain\Model\RatingPlan\RatingPlanInterface
+     */
+    public function getRatingPlan()
+    {
+        return $this->ratingPlan;
+    }
 
     // @codeCoverageIgnoreEnd
 }
-

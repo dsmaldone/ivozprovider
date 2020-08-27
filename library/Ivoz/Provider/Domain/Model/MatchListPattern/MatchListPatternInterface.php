@@ -6,6 +6,10 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface MatchListPatternInterface extends LoggableEntityInterface
 {
+    const TYPE_NUMBER = 'number';
+    const TYPE_REGEXP = 'regexp';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -14,34 +18,16 @@ interface MatchListPatternInterface extends LoggableEntityInterface
 
     /**
      * Get Number value in E.164 format
-     * @param $prefix string
+     * @return string
      */
     public function getNumberE164();
 
     /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return self
-     */
-    public function setDescription($description = null);
-
-    /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription();
-
-    /**
-     * Set type
-     *
-     * @param string $type
-     *
-     * @return self
-     */
-    public function setType($type);
 
     /**
      * Get type
@@ -51,34 +37,16 @@ interface MatchListPatternInterface extends LoggableEntityInterface
     public function getType();
 
     /**
-     * Set regexp
-     *
-     * @param string $regexp
-     *
-     * @return self
-     */
-    public function setRegexp($regexp = null);
-
-    /**
      * Get regexp
      *
-     * @return string
+     * @return string | null
      */
     public function getRegexp();
 
     /**
-     * Set numbervalue
-     *
-     * @param string $numbervalue
-     *
-     * @return self
-     */
-    public function setNumbervalue($numbervalue = null);
-
-    /**
      * Get numbervalue
      *
-     * @return string
+     * @return string | null
      */
     public function getNumbervalue();
 
@@ -87,9 +55,9 @@ interface MatchListPatternInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList
      *
-     * @return self
+     * @return static
      */
-    public function setMatchList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList = null);
+    public function setMatchList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList);
 
     /**
      * Get matchList
@@ -99,20 +67,9 @@ interface MatchListPatternInterface extends LoggableEntityInterface
     public function getMatchList();
 
     /**
-     * Set numberCountry
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry
-     *
-     * @return self
-     */
-    public function setNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $numberCountry = null);
-
-    /**
      * Get numberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getNumberCountry();
-
 }
-

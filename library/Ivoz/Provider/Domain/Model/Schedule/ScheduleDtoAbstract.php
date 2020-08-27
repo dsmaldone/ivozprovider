@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Schedule;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -18,49 +16,49 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     private $name;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $timeIn;
 
     /**
-     * @var \DateTime
+     * @var \DateTime | string
      */
     private $timeout;
 
     /**
      * @var boolean
      */
-    private $monday = '0';
+    private $monday = false;
 
     /**
      * @var boolean
      */
-    private $tuesday = '0';
+    private $tuesday = false;
 
     /**
      * @var boolean
      */
-    private $wednesday = '0';
+    private $wednesday = false;
 
     /**
      * @var boolean
      */
-    private $thursday = '0';
+    private $thursday = false;
 
     /**
      * @var boolean
      */
-    private $friday = '0';
+    private $friday = false;
 
     /**
      * @var boolean
      */
-    private $saturday = '0';
+    private $saturday = false;
 
     /**
      * @var boolean
      */
-    private $sunday = '0';
+    private $sunday = false;
 
     /**
      * @var integer
@@ -83,7 +81,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -110,7 +108,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'timeIn' => $this->getTimeIn(),
             'timeout' => $this->getTimeout(),
@@ -124,22 +122,19 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
             'id' => $this->getId(),
             'company' => $this->getCompany()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -155,7 +150,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -175,7 +170,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getTimeIn()
     {
@@ -195,7 +190,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime | null
      */
     public function getTimeout()
     {
@@ -215,7 +210,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getMonday()
     {
@@ -235,7 +230,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getTuesday()
     {
@@ -255,7 +250,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getWednesday()
     {
@@ -275,7 +270,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getThursday()
     {
@@ -295,7 +290,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getFriday()
     {
@@ -315,7 +310,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getSaturday()
     {
@@ -335,7 +330,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getSunday()
     {
@@ -355,7 +350,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -375,7 +370,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -383,7 +378,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -397,7 +392,7 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -408,5 +403,3 @@ abstract class ScheduleDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

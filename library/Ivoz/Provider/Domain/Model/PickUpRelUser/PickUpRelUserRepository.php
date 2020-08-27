@@ -2,8 +2,10 @@
 
 namespace Ivoz\Provider\Domain\Model\PickUpRelUser;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
-interface PickUpRelUserRepository extends ObjectRepository, Selectable {}
+interface PickUpRelUserRepository extends ObjectRepository, Selectable
+{
 
+}

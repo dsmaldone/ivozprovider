@@ -9,15 +9,18 @@ class KlearCustomGenerateInvoiceController extends Zend_Controller_Action
 
     protected $_brandId;
 
-    public function init ()
+    public function init()
     {
         /**
          * Initialize action controller here
          */
         if ((! $this->_mainRouter = $this->getRequest()->getUserParam(
-                "mainRouter")) || (! is_object($this->_mainRouter))) {
-            throw new Zend_Exception("",
-                    Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
+            "mainRouter"
+        )) || (! is_object($this->_mainRouter))) {
+            throw new Zend_Exception(
+                "",
+                Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION
+            );
         }
 
         $this->_helper->ContextSwitch()
@@ -45,7 +48,7 @@ class KlearCustomGenerateInvoiceController extends Zend_Controller_Action
         }
     }
 
-    protected function _confirmDialog ()
+    protected function _confirmDialog()
     {
         $title = $this->_helper->translate("Generate invoice");
         $message = $this->_helper->translate("Are you sure you want to generate the invoice?");
@@ -83,21 +86,33 @@ class KlearCustomGenerateInvoiceController extends Zend_Controller_Action
         /** @var \Ivoz\Core\Application\Service\DataGateway $dataGateway */
         $dataGateway = \Zend_Registry::get('data_gateway');
 
-        foreach ($pks as $pk) {
-            $invoice = $dataGateway->find(Invoice::class, $pk);
-            $invoice->setStatus("waiting");
-            $dataGateway->update(Invoice::class, $invoice);
-        }
+        try {
+            foreach ($pks as $pk) {
+                $invoice = $dataGateway->find(Invoice::class, $pk);
+                $invoice->setStatus("waiting");
+                $dataGateway->update(Invoice::class, $invoice);
+            }
 
-        if (count($pks) == 1) {
-            $title = $this->_helper->translate("Invoice(s) enqueued");
-            $message = $this->_helper->translate("Invoice has been enqueued. It will be generated as soon as posible.");
-        } else {
-            $n = count($pks);
-            $title = $this->_helper->translate("Invoice(s) enqueued") . ": " . $n;
-            $message = $this->_helper->translate("Invoices have been enqueued. They will be generated as soon as posible.");
+            if (count($pks) == 1) {
+                $title = $this->_helper->translate("Invoice(s) enqueued");
+                $message = $this->_helper->translate("Invoice has been enqueued. It will be generated as soon as posible.");
+            } else {
+                $n = count($pks);
+                $title = $this->_helper->translate("Invoice(s) enqueued") . ": " . $n;
+                $message = $this->_helper->translate("Invoices have been enqueued. They will be generated as soon as posible.");
+            }
+        } catch (\Exception $e) {
+            $phpSettings = $this->getInvokeArg('bootstrap')->getOption("phpSettings");
+            $displayErrors = $phpSettings["display_errors"] ?? false;
+            $showErrors = ($e instanceof \DomainException) || $displayErrors;
+            $title = $this->_helper->translate("Error");
+
+            $message = $showErrors
+                ? $e->getMessage()
+                : 'Undefined error';
+        } finally {
+            $closeButton = $this->_helper->translate("Close");
         }
-        $closeButton = $this->_helper->translate("Close");
 
         $data = array(
             'title' => $title,
@@ -112,7 +127,7 @@ class KlearCustomGenerateInvoiceController extends Zend_Controller_Action
         $this->_dispatch($data);
     }
 
-    protected function _dispatch (array $data)
+    protected function _dispatch(array $data)
     {
         $jsonResponse = new Klear_Model_DispatchResponse();
         $jsonResponse->setModule('klearMatrix');
@@ -122,4 +137,3 @@ class KlearCustomGenerateInvoiceController extends Zend_Controller_Action
         $jsonResponse->attachView($this->view);
     }
 }
-

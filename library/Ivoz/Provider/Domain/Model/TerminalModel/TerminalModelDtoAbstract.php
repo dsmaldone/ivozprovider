@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\TerminalModel;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -68,7 +66,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -92,7 +90,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'iden' => $this->getIden(),
             'name' => $this->getName(),
             'description' => $this->getDescription(),
@@ -103,22 +101,19 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
             'id' => $this->getId(),
             'terminalManufacturer' => $this->getTerminalManufacturer()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->terminalManufacturer = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\TerminalManufacturer\\TerminalManufacturer', $this->getTerminalManufacturerId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -134,7 +129,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getIden()
     {
@@ -154,7 +149,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -174,7 +169,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -194,7 +189,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getGenericTemplate()
     {
@@ -214,7 +209,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSpecificTemplate()
     {
@@ -234,7 +229,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getGenericUrlPattern()
     {
@@ -254,7 +249,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getSpecificUrlPattern()
     {
@@ -274,7 +269,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -294,7 +289,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\TerminalManufacturer\TerminalManufacturerDto
+     * @return \Ivoz\Provider\Domain\Model\TerminalManufacturer\TerminalManufacturerDto | null
      */
     public function getTerminalManufacturer()
     {
@@ -302,7 +297,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -316,7 +311,7 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getTerminalManufacturerId()
     {
@@ -327,5 +322,3 @@ abstract class TerminalModelDtoAbstract implements DataTransferObjectInterface
         return null;
     }
 }
-
-

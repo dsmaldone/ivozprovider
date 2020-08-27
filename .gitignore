@@ -3,7 +3,6 @@
 *.settings
 *.idea
 .idea/*
-scheme/build.properties.development
 
 vendor
 **/coverage/
@@ -27,3 +26,4 @@ doc/doctrees/
 
 kamailio/users/config/kamailio-selfsigned.key
 kamailio/trunks/config/kamailio-selfsigned.key
+

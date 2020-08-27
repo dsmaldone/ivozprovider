@@ -9,20 +9,16 @@ use Symfony\Component\Security\Core\User\AdvancedUserInterface;
  */
 class Administrator extends AdministratorAbstract implements AdministratorInterface, AdvancedUserInterface, \Serializable
 {
-    use AdministratorTrait;
-    use AdministratorSecurityTrait;
+    use AdministratorTrait, AdministratorSecurityTrait {
+        AdministratorTrait::getRelPublicEntities insteadof AdministratorSecurityTrait;
+    }
 
     /**
      * @return array
      */
     public function getChangeSet()
     {
-        $changeSet = parent::getChangeSet();
-        if (isset($changeSet['pass'])) {
-            $changeSet['pass'] = '****';
-        }
-
-        return $changeSet;
+        return parent::getChangeSet();
     }
 
     /**
@@ -44,7 +40,7 @@ class Administrator extends AdministratorAbstract implements AdministratorInterf
             return $this;
         }
 
-        $salt = substr(md5(mt_rand(), false), 0, 22);
+        $salt = substr(md5(random_int(0, mt_getrandmax()), false), 0, 22);
         $cryptPass = crypt(
             $pass,
             '$2a$08$' . $salt . '$' . $salt . '$'
@@ -67,25 +63,73 @@ class Administrator extends AdministratorAbstract implements AdministratorInterf
     /**
      * @return bool
      */
-    public function isBrandAdmin()
+    public function isBrandAdmin(): bool
     {
         if ($this->isSuperAdmin()) {
             return true;
         }
 
-        return !is_null($this->getBrand());
+        return is_null($this->getCompany());
     }
 
-    /**
-     * @return bool
-     */
-    public function isCompanyAdmin()
+    public function isVpbxAdmin(): bool
     {
-        if ($this->isBrandAdmin()) {
-            return true;
+        $company = $this->getCompany();
+        if (!$company) {
+            return false;
         }
 
-        return !is_null($this->getCompany());
+        return $company->isVpbx();
+    }
+
+    public function isResidentialAdmin(): bool
+    {
+        $company = $this->getCompany();
+        if (!$company) {
+            return false;
+        }
+
+        return $company->isResidential();
+    }
+
+    public function isRetailAdmin(): bool
+    {
+        $company = $this->getCompany();
+        if (!$company) {
+            return false;
+        }
+
+        return $company->isRetail();
+    }
+
+    public function isWholesaleAdmin(): bool
+    {
+        $company = $this->getCompany();
+        if (!$company) {
+            return false;
+        }
+
+        return $company->isWholesale();
+    }
+
+    public function companyHasFeature(string $iden): bool
+    {
+        $company = $this->getCompany();
+        if ($company) {
+            return $company->hasFeatureByIden($iden);
+        }
+
+        return false;
+    }
+
+    public function brandHasFeature(string $iden): bool
+    {
+        $brand = $this->getBrand();
+        if ($brand) {
+            return $brand->hasFeatureByIden($iden);
+        }
+
+        return false;
     }
 
     public function serialize()
@@ -110,18 +154,30 @@ class Administrator extends AdministratorAbstract implements AdministratorInterf
             ) = unserialize($serialized);
     }
 
-    /**
-     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface
-     */
-    public function getTimezone()
+    protected function sanitizeValues()
     {
-        $timeZone = parent::getTimezone();
-        if (!empty($timeZone)) {
+        if (!$this->getTimezone()) {
+            $this->setTimezone(
+                $this->getParentEntityTimezone()
+            );
+        }
+    }
 
-            return $timeZone;
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface | null
+     */
+    private function getParentEntityTimezone()
+    {
+        $company = $this->getCompany();
+        if ($company) {
+            return $company->getDefaultTimezone();
         }
 
-        return $this->getCompany()->getDefaultTimezone();
+        $brand = $this->getBrand();
+        if ($brand) {
+            return $brand->getDefaultTimezone();
+        }
+
+        return null;
     }
 }
-

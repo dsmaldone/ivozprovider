@@ -2,12 +2,13 @@
 
 namespace Ivoz\Provider\Application\Service\Locution;
 
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\Service\StoragePathResolverCollection;
-use Ivoz\Core\Domain\Model\EntityInterface;
-use Ivoz\Core\Application\Service\Assembler\CustomEntityAssemblerInterface;
 use Assert\Assertion;
+use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Application\ForeignKeyTransformerInterface;
+use Ivoz\Core\Application\Service\Assembler\CustomEntityAssemblerInterface;
+use Ivoz\Core\Application\Service\StoragePathResolverCollection;
 use Ivoz\Core\Application\Service\Traits\FileContainerEntityAssemblerTrait;
+use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Provider\Domain\Model\Locution\LocutionInterface;
 
 class LocutionAssembler implements CustomEntityAssemblerInterface
@@ -20,14 +21,13 @@ class LocutionAssembler implements CustomEntityAssemblerInterface
         $this->storagePathResolver = $storagePathResolver;
     }
 
-    /**
-     * @param DataTransferObjectInterface $dto
-     * @param EntityInterface $entity
-     */
-    public function fromDto(DataTransferObjectInterface $dto, EntityInterface $entity)
-    {
-        Assertion::isInstanceOf($entity, LocutionInterface::class);
-        $entity->updateFromDto($dto);
-        $this->handleEntityFiles($entity, $dto);
+    public function fromDto(
+        DataTransferObjectInterface $locutionDto,
+        EntityInterface $locution,
+        ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        Assertion::isInstanceOf($locution, LocutionInterface::class);
+        $locution->updateFromDto($locutionDto, $fkTransformer);
+        $this->handleEntityFiles($locution, $locutionDto, $fkTransformer);
     }
 }

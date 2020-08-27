@@ -3,8 +3,9 @@
 namespace Ivoz\Kam\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Kam\Domain\Model\Dispatcher\DispatcherRepository;
 use Ivoz\Kam\Domain\Model\Dispatcher\Dispatcher;
+use Ivoz\Kam\Domain\Model\Dispatcher\DispatcherInterface;
+use Ivoz\Kam\Domain\Model\Dispatcher\DispatcherRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -18,5 +19,19 @@ class DispatcherDoctrineRepository extends ServiceEntityRepository implements Di
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Dispatcher::class);
+    }
+
+    /**
+     * @param int $id
+     * @return null|DispatcherInterface
+     */
+    public function findOneByApplicationServerId($id)
+    {
+        /** @var DispatcherInterface $response */
+        $response = $this->findOneBy([
+            'applicationServer' => $id
+        ]);
+
+        return $response;
     }
 }

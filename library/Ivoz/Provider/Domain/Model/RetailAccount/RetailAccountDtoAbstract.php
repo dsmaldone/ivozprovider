@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\RetailAccount;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -40,37 +38,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     /**
      * @var string
      */
-    private $authNeeded = 'yes';
-
-    /**
-     * @var string
-     */
     private $password;
-
-    /**
-     * @var string
-     */
-    private $disallow = 'all';
-
-    /**
-     * @var string
-     */
-    private $allow = 'alaw';
-
-    /**
-     * @var string
-     */
-    private $directMediaMethod = 'update';
-
-    /**
-     * @var string
-     */
-    private $calleridUpdateHeader = 'pai';
-
-    /**
-     * @var string
-     */
-    private $updateCallerid = 'yes';
 
     /**
      * @var string
@@ -81,6 +49,16 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
      * @var string
      */
     private $directConnectivity = 'yes';
+
+    /**
+     * @var string
+     */
+    private $ddiIn = 'yes';
+
+    /**
+     * @var string
+     */
+    private $t38Passthrough = 'no';
 
     /**
      * @var integer
@@ -113,11 +91,6 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     private $outgoingDdi;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Language\LanguageDto | null
-     */
-    private $language;
-
-    /**
      * @var \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointDto[] | null
      */
     private $psEndpoints = null;
@@ -126,6 +99,11 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
      * @var \Ivoz\Provider\Domain\Model\Ddi\DdiDto[] | null
      */
     private $ddis = null;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\CallForwardSetting\CallForwardSettingDto[] | null
+     */
+    private $callForwardSettings = null;
 
 
     use DtoNormalizer;
@@ -138,7 +116,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -150,22 +128,17 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
             'transport' => 'transport',
             'ip' => 'ip',
             'port' => 'port',
-            'authNeeded' => 'authNeeded',
             'password' => 'password',
-            'disallow' => 'disallow',
-            'allow' => 'allow',
-            'directMediaMethod' => 'directMediaMethod',
-            'calleridUpdateHeader' => 'calleridUpdateHeader',
-            'updateCallerid' => 'updateCallerid',
             'fromDomain' => 'fromDomain',
             'directConnectivity' => 'directConnectivity',
+            'ddiIn' => 'ddiIn',
+            't38Passthrough' => 't38Passthrough',
             'id' => 'id',
             'brandId' => 'brand',
             'domainId' => 'domain',
             'companyId' => 'company',
             'transformationRuleSetId' => 'transformationRuleSet',
-            'outgoingDdiId' => 'outgoingDdi',
-            'languageId' => 'language'
+            'outgoingDdiId' => 'outgoingDdi'
         ];
     }
 
@@ -174,81 +147,40 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'description' => $this->getDescription(),
             'transport' => $this->getTransport(),
             'ip' => $this->getIp(),
             'port' => $this->getPort(),
-            'authNeeded' => $this->getAuthNeeded(),
             'password' => $this->getPassword(),
-            'disallow' => $this->getDisallow(),
-            'allow' => $this->getAllow(),
-            'directMediaMethod' => $this->getDirectMediaMethod(),
-            'calleridUpdateHeader' => $this->getCalleridUpdateHeader(),
-            'updateCallerid' => $this->getUpdateCallerid(),
             'fromDomain' => $this->getFromDomain(),
             'directConnectivity' => $this->getDirectConnectivity(),
+            'ddiIn' => $this->getDdiIn(),
+            't38Passthrough' => $this->getT38Passthrough(),
             'id' => $this->getId(),
             'brand' => $this->getBrand(),
             'domain' => $this->getDomain(),
             'company' => $this->getCompany(),
             'transformationRuleSet' => $this->getTransformationRuleSet(),
             'outgoingDdi' => $this->getOutgoingDdi(),
-            'language' => $this->getLanguage(),
             'psEndpoints' => $this->getPsEndpoints(),
-            'ddis' => $this->getDdis()
+            'ddis' => $this->getDdis(),
+            'callForwardSettings' => $this->getCallForwardSettings()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        $this->domain = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Domain\\Domain', $this->getDomainId());
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->transformationRuleSet = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\TransformationRuleSet\\TransformationRuleSet', $this->getTransformationRuleSetId());
-        $this->outgoingDdi = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Ddi\\Ddi', $this->getOutgoingDdiId());
-        $this->language = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Language\\Language', $this->getLanguageId());
-        if (!is_null($this->psEndpoints)) {
-            $items = $this->getPsEndpoints();
-            $this->psEndpoints = [];
-            foreach ($items as $item) {
-                $this->psEndpoints[] = $transformer->transform(
-                    'Ivoz\\Ast\\Domain\\Model\\PsEndpoint\\PsEndpoint',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-        if (!is_null($this->ddis)) {
-            $items = $this->getDdis();
-            $this->ddis = [];
-            foreach ($items as $item) {
-                $this->ddis[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\Ddi\\Ddi',
-                    $item->getId() ?? $item
-                );
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
             }
+            $response[$sensitiveField] = '*****';
         }
 
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->psEndpoints = $transformer->transform(
-            'Ivoz\\Ast\\Domain\\Model\\PsEndpoint\\PsEndpoint',
-            $this->psEndpoints
-        );
-        $this->ddis = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\Ddi\\Ddi',
-            $this->ddis
-        );
+        return $response;
     }
 
     /**
@@ -264,7 +196,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -284,7 +216,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -304,7 +236,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getTransport()
     {
@@ -324,7 +256,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getIp()
     {
@@ -344,31 +276,11 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPort()
     {
         return $this->port;
-    }
-
-    /**
-     * @param string $authNeeded
-     *
-     * @return static
-     */
-    public function setAuthNeeded($authNeeded = null)
-    {
-        $this->authNeeded = $authNeeded;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getAuthNeeded()
-    {
-        return $this->authNeeded;
     }
 
     /**
@@ -384,111 +296,11 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPassword()
     {
         return $this->password;
-    }
-
-    /**
-     * @param string $disallow
-     *
-     * @return static
-     */
-    public function setDisallow($disallow = null)
-    {
-        $this->disallow = $disallow;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDisallow()
-    {
-        return $this->disallow;
-    }
-
-    /**
-     * @param string $allow
-     *
-     * @return static
-     */
-    public function setAllow($allow = null)
-    {
-        $this->allow = $allow;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getAllow()
-    {
-        return $this->allow;
-    }
-
-    /**
-     * @param string $directMediaMethod
-     *
-     * @return static
-     */
-    public function setDirectMediaMethod($directMediaMethod = null)
-    {
-        $this->directMediaMethod = $directMediaMethod;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDirectMediaMethod()
-    {
-        return $this->directMediaMethod;
-    }
-
-    /**
-     * @param string $calleridUpdateHeader
-     *
-     * @return static
-     */
-    public function setCalleridUpdateHeader($calleridUpdateHeader = null)
-    {
-        $this->calleridUpdateHeader = $calleridUpdateHeader;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCalleridUpdateHeader()
-    {
-        return $this->calleridUpdateHeader;
-    }
-
-    /**
-     * @param string $updateCallerid
-     *
-     * @return static
-     */
-    public function setUpdateCallerid($updateCallerid = null)
-    {
-        $this->updateCallerid = $updateCallerid;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdateCallerid()
-    {
-        return $this->updateCallerid;
     }
 
     /**
@@ -504,7 +316,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getFromDomain()
     {
@@ -524,11 +336,51 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDirectConnectivity()
     {
         return $this->directConnectivity;
+    }
+
+    /**
+     * @param string $ddiIn
+     *
+     * @return static
+     */
+    public function setDdiIn($ddiIn = null)
+    {
+        $this->ddiIn = $ddiIn;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getDdiIn()
+    {
+        return $this->ddiIn;
+    }
+
+    /**
+     * @param string $t38Passthrough
+     *
+     * @return static
+     */
+    public function setT38Passthrough($t38Passthrough = null)
+    {
+        $this->t38Passthrough = $t38Passthrough;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getT38Passthrough()
+    {
+        return $this->t38Passthrough;
     }
 
     /**
@@ -544,7 +396,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -564,7 +416,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -572,7 +424,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -586,7 +438,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -610,7 +462,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Domain\DomainDto
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainDto | null
      */
     public function getDomain()
     {
@@ -618,7 +470,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -632,7 +484,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getDomainId()
     {
@@ -656,7 +508,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -664,7 +516,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -678,7 +530,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -702,7 +554,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetDto
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetDto | null
      */
     public function getTransformationRuleSet()
     {
@@ -710,7 +562,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -724,7 +576,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getTransformationRuleSetId()
     {
@@ -748,7 +600,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiDto | null
      */
     public function getOutgoingDdi()
     {
@@ -756,7 +608,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -770,57 +622,11 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getOutgoingDdiId()
     {
         if ($dto = $this->getOutgoingDdi()) {
-            return $dto->getId();
-        }
-
-        return null;
-    }
-
-    /**
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageDto $language
-     *
-     * @return static
-     */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageDto $language = null)
-    {
-        $this->language = $language;
-
-        return $this;
-    }
-
-    /**
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageDto
-     */
-    public function getLanguage()
-    {
-        return $this->language;
-    }
-
-    /**
-     * @param integer $id | null
-     *
-     * @return static
-     */
-    public function setLanguageId($id)
-    {
-        $value = !is_null($id)
-            ? new \Ivoz\Provider\Domain\Model\Language\LanguageDto($id)
-            : null;
-
-        return $this->setLanguage($value);
-    }
-
-    /**
-     * @return integer | null
-     */
-    public function getLanguageId()
-    {
-        if ($dto = $this->getLanguage()) {
             return $dto->getId();
         }
 
@@ -840,7 +646,7 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getPsEndpoints()
     {
@@ -860,12 +666,30 @@ abstract class RetailAccountDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getDdis()
     {
         return $this->ddis;
     }
+
+    /**
+     * @param array $callForwardSettings
+     *
+     * @return static
+     */
+    public function setCallForwardSettings($callForwardSettings = null)
+    {
+        $this->callForwardSettings = $callForwardSettings;
+
+        return $this;
+    }
+
+    /**
+     * @return array | null
+     */
+    public function getCallForwardSettings()
+    {
+        return $this->callForwardSettings;
+    }
 }
-
-

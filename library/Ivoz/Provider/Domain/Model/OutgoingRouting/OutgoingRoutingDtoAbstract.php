@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\OutgoingRouting;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -25,7 +23,32 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $weight = '1';
+    private $weight = 1;
+
+    /**
+     * @var string
+     */
+    private $routingMode = 'static';
+
+    /**
+     * @var string
+     */
+    private $prefix;
+
+    /**
+     * @var boolean
+     */
+    private $stopper = false;
+
+    /**
+     * @var boolean
+     */
+    private $forceClid = false;
+
+    /**
+     * @var string
+     */
+    private $clid;
 
     /**
      * @var integer
@@ -43,9 +66,9 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     private $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto | null
+     * @var \Ivoz\Provider\Domain\Model\Carrier\CarrierDto | null
      */
-    private $peeringContract;
+    private $carrier;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternDto | null
@@ -63,9 +86,29 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     private $routingTag;
 
     /**
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryDto | null
+     */
+    private $clidCountry;
+
+    /**
+     * @var \Ivoz\Cgr\Domain\Model\TpLcrRule\TpLcrRuleDto | null
+     */
+    private $tpLcrRule;
+
+    /**
      * @var \Ivoz\Kam\Domain\Model\TrunksLcrRule\TrunksLcrRuleDto[] | null
      */
     private $lcrRules = null;
+
+    /**
+     * @var \Ivoz\Kam\Domain\Model\TrunksLcrRuleTarget\TrunksLcrRuleTargetDto[] | null
+     */
+    private $lcrRuleTargets = null;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\OutgoingRoutingRelCarrier\OutgoingRoutingRelCarrierDto[] | null
+     */
+    private $relCarriers = null;
 
 
     use DtoNormalizer;
@@ -78,7 +121,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -88,13 +131,20 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
             'type' => 'type',
             'priority' => 'priority',
             'weight' => 'weight',
+            'routingMode' => 'routingMode',
+            'prefix' => 'prefix',
+            'stopper' => 'stopper',
+            'forceClid' => 'forceClid',
+            'clid' => 'clid',
             'id' => 'id',
             'brandId' => 'brand',
             'companyId' => 'company',
-            'peeringContractId' => 'peeringContract',
+            'carrierId' => 'carrier',
             'routingPatternId' => 'routingPattern',
             'routingPatternGroupId' => 'routingPatternGroup',
-            'routingTagId' => 'routingTag'
+            'routingTagId' => 'routingTag',
+            'clidCountryId' => 'clidCountry',
+            'tpLcrRuleId' => 'tpLcrRule'
         ];
     }
 
@@ -103,54 +153,41 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'type' => $this->getType(),
             'priority' => $this->getPriority(),
             'weight' => $this->getWeight(),
+            'routingMode' => $this->getRoutingMode(),
+            'prefix' => $this->getPrefix(),
+            'stopper' => $this->getStopper(),
+            'forceClid' => $this->getForceClid(),
+            'clid' => $this->getClid(),
             'id' => $this->getId(),
             'brand' => $this->getBrand(),
             'company' => $this->getCompany(),
-            'peeringContract' => $this->getPeeringContract(),
+            'carrier' => $this->getCarrier(),
             'routingPattern' => $this->getRoutingPattern(),
             'routingPatternGroup' => $this->getRoutingPatternGroup(),
             'routingTag' => $this->getRoutingTag(),
-            'lcrRules' => $this->getLcrRules()
+            'clidCountry' => $this->getClidCountry(),
+            'tpLcrRule' => $this->getTpLcrRule(),
+            'lcrRules' => $this->getLcrRules(),
+            'lcrRuleTargets' => $this->getLcrRuleTargets(),
+            'relCarriers' => $this->getRelCarriers()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->peeringContract = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\PeeringContract\\PeeringContract', $this->getPeeringContractId());
-        $this->routingPattern = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\RoutingPattern\\RoutingPattern', $this->getRoutingPatternId());
-        $this->routingPatternGroup = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\RoutingPatternGroup\\RoutingPatternGroup', $this->getRoutingPatternGroupId());
-        $this->routingTag = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\RoutingTag\\RoutingTag', $this->getRoutingTagId());
-        if (!is_null($this->lcrRules)) {
-            $items = $this->getLcrRules();
-            $this->lcrRules = [];
-            foreach ($items as $item) {
-                $this->lcrRules[] = $transformer->transform(
-                    'Ivoz\\Kam\\Domain\\Model\\TrunksLcrRule\\TrunksLcrRule',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->lcrRules = $transformer->transform(
-            'Ivoz\\Kam\\Domain\\Model\\TrunksLcrRule\\TrunksLcrRule',
-            $this->lcrRules
-        );
+        return $response;
     }
 
     /**
@@ -166,7 +203,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getType()
     {
@@ -186,7 +223,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getPriority()
     {
@@ -206,11 +243,111 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getWeight()
     {
         return $this->weight;
+    }
+
+    /**
+     * @param string $routingMode
+     *
+     * @return static
+     */
+    public function setRoutingMode($routingMode = null)
+    {
+        $this->routingMode = $routingMode;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getRoutingMode()
+    {
+        return $this->routingMode;
+    }
+
+    /**
+     * @param string $prefix
+     *
+     * @return static
+     */
+    public function setPrefix($prefix = null)
+    {
+        $this->prefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getPrefix()
+    {
+        return $this->prefix;
+    }
+
+    /**
+     * @param boolean $stopper
+     *
+     * @return static
+     */
+    public function setStopper($stopper = null)
+    {
+        $this->stopper = $stopper;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean | null
+     */
+    public function getStopper()
+    {
+        return $this->stopper;
+    }
+
+    /**
+     * @param boolean $forceClid
+     *
+     * @return static
+     */
+    public function setForceClid($forceClid = null)
+    {
+        $this->forceClid = $forceClid;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean | null
+     */
+    public function getForceClid()
+    {
+        return $this->forceClid;
+    }
+
+    /**
+     * @param string $clid
+     *
+     * @return static
+     */
+    public function setClid($clid = null)
+    {
+        $this->clid = $clid;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getClid()
+    {
+        return $this->clid;
     }
 
     /**
@@ -226,7 +363,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -246,7 +383,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -254,7 +391,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -268,7 +405,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -292,7 +429,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -300,7 +437,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -314,7 +451,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -326,45 +463,45 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto $peeringContract
+     * @param \Ivoz\Provider\Domain\Model\Carrier\CarrierDto $carrier
      *
      * @return static
      */
-    public function setPeeringContract(\Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto $peeringContract = null)
+    public function setCarrier(\Ivoz\Provider\Domain\Model\Carrier\CarrierDto $carrier = null)
     {
-        $this->peeringContract = $peeringContract;
+        $this->carrier = $carrier;
 
         return $this;
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto
+     * @return \Ivoz\Provider\Domain\Model\Carrier\CarrierDto | null
      */
-    public function getPeeringContract()
+    public function getCarrier()
     {
-        return $this->peeringContract;
+        return $this->carrier;
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
-    public function setPeeringContractId($id)
+    public function setCarrierId($id)
     {
         $value = !is_null($id)
-            ? new \Ivoz\Provider\Domain\Model\PeeringContract\PeeringContractDto($id)
+            ? new \Ivoz\Provider\Domain\Model\Carrier\CarrierDto($id)
             : null;
 
-        return $this->setPeeringContract($value);
+        return $this->setCarrier($value);
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
-    public function getPeeringContractId()
+    public function getCarrierId()
     {
-        if ($dto = $this->getPeeringContract()) {
+        if ($dto = $this->getCarrier()) {
             return $dto->getId();
         }
 
@@ -384,7 +521,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternDto
+     * @return \Ivoz\Provider\Domain\Model\RoutingPattern\RoutingPatternDto | null
      */
     public function getRoutingPattern()
     {
@@ -392,7 +529,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -406,7 +543,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getRoutingPatternId()
     {
@@ -430,7 +567,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupDto
+     * @return \Ivoz\Provider\Domain\Model\RoutingPatternGroup\RoutingPatternGroupDto | null
      */
     public function getRoutingPatternGroup()
     {
@@ -438,7 +575,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -452,7 +589,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getRoutingPatternGroupId()
     {
@@ -476,7 +613,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagDto
+     * @return \Ivoz\Provider\Domain\Model\RoutingTag\RoutingTagDto | null
      */
     public function getRoutingTag()
     {
@@ -484,7 +621,7 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -498,11 +635,103 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getRoutingTagId()
     {
         if ($dto = $this->getRoutingTag()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryDto $clidCountry
+     *
+     * @return static
+     */
+    public function setClidCountry(\Ivoz\Provider\Domain\Model\Country\CountryDto $clidCountry = null)
+    {
+        $this->clidCountry = $clidCountry;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryDto | null
+     */
+    public function getClidCountry()
+    {
+        return $this->clidCountry;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setClidCountryId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Provider\Domain\Model\Country\CountryDto($id)
+            : null;
+
+        return $this->setClidCountry($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getClidCountryId()
+    {
+        if ($dto = $this->getClidCountry()) {
+            return $dto->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Ivoz\Cgr\Domain\Model\TpLcrRule\TpLcrRuleDto $tpLcrRule
+     *
+     * @return static
+     */
+    public function setTpLcrRule(\Ivoz\Cgr\Domain\Model\TpLcrRule\TpLcrRuleDto $tpLcrRule = null)
+    {
+        $this->tpLcrRule = $tpLcrRule;
+
+        return $this;
+    }
+
+    /**
+     * @return \Ivoz\Cgr\Domain\Model\TpLcrRule\TpLcrRuleDto | null
+     */
+    public function getTpLcrRule()
+    {
+        return $this->tpLcrRule;
+    }
+
+    /**
+     * @param mixed | null $id
+     *
+     * @return static
+     */
+    public function setTpLcrRuleId($id)
+    {
+        $value = !is_null($id)
+            ? new \Ivoz\Cgr\Domain\Model\TpLcrRule\TpLcrRuleDto($id)
+            : null;
+
+        return $this->setTpLcrRule($value);
+    }
+
+    /**
+     * @return mixed | null
+     */
+    public function getTpLcrRuleId()
+    {
+        if ($dto = $this->getTpLcrRule()) {
             return $dto->getId();
         }
 
@@ -522,12 +751,50 @@ abstract class OutgoingRoutingDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getLcrRules()
     {
         return $this->lcrRules;
     }
+
+    /**
+     * @param array $lcrRuleTargets
+     *
+     * @return static
+     */
+    public function setLcrRuleTargets($lcrRuleTargets = null)
+    {
+        $this->lcrRuleTargets = $lcrRuleTargets;
+
+        return $this;
+    }
+
+    /**
+     * @return array | null
+     */
+    public function getLcrRuleTargets()
+    {
+        return $this->lcrRuleTargets;
+    }
+
+    /**
+     * @param array $relCarriers
+     *
+     * @return static
+     */
+    public function setRelCarriers($relCarriers = null)
+    {
+        $this->relCarriers = $relCarriers;
+
+        return $this;
+    }
+
+    /**
+     * @return array | null
+     */
+    public function getRelCarriers()
+    {
+        return $this->relCarriers;
+    }
 }
-
-

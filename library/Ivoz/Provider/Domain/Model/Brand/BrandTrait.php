@@ -4,7 +4,6 @@ namespace Ivoz\Provider\Domain\Model\Brand;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -19,42 +18,47 @@ trait BrandTrait
     protected $id;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $companies;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $services;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $urls;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $relFeatures;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
-    protected $retailAccounts;
+    protected $relProxyTrunks;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
+     */
+    protected $residentialDevices;
+
+    /**
+     * @var ArrayCollection
      */
     protected $musicsOnHold;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $matchLists;
 
     /**
-     * @var Collection
+     * @var ArrayCollection
      */
     protected $outgoingRoutings;
 
@@ -69,54 +73,100 @@ trait BrandTrait
         $this->services = new ArrayCollection();
         $this->urls = new ArrayCollection();
         $this->relFeatures = new ArrayCollection();
-        $this->retailAccounts = new ArrayCollection();
+        $this->relProxyTrunks = new ArrayCollection();
+        $this->residentialDevices = new ArrayCollection();
         $this->musicsOnHold = new ArrayCollection();
         $this->matchLists = new ArrayCollection();
         $this->outgoingRoutings = new ArrayCollection();
     }
 
+    abstract protected function sanitizeValues();
+
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param BrandDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto BrandDto
-         */
-        $self = parent::fromDto($dto);
-        if ($dto->getCompanies()) {
-            $self->replaceCompanies($dto->getCompanies());
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
+        if (!is_null($dto->getCompanies())) {
+            $self->replaceCompanies(
+                $fkTransformer->transformCollection(
+                    $dto->getCompanies()
+                )
+            );
         }
 
-        if ($dto->getServices()) {
-            $self->replaceServices($dto->getServices());
+        if (!is_null($dto->getServices())) {
+            $self->replaceServices(
+                $fkTransformer->transformCollection(
+                    $dto->getServices()
+                )
+            );
         }
 
-        if ($dto->getUrls()) {
-            $self->replaceUrls($dto->getUrls());
+        if (!is_null($dto->getUrls())) {
+            $self->replaceUrls(
+                $fkTransformer->transformCollection(
+                    $dto->getUrls()
+                )
+            );
         }
 
-        if ($dto->getRelFeatures()) {
-            $self->replaceRelFeatures($dto->getRelFeatures());
+        if (!is_null($dto->getRelFeatures())) {
+            $self->replaceRelFeatures(
+                $fkTransformer->transformCollection(
+                    $dto->getRelFeatures()
+                )
+            );
         }
 
-        if ($dto->getRetailAccounts()) {
-            $self->replaceRetailAccounts($dto->getRetailAccounts());
+        if (!is_null($dto->getRelProxyTrunks())) {
+            $self->replaceRelProxyTrunks(
+                $fkTransformer->transformCollection(
+                    $dto->getRelProxyTrunks()
+                )
+            );
         }
 
-        if ($dto->getMusicsOnHold()) {
-            $self->replaceMusicsOnHold($dto->getMusicsOnHold());
+        if (!is_null($dto->getResidentialDevices())) {
+            $self->replaceResidentialDevices(
+                $fkTransformer->transformCollection(
+                    $dto->getResidentialDevices()
+                )
+            );
         }
 
-        if ($dto->getMatchLists()) {
-            $self->replaceMatchLists($dto->getMatchLists());
+        if (!is_null($dto->getMusicsOnHold())) {
+            $self->replaceMusicsOnHold(
+                $fkTransformer->transformCollection(
+                    $dto->getMusicsOnHold()
+                )
+            );
         }
 
-        if ($dto->getOutgoingRoutings()) {
-            $self->replaceOutgoingRoutings($dto->getOutgoingRoutings());
+        if (!is_null($dto->getMatchLists())) {
+            $self->replaceMatchLists(
+                $fkTransformer->transformCollection(
+                    $dto->getMatchLists()
+                )
+            );
         }
+
+        if (!is_null($dto->getOutgoingRoutings())) {
+            $self->replaceOutgoingRoutings(
+                $fkTransformer->transformCollection(
+                    $dto->getOutgoingRoutings()
+                )
+            );
+        }
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -126,43 +176,86 @@ trait BrandTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param BrandDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto BrandDto
-         */
-        parent::updateFromDto($dto);
-        if ($dto->getCompanies()) {
-            $this->replaceCompanies($dto->getCompanies());
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+        if (!is_null($dto->getCompanies())) {
+            $this->replaceCompanies(
+                $fkTransformer->transformCollection(
+                    $dto->getCompanies()
+                )
+            );
         }
-        if ($dto->getServices()) {
-            $this->replaceServices($dto->getServices());
+        if (!is_null($dto->getServices())) {
+            $this->replaceServices(
+                $fkTransformer->transformCollection(
+                    $dto->getServices()
+                )
+            );
         }
-        if ($dto->getUrls()) {
-            $this->replaceUrls($dto->getUrls());
+        if (!is_null($dto->getUrls())) {
+            $this->replaceUrls(
+                $fkTransformer->transformCollection(
+                    $dto->getUrls()
+                )
+            );
         }
-        if ($dto->getRelFeatures()) {
-            $this->replaceRelFeatures($dto->getRelFeatures());
+        if (!is_null($dto->getRelFeatures())) {
+            $this->replaceRelFeatures(
+                $fkTransformer->transformCollection(
+                    $dto->getRelFeatures()
+                )
+            );
         }
-        if ($dto->getRetailAccounts()) {
-            $this->replaceRetailAccounts($dto->getRetailAccounts());
+        if (!is_null($dto->getRelProxyTrunks())) {
+            $this->replaceRelProxyTrunks(
+                $fkTransformer->transformCollection(
+                    $dto->getRelProxyTrunks()
+                )
+            );
         }
-        if ($dto->getMusicsOnHold()) {
-            $this->replaceMusicsOnHold($dto->getMusicsOnHold());
+        if (!is_null($dto->getResidentialDevices())) {
+            $this->replaceResidentialDevices(
+                $fkTransformer->transformCollection(
+                    $dto->getResidentialDevices()
+                )
+            );
         }
-        if ($dto->getMatchLists()) {
-            $this->replaceMatchLists($dto->getMatchLists());
+        if (!is_null($dto->getMusicsOnHold())) {
+            $this->replaceMusicsOnHold(
+                $fkTransformer->transformCollection(
+                    $dto->getMusicsOnHold()
+                )
+            );
         }
-        if ($dto->getOutgoingRoutings()) {
-            $this->replaceOutgoingRoutings($dto->getOutgoingRoutings());
+        if (!is_null($dto->getMatchLists())) {
+            $this->replaceMatchLists(
+                $fkTransformer->transformCollection(
+                    $dto->getMatchLists()
+                )
+            );
         }
+        if (!is_null($dto->getOutgoingRoutings())) {
+            $this->replaceOutgoingRoutings(
+                $fkTransformer->transformCollection(
+                    $dto->getOutgoingRoutings()
+                )
+            );
+        }
+        $this->sanitizeValues();
+
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return BrandDto
      */
@@ -182,14 +275,12 @@ trait BrandTrait
             'id' => self::getId()
         ];
     }
-
-
     /**
      * Add company
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
@@ -211,10 +302,10 @@ trait BrandTrait
     /**
      * Replace companies
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface[] $companies
-     * @return self
+     * @param ArrayCollection $companies of Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return static
      */
-    public function replaceCompanies(Collection $companies)
+    public function replaceCompanies(ArrayCollection $companies)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -244,7 +335,7 @@ trait BrandTrait
 
     /**
      * Get companies
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface[]
      */
     public function getCompanies(Criteria $criteria = null)
@@ -261,7 +352,7 @@ trait BrandTrait
      *
      * @param \Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface $service
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addService(\Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface $service)
     {
@@ -283,10 +374,10 @@ trait BrandTrait
     /**
      * Replace services
      *
-     * @param \Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface[] $services
-     * @return self
+     * @param ArrayCollection $services of Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface
+     * @return static
      */
-    public function replaceServices(Collection $services)
+    public function replaceServices(ArrayCollection $services)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -316,7 +407,7 @@ trait BrandTrait
 
     /**
      * Get services
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface[]
      */
     public function getServices(Criteria $criteria = null)
@@ -331,11 +422,11 @@ trait BrandTrait
     /**
      * Add url
      *
-     * @param \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface $url
+     * @param \Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface $url
      *
-     * @return BrandTrait
+     * @return static
      */
-    public function addUrl(\Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface $url)
+    public function addUrl(\Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface $url)
     {
         $this->urls->add($url);
 
@@ -345,9 +436,9 @@ trait BrandTrait
     /**
      * Remove url
      *
-     * @param \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface $url
+     * @param \Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface $url
      */
-    public function removeUrl(\Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface $url)
+    public function removeUrl(\Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface $url)
     {
         $this->urls->removeElement($url);
     }
@@ -355,10 +446,10 @@ trait BrandTrait
     /**
      * Replace urls
      *
-     * @param \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface[] $urls
-     * @return self
+     * @param ArrayCollection $urls of Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface
+     * @return static
      */
-    public function replaceUrls(Collection $urls)
+    public function replaceUrls(ArrayCollection $urls)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -388,8 +479,8 @@ trait BrandTrait
 
     /**
      * Get urls
-     *
-     * @return \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface[]
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface[]
      */
     public function getUrls(Criteria $criteria = null)
     {
@@ -405,7 +496,7 @@ trait BrandTrait
      *
      * @param \Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface $relFeature
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addRelFeature(\Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface $relFeature)
     {
@@ -427,10 +518,10 @@ trait BrandTrait
     /**
      * Replace relFeatures
      *
-     * @param \Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface[] $relFeatures
-     * @return self
+     * @param ArrayCollection $relFeatures of Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface
+     * @return static
      */
-    public function replaceRelFeatures(Collection $relFeatures)
+    public function replaceRelFeatures(ArrayCollection $relFeatures)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -460,7 +551,7 @@ trait BrandTrait
 
     /**
      * Get relFeatures
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface[]
      */
     public function getRelFeatures(Criteria $criteria = null)
@@ -473,75 +564,147 @@ trait BrandTrait
     }
 
     /**
-     * Add retailAccount
+     * Add relProxyTrunk
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface $relProxyTrunk
      *
-     * @return BrandTrait
+     * @return static
      */
-    public function addRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount)
+    public function addRelProxyTrunk(\Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface $relProxyTrunk)
     {
-        $this->retailAccounts->add($retailAccount);
+        $this->relProxyTrunks->add($relProxyTrunk);
 
         return $this;
     }
 
     /**
-     * Remove retailAccount
+     * Remove relProxyTrunk
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface $relProxyTrunk
      */
-    public function removeRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount)
+    public function removeRelProxyTrunk(\Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface $relProxyTrunk)
     {
-        $this->retailAccounts->removeElement($retailAccount);
+        $this->relProxyTrunks->removeElement($relProxyTrunk);
     }
 
     /**
-     * Replace retailAccounts
+     * Replace relProxyTrunks
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface[] $retailAccounts
-     * @return self
+     * @param ArrayCollection $relProxyTrunks of Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface
+     * @return static
      */
-    public function replaceRetailAccounts(Collection $retailAccounts)
+    public function replaceRelProxyTrunks(ArrayCollection $relProxyTrunks)
     {
         $updatedEntities = [];
         $fallBackId = -1;
-        foreach ($retailAccounts as $entity) {
+        foreach ($relProxyTrunks as $entity) {
             $index = $entity->getId() ? $entity->getId() : $fallBackId--;
             $updatedEntities[$index] = $entity;
             $entity->setBrand($this);
         }
         $updatedEntityKeys = array_keys($updatedEntities);
 
-        foreach ($this->retailAccounts as $key => $entity) {
+        foreach ($this->relProxyTrunks as $key => $entity) {
             $identity = $entity->getId();
             if (in_array($identity, $updatedEntityKeys)) {
-                $this->retailAccounts->set($key, $updatedEntities[$identity]);
+                $this->relProxyTrunks->set($key, $updatedEntities[$identity]);
             } else {
-                $this->retailAccounts->remove($key);
+                $this->relProxyTrunks->remove($key);
             }
             unset($updatedEntities[$identity]);
         }
 
         foreach ($updatedEntities as $entity) {
-            $this->addRetailAccount($entity);
+            $this->addRelProxyTrunk($entity);
         }
 
         return $this;
     }
 
     /**
-     * Get retailAccounts
-     *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface[]
+     * Get relProxyTrunks
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface[]
      */
-    public function getRetailAccounts(Criteria $criteria = null)
+    public function getRelProxyTrunks(Criteria $criteria = null)
     {
         if (!is_null($criteria)) {
-            return $this->retailAccounts->matching($criteria)->toArray();
+            return $this->relProxyTrunks->matching($criteria)->toArray();
         }
 
-        return $this->retailAccounts->toArray();
+        return $this->relProxyTrunks->toArray();
+    }
+
+    /**
+     * Add residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice
+     *
+     * @return static
+     */
+    public function addResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice)
+    {
+        $this->residentialDevices->add($residentialDevice);
+
+        return $this;
+    }
+
+    /**
+     * Remove residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice
+     */
+    public function removeResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice)
+    {
+        $this->residentialDevices->removeElement($residentialDevice);
+    }
+
+    /**
+     * Replace residentialDevices
+     *
+     * @param ArrayCollection $residentialDevices of Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
+     * @return static
+     */
+    public function replaceResidentialDevices(ArrayCollection $residentialDevices)
+    {
+        $updatedEntities = [];
+        $fallBackId = -1;
+        foreach ($residentialDevices as $entity) {
+            $index = $entity->getId() ? $entity->getId() : $fallBackId--;
+            $updatedEntities[$index] = $entity;
+            $entity->setBrand($this);
+        }
+        $updatedEntityKeys = array_keys($updatedEntities);
+
+        foreach ($this->residentialDevices as $key => $entity) {
+            $identity = $entity->getId();
+            if (in_array($identity, $updatedEntityKeys)) {
+                $this->residentialDevices->set($key, $updatedEntities[$identity]);
+            } else {
+                $this->residentialDevices->remove($key);
+            }
+            unset($updatedEntities[$identity]);
+        }
+
+        foreach ($updatedEntities as $entity) {
+            $this->addResidentialDevice($entity);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get residentialDevices
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface[]
+     */
+    public function getResidentialDevices(Criteria $criteria = null)
+    {
+        if (!is_null($criteria)) {
+            return $this->residentialDevices->matching($criteria)->toArray();
+        }
+
+        return $this->residentialDevices->toArray();
     }
 
     /**
@@ -549,7 +712,7 @@ trait BrandTrait
      *
      * @param \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface $musicsOnHold
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addMusicsOnHold(\Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface $musicsOnHold)
     {
@@ -571,10 +734,10 @@ trait BrandTrait
     /**
      * Replace musicsOnHold
      *
-     * @param \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface[] $musicsOnHold
-     * @return self
+     * @param ArrayCollection $musicsOnHold of Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface
+     * @return static
      */
-    public function replaceMusicsOnHold(Collection $musicsOnHold)
+    public function replaceMusicsOnHold(ArrayCollection $musicsOnHold)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -604,7 +767,7 @@ trait BrandTrait
 
     /**
      * Get musicsOnHold
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface[]
      */
     public function getMusicsOnHold(Criteria $criteria = null)
@@ -621,7 +784,7 @@ trait BrandTrait
      *
      * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addMatchList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList)
     {
@@ -643,10 +806,10 @@ trait BrandTrait
     /**
      * Replace matchLists
      *
-     * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface[] $matchLists
-     * @return self
+     * @param ArrayCollection $matchLists of Ivoz\Provider\Domain\Model\MatchList\MatchListInterface
+     * @return static
      */
-    public function replaceMatchLists(Collection $matchLists)
+    public function replaceMatchLists(ArrayCollection $matchLists)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -676,7 +839,7 @@ trait BrandTrait
 
     /**
      * Get matchLists
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface[]
      */
     public function getMatchLists(Criteria $criteria = null)
@@ -693,7 +856,7 @@ trait BrandTrait
      *
      * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting)
     {
@@ -715,10 +878,10 @@ trait BrandTrait
     /**
      * Replace outgoingRoutings
      *
-     * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[] $outgoingRoutings
-     * @return self
+     * @param ArrayCollection $outgoingRoutings of Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface
+     * @return static
      */
-    public function replaceOutgoingRoutings(Collection $outgoingRoutings)
+    public function replaceOutgoingRoutings(ArrayCollection $outgoingRoutings)
     {
         $updatedEntities = [];
         $fallBackId = -1;
@@ -748,7 +911,7 @@ trait BrandTrait
 
     /**
      * Get outgoingRoutings
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[]
      */
     public function getOutgoingRoutings(Criteria $criteria = null)
@@ -759,7 +922,4 @@ trait BrandTrait
 
         return $this->outgoingRoutings->toArray();
     }
-
-
 }
-

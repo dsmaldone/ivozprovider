@@ -4,13 +4,19 @@ namespace Worker;
 
 use Doctrine\ORM\EntityManagerInterface;
 use GearmanJob;
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Kam\Infrastructure\Kamailio\RpcClient;
 use Ivoz\Provider\Domain\Model\ProxyTrunk\ProxyTrunk;
+use Ivoz\Provider\Domain\Model\ProxyTrunk\ProxyTrunkRepository;
 use Ivoz\Provider\Domain\Model\ProxyUser\ProxyUser;
+use Ivoz\Provider\Domain\Model\ProxyUser\ProxyUserRepository;
 use Mmoreram\GearmanBundle\Driver\Gearman;
 use Monolog\Logger;
 use PhpXmlRpc\Client;
 use PhpXmlRpc\Request;
+use Ivoz\Core\Domain\Service\DomainEventPublisher;
+use Ivoz\Core\Application\RequestId;
+use Ivoz\Core\Application\RegisterCommandTrait;
 
 /**
  * @Gearman\Work(
@@ -22,41 +28,29 @@ use PhpXmlRpc\Request;
  */
 class Xmlrpc
 {
-    /**
-     * @var EntityManagerInterface
-     */
-    protected $em;
+    use RegisterCommandTrait;
 
-    /**
-     * @var Logger
-     */
-    protected $logger;
+    private $eventPublisher;
+    private $requestId;
+    private $em;
+    private $logger;
+    private $retryInterval = 180;
 
-    /**
-     * Retry interval for delayed jobs
-     *
-     * @var int
-     */
-    protected $retryInterval = 180;
-
-    /**
-     * Xmlrpc constructor.
-     *
-     * @param EntityManagerInterface $em
-     * @param EntityPersisterInterface $entityPersister
-     * @param Logger $logger
-     */
     public function __construct(
+        DomainEventPublisher $eventPublisher,
+        RequestId $requestId,
         EntityManagerInterface $em,
-        EntityPersisterInterface $entityPersister,
         Logger $logger
     ) {
+        $this->eventPublisher = $eventPublisher;
+        $this->requestId = $requestId;
         $this->em = $em;
         $this->logger = $logger;
     }
 
     /**
      * Send Inmmediate XMLRPC request to Kamailio Proxies
+     *
      *
      * @Gearman\Job(
      *     name = "immediate",
@@ -70,11 +64,12 @@ class Xmlrpc
     {
         // Thanks Gearmand, you've done your job
         $serializedJob->sendComplete("DONE");
+        $this->registerCommand('Worker', 'xmlrpc');
 
         /** @var \Ivoz\Core\Infrastructure\Domain\Service\Gearman\Jobs\Xmlrpc $job */
         $job = igbinary_unserialize($serializedJob->workload());
 
-        return $this->sendXmlRpcRequest(
+        return $this->sendRpcRequest(
             $job->getRpcEntity(),
             $job->getRpcPort(),
             $job->getRpcMethod()
@@ -84,7 +79,7 @@ class Xmlrpc
     /**
      * Send delayed XMLRPC request to Kamailio Proxies
      *
-     * @param GearmanJob $job Object with job parameters
+     * @param GearmanJob $serializedJob Object with job parameters
      *
      * @return boolean
      *
@@ -95,77 +90,95 @@ class Xmlrpc
      */
     public function delayed(GearmanJob $serializedJob)
     {
-        $retryInterval =
-
         /** @var \Ivoz\Core\Infrastructure\Domain\Service\Gearman\Jobs\Xmlrpc $job */
         $job = igbinary_unserialize($serializedJob->workload());
 
-        $success = $this->sendXmlRpcRequest(
+        $success = $this->sendRpcRequest(
             $job->getRpcEntity(),
             $job->getRpcPort(),
             $job->getRpcMethod()
         );
 
         if (!$success) {
-            $this->logger->info(sprintf("[XMLRPC] Delayed %s job request failed: Retrying in %d seconds.",
-               $job->getRpcMethod(), $this->retryInterval)
-            );
+            $this->logger->info(sprintf(
+                "[KAM-RPC] Delayed %s job request failed: Retrying in %d seconds.",
+                $job->getRpcMethod(),
+                $this->retryInterval
+            ));
             sleep($this->retryInterval);
-        } else {
-            // Thanks Gearmand, you've done your job
-            $serializedJob->sendComplete("DONE");
+            exit(GEARMAN_WORK_ERROR);
         }
 
+        // Thanks Gearmand, you've done your job
+        $serializedJob->sendComplete("DONE");
         return $success;
     }
-
 
     /**
      * Send XML request to all servers of the given type
      *
-     * @param $entity Entity Name of the servers
-     * @param $port RPC Port
-     * @param $method RPC Method
+     * @param string $entity Name of the servers
+     * @param int $port RPC Port
+     * @param string$method RPC Method
      *
      * @return bool
      */
-    private function sendXmlRpcRequest($entity, $port, $method)
+    private function sendRpcRequest($entity, $port, $method)
     {
-        // Get servers to send the XmlRpcRequest
-        $repository = $this->em->getRepository($entity);
-        if (!$repository) {
-            $this->logger->error(sprintf("Unable to find repository for %s", $entity));
+        try {
+
+            /** @var ProxyTrunkRepository|ProxyUserRepository $repository */
+            $repository = $this->em->getRepository($entity);
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf("Unable to find repository for %s", $entity)
+            );
             return false;
         }
 
-        /** @var ProxyTrunk[]|ProxyUser[] $servers */
-        $servers = $repository->findAll();
+        /** @var ProxyTrunk|ProxyUser $server */
+        $server = $repository->getProxyMainAddress();
 
-        foreach ($servers as $server) {
-            try {
-                // Create a new XmlRpc client for each server
-                $client = new Client(sprintf("http://%s:%d/RPC2",  $server->getIp(), $port));
-                $client->setUserAgent("xmlrpclib");
-                $client->send(new Request($method));
+        try {
+            $uri = sprintf(
+                "http://%s:%d/%s",
+                $server->getIp(),
+                $port,
+                $method
+            );
 
-                $response = $client->send(new Request($method));
+            $this->logger->info(sprintf(
+                "[KAM-RPC] About send a request to %s",
+                $uri
+            ));
 
-                if ($response->errno) {
-                    throw new \Exception($response->errstr);
-                }
+            $client = RpcClient::factory($uri);
 
-                $this->logger->info(sprintf("[XMLRPC] Request %s sent to %s [%s:%d]",
-                    $method, $server->getName(), $server->getIp(), $port
-                ));
+            $requestId = 1;
+            $request = $client
+                ->request(
+                    $requestId,
+                    $method,
+                    []
+                );
 
-            } catch (\Exception $e) {
-                $this->logger->error(sprintf("[XMLRPC] Unable to send request %s to server %s [%s:%d]",
-                    $method, $server->getName(), $server->getIp(), $port
-                ));
-                return false;
+            /** @var \Graze\GuzzleHttp\JsonRpc\Message\Response $response */
+            $response = $client->send($request);
+
+            if ($response->getRpcErrorCode()) {
+                throw new \Exception($response->getRpcErrorMessage());
             }
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf(
+                "[KAM-RPC] Unable to send request %s to server %s [%s:%d]: %s",
+                $method,
+                $server->getName(),
+                $server->getIp(),
+                $port,
+                $e->getMessage()
+            ));
+            return false;
         }
         return true;
     }
-
 }

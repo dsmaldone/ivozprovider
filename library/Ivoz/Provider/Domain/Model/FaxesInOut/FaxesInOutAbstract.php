@@ -19,33 +19,33 @@ abstract class FaxesInOutAbstract
     protected $calldate;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $src;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $dst;
 
     /**
      * comment: enum:In|Out
-     * @var string
+     * @var string | null
      */
     protected $type = 'Out';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $pages;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $status;
 
     /**
-     * @var File
+     * @var File | null
      */
     protected $file;
 
@@ -55,7 +55,7 @@ abstract class FaxesInOutAbstract
     protected $fax;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @var \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     protected $dstCountry;
 
@@ -75,7 +75,8 @@ abstract class FaxesInOutAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "FaxesInOut",
             $this->getId()
         );
@@ -99,7 +100,8 @@ abstract class FaxesInOutAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param FaxesInOutInterface|null $entity
      * @param int $depth
      * @return FaxesInOutDto|null
      */
@@ -119,19 +121,22 @@ abstract class FaxesInOutAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var FaxesInOutDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FaxesInOutDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FaxesInOutDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FaxesInOutDto::class);
 
         $file = new File(
@@ -151,25 +156,24 @@ abstract class FaxesInOutAbstract
             ->setType($dto->getType())
             ->setPages($dto->getPages())
             ->setStatus($dto->getStatus())
-            ->setFax($dto->getFax())
-            ->setDstCountry($dto->getDstCountry())
+            ->setFax($fkTransformer->transform($dto->getFax()))
+            ->setDstCountry($fkTransformer->transform($dto->getDstCountry()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FaxesInOutDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FaxesInOutDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FaxesInOutDto::class);
 
         $file = new File(
@@ -186,16 +190,16 @@ abstract class FaxesInOutAbstract
             ->setPages($dto->getPages())
             ->setStatus($dto->getStatus())
             ->setFile($file)
-            ->setFax($dto->getFax())
-            ->setDstCountry($dto->getDstCountry());
+            ->setFax($fkTransformer->transform($dto->getFax()))
+            ->setDstCountry($fkTransformer->transform($dto->getDstCountry()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return FaxesInOutDto
      */
@@ -230,12 +234,10 @@ abstract class FaxesInOutAbstract
             'fileFileSize' => self::getFile()->getFileSize(),
             'fileMimeType' => self::getFile()->getMimeType(),
             'fileBaseName' => self::getFile()->getBaseName(),
-            'faxId' => self::getFax() ? self::getFax()->getId() : null,
+            'faxId' => self::getFax()->getId(),
             'dstCountryId' => self::getDstCountry() ? self::getDstCountry()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -243,15 +245,19 @@ abstract class FaxesInOutAbstract
      *
      * @param \DateTime $calldate
      *
-     * @return self
+     * @return static
      */
-    public function setCalldate($calldate)
+    protected function setCalldate($calldate)
     {
         Assertion::notNull($calldate, 'calldate value "%s" is null, but non null value was expected.');
         $calldate = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $calldate,
             null
         );
+
+        if ($this->calldate == $calldate) {
+            return $this;
+        }
 
         $this->calldate = $calldate;
 
@@ -265,17 +271,17 @@ abstract class FaxesInOutAbstract
      */
     public function getCalldate()
     {
-        return $this->calldate;
+        return clone $this->calldate;
     }
 
     /**
      * Set src
      *
-     * @param string $src
+     * @param string $src | null
      *
-     * @return self
+     * @return static
      */
-    public function setSrc($src = null)
+    protected function setSrc($src = null)
     {
         if (!is_null($src)) {
             Assertion::maxLength($src, 128, 'src value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -289,7 +295,7 @@ abstract class FaxesInOutAbstract
     /**
      * Get src
      *
-     * @return string
+     * @return string | null
      */
     public function getSrc()
     {
@@ -299,11 +305,11 @@ abstract class FaxesInOutAbstract
     /**
      * Set dst
      *
-     * @param string $dst
+     * @param string $dst | null
      *
-     * @return self
+     * @return static
      */
-    public function setDst($dst = null)
+    protected function setDst($dst = null)
     {
         if (!is_null($dst)) {
             Assertion::maxLength($dst, 128, 'dst value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -317,7 +323,7 @@ abstract class FaxesInOutAbstract
     /**
      * Get dst
      *
-     * @return string
+     * @return string | null
      */
     public function getDst()
     {
@@ -327,18 +333,18 @@ abstract class FaxesInOutAbstract
     /**
      * Set type
      *
-     * @param string $type
+     * @param string $type | null
      *
-     * @return self
+     * @return static
      */
-    public function setType($type = null)
+    protected function setType($type = null)
     {
         if (!is_null($type)) {
             Assertion::maxLength($type, 20, 'type value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($type, array (
-          0 => 'In',
-          1 => 'Out',
-        ), 'typevalue "%s" is not an element of the valid values: %s');
+            Assertion::choice($type, [
+                FaxesInOutInterface::TYPE_IN,
+                FaxesInOutInterface::TYPE_OUT
+            ], 'typevalue "%s" is not an element of the valid values: %s');
         }
 
         $this->type = $type;
@@ -349,7 +355,7 @@ abstract class FaxesInOutAbstract
     /**
      * Get type
      *
-     * @return string
+     * @return string | null
      */
     public function getType()
     {
@@ -359,11 +365,11 @@ abstract class FaxesInOutAbstract
     /**
      * Set pages
      *
-     * @param string $pages
+     * @param string $pages | null
      *
-     * @return self
+     * @return static
      */
-    public function setPages($pages = null)
+    protected function setPages($pages = null)
     {
         if (!is_null($pages)) {
             Assertion::maxLength($pages, 64, 'pages value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -377,7 +383,7 @@ abstract class FaxesInOutAbstract
     /**
      * Get pages
      *
-     * @return string
+     * @return string | null
      */
     public function getPages()
     {
@@ -387,15 +393,12 @@ abstract class FaxesInOutAbstract
     /**
      * Set status
      *
-     * @param string $status
+     * @param string $status | null
      *
-     * @return self
+     * @return static
      */
-    public function setStatus($status = null)
+    protected function setStatus($status = null)
     {
-        if (!is_null($status)) {
-        }
-
         $this->status = $status;
 
         return $this;
@@ -404,7 +407,7 @@ abstract class FaxesInOutAbstract
     /**
      * Get status
      *
-     * @return string
+     * @return string | null
      */
     public function getStatus()
     {
@@ -416,9 +419,9 @@ abstract class FaxesInOutAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax
      *
-     * @return self
+     * @return static
      */
-    public function setFax(\Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax)
+    protected function setFax(\Ivoz\Provider\Domain\Model\Fax\FaxInterface $fax)
     {
         $this->fax = $fax;
 
@@ -438,11 +441,11 @@ abstract class FaxesInOutAbstract
     /**
      * Set dstCountry
      *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $dstCountry
+     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $dstCountry | null
      *
-     * @return self
+     * @return static
      */
-    public function setDstCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $dstCountry = null)
+    protected function setDstCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $dstCountry = null)
     {
         $this->dstCountry = $dstCountry;
 
@@ -452,7 +455,7 @@ abstract class FaxesInOutAbstract
     /**
      * Get dstCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getDstCountry()
     {
@@ -464,12 +467,16 @@ abstract class FaxesInOutAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\FaxesInOut\File $file
      *
-     * @return self
+     * @return static
      */
-    public function setFile(File $file)
+    protected function setFile(File $file)
     {
-        $this->file = $file;
+        $isEqual = $this->file && $this->file->equals($file);
+        if ($isEqual) {
+            return $this;
+        }
 
+        $this->file = $file;
         return $this;
     }
 
@@ -482,7 +489,5 @@ abstract class FaxesInOutAbstract
     {
         return $this->file;
     }
-
     // @codeCoverageIgnoreEnd
 }
-

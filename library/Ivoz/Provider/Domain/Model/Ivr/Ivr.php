@@ -1,8 +1,6 @@
 <?php
 namespace Ivoz\Provider\Domain\Model\Ivr;
 
-use Ivoz\Core\Domain\Model\EntityInterface;
-use Ivoz\Provider\Domain\Model\Locution\LocutionInterface;
 use Ivoz\Provider\Domain\Traits\RoutableTrait;
 
 /**
@@ -12,7 +10,8 @@ class Ivr extends IvrAbstract implements IvrInterface
 {
     use IvrTrait;
 
-    use RoutableTrait { getTarget as protected; }
+    use RoutableTrait { getTarget as protected;
+    }
 
     /**
      * @codeCoverageIgnore
@@ -39,7 +38,8 @@ class Ivr extends IvrAbstract implements IvrInterface
      */
     public function __toString()
     {
-        return sprintf("%s [%s]",
+        return sprintf(
+            "%s [%s]",
             $this->getName(),
             parent::__toString()
         );
@@ -52,7 +52,7 @@ class Ivr extends IvrAbstract implements IvrInterface
     }
 
     /**
-     * @return LocutionInterface[] with key=>value
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface[] with key=>value
      */
     public function getAllLocutions()
     {
@@ -96,15 +96,19 @@ class Ivr extends IvrAbstract implements IvrInterface
             $this->getErrorNumberValue();
     }
 
+    /**
+     * @return null|string
+     */
     public function getNoInputTarget()
     {
         return $this->getTarget("NoInput");
     }
 
+    /**
+     * @return null|string
+     */
     public function getErrorTarget()
     {
         return $this->getTarget("Error");
     }
-
 }
-

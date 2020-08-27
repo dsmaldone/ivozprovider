@@ -22,7 +22,7 @@ production:
       title: _("List of %s %2s", ngettext('Match List', 'Match Lists', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/company/match_lists.html"
+        href: "/doc/en/administration_portal/client/vpbx/routing_tools/match_lists.html"
       fields: &matchLists_fieldsLink
         blacklist:
           company: true
@@ -30,17 +30,17 @@ production:
         options:
           title: _("Options")
           screens:
-            matchListsEdit_screen: true
-            matchListPatternsList_screen: true
-            matchListPatternsView_screen: true
+            matchListsEdit_screen: ${auth.acls.MatchLists.update}
+            matchListPatternsList_screen: ${auth.acls.MatchListPatterns.read}
+            matchListPatternsView_screen: ${auth.acls.MatchListPatterns.read}
           dialogs:
-            matchListsDel_dialog: true
+            matchListsDel_dialog: ${auth.acls.MatchLists.delete}
       options:
         title: _("Options")
         screens:
-          matchListsNew_screen: true
+          matchListsNew_screen: ${auth.acls.MatchLists.create}
         dialogs:
-          matchListsDel_dialog: true
+          matchListsDel_dialog: ${auth.acls.MatchLists.delete}
 
     matchListsNew_screen: &matchListsNew_screenLink
       <<: *MatchLists

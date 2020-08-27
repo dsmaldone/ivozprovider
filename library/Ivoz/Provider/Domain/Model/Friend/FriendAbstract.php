@@ -25,17 +25,17 @@ abstract class FriendAbstract
 
     /**
      * comment: enum:udp|tcp|tls
-     * @var string
+     * @var string | null
      */
     protected $transport;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $ip;
 
     /**
-     * @var integer
+     * @var integer | null
      */
     protected $port;
 
@@ -46,14 +46,14 @@ abstract class FriendAbstract
     protected $authNeeded = 'yes';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $password;
 
     /**
      * @var integer
      */
-    protected $priority = '1';
+    protected $priority = 1;
 
     /**
      * @var string
@@ -88,15 +88,27 @@ abstract class FriendAbstract
 
     /**
      * column: from_domain
-     * @var string
+     * @var string | null
      */
     protected $fromDomain;
+
+    /**
+     * comment: enum:yes|no|intervpbx
+     * @var string
+     */
+    protected $directConnectivity = 'yes';
 
     /**
      * comment: enum:yes|no
      * @var string
      */
-    protected $directConnectivity = 'yes';
+    protected $ddiIn = 'yes';
+
+    /**
+     * comment: enum:yes|no
+     * @var string
+     */
+    protected $t38Passthrough = 'no';
 
     /**
      * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface
@@ -104,29 +116,34 @@ abstract class FriendAbstract
     protected $company;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @var \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     protected $domain;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @var \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     protected $transformationRuleSet;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface
+     * @var \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface | null
      */
     protected $callAcl;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @var \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     protected $outgoingDdi;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @var \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     protected $language;
+
+    /**
+     * @var \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
+     */
+    protected $interCompany;
 
 
     use ChangelogTrait;
@@ -137,7 +154,6 @@ abstract class FriendAbstract
     protected function __construct(
         $name,
         $description,
-        $transport,
         $authNeeded,
         $priority,
         $disallow,
@@ -145,11 +161,12 @@ abstract class FriendAbstract
         $directMediaMethod,
         $calleridUpdateHeader,
         $updateCallerid,
-        $directConnectivity
+        $directConnectivity,
+        $ddiIn,
+        $t38Passthrough
     ) {
         $this->setName($name);
         $this->setDescription($description);
-        $this->setTransport($transport);
         $this->setAuthNeeded($authNeeded);
         $this->setPriority($priority);
         $this->setDisallow($disallow);
@@ -158,13 +175,16 @@ abstract class FriendAbstract
         $this->setCalleridUpdateHeader($calleridUpdateHeader);
         $this->setUpdateCallerid($updateCallerid);
         $this->setDirectConnectivity($directConnectivity);
+        $this->setDdiIn($ddiIn);
+        $this->setT38Passthrough($t38Passthrough);
     }
 
     abstract public function getId();
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Friend",
             $this->getId()
         );
@@ -188,7 +208,8 @@ abstract class FriendAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param FriendInterface|null $entity
      * @param int $depth
      * @return FriendDto|null
      */
@@ -208,25 +229,27 @@ abstract class FriendAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var FriendDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FriendDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FriendDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FriendDto::class);
 
         $self = new static(
             $dto->getName(),
             $dto->getDescription(),
-            $dto->getTransport(),
             $dto->getAuthNeeded(),
             $dto->getPriority(),
             $dto->getDisallow(),
@@ -234,36 +257,40 @@ abstract class FriendAbstract
             $dto->getDirectMediaMethod(),
             $dto->getCalleridUpdateHeader(),
             $dto->getUpdateCallerid(),
-            $dto->getDirectConnectivity());
+            $dto->getDirectConnectivity(),
+            $dto->getDdiIn(),
+            $dto->getT38Passthrough()
+        );
 
         $self
+            ->setTransport($dto->getTransport())
             ->setIp($dto->getIp())
             ->setPort($dto->getPort())
             ->setPassword($dto->getPassword())
             ->setFromDomain($dto->getFromDomain())
-            ->setCompany($dto->getCompany())
-            ->setDomain($dto->getDomain())
-            ->setTransformationRuleSet($dto->getTransformationRuleSet())
-            ->setCallAcl($dto->getCallAcl())
-            ->setOutgoingDdi($dto->getOutgoingDdi())
-            ->setLanguage($dto->getLanguage())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setDomain($fkTransformer->transform($dto->getDomain()))
+            ->setTransformationRuleSet($fkTransformer->transform($dto->getTransformationRuleSet()))
+            ->setCallAcl($fkTransformer->transform($dto->getCallAcl()))
+            ->setOutgoingDdi($fkTransformer->transform($dto->getOutgoingDdi()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setInterCompany($fkTransformer->transform($dto->getInterCompany()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param FriendDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto FriendDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, FriendDto::class);
 
         $this
@@ -282,20 +309,23 @@ abstract class FriendAbstract
             ->setUpdateCallerid($dto->getUpdateCallerid())
             ->setFromDomain($dto->getFromDomain())
             ->setDirectConnectivity($dto->getDirectConnectivity())
-            ->setCompany($dto->getCompany())
-            ->setDomain($dto->getDomain())
-            ->setTransformationRuleSet($dto->getTransformationRuleSet())
-            ->setCallAcl($dto->getCallAcl())
-            ->setOutgoingDdi($dto->getOutgoingDdi())
-            ->setLanguage($dto->getLanguage());
+            ->setDdiIn($dto->getDdiIn())
+            ->setT38Passthrough($dto->getT38Passthrough())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
+            ->setDomain($fkTransformer->transform($dto->getDomain()))
+            ->setTransformationRuleSet($fkTransformer->transform($dto->getTransformationRuleSet()))
+            ->setCallAcl($fkTransformer->transform($dto->getCallAcl()))
+            ->setOutgoingDdi($fkTransformer->transform($dto->getOutgoingDdi()))
+            ->setLanguage($fkTransformer->transform($dto->getLanguage()))
+            ->setInterCompany($fkTransformer->transform($dto->getInterCompany()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return FriendDto
      */
@@ -317,12 +347,15 @@ abstract class FriendAbstract
             ->setUpdateCallerid(self::getUpdateCallerid())
             ->setFromDomain(self::getFromDomain())
             ->setDirectConnectivity(self::getDirectConnectivity())
+            ->setDdiIn(self::getDdiIn())
+            ->setT38Passthrough(self::getT38Passthrough())
             ->setCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getCompany(), $depth))
             ->setDomain(\Ivoz\Provider\Domain\Model\Domain\Domain::entityToDto(self::getDomain(), $depth))
             ->setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSet::entityToDto(self::getTransformationRuleSet(), $depth))
             ->setCallAcl(\Ivoz\Provider\Domain\Model\CallAcl\CallAcl::entityToDto(self::getCallAcl(), $depth))
             ->setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\Ddi::entityToDto(self::getOutgoingDdi(), $depth))
-            ->setLanguage(\Ivoz\Provider\Domain\Model\Language\Language::entityToDto(self::getLanguage(), $depth));
+            ->setLanguage(\Ivoz\Provider\Domain\Model\Language\Language::entityToDto(self::getLanguage(), $depth))
+            ->setInterCompany(\Ivoz\Provider\Domain\Model\Company\Company::entityToDto(self::getInterCompany(), $depth));
     }
 
     /**
@@ -346,16 +379,17 @@ abstract class FriendAbstract
             'update_callerid' => self::getUpdateCallerid(),
             'from_domain' => self::getFromDomain(),
             'directConnectivity' => self::getDirectConnectivity(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null,
+            'ddiIn' => self::getDdiIn(),
+            't38Passthrough' => self::getT38Passthrough(),
+            'companyId' => self::getCompany()->getId(),
             'domainId' => self::getDomain() ? self::getDomain()->getId() : null,
             'transformationRuleSetId' => self::getTransformationRuleSet() ? self::getTransformationRuleSet()->getId() : null,
             'callAclId' => self::getCallAcl() ? self::getCallAcl()->getId() : null,
             'outgoingDdiId' => self::getOutgoingDdi() ? self::getOutgoingDdi()->getId() : null,
-            'languageId' => self::getLanguage() ? self::getLanguage()->getId() : null
+            'languageId' => self::getLanguage() ? self::getLanguage()->getId() : null,
+            'interCompanyId' => self::getInterCompany() ? self::getInterCompany()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -363,9 +397,9 @@ abstract class FriendAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 65, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -390,9 +424,9 @@ abstract class FriendAbstract
      *
      * @param string $description
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description)
+    protected function setDescription($description)
     {
         Assertion::notNull($description, 'description value "%s" is null, but non null value was expected.');
         Assertion::maxLength($description, 500, 'description value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -415,19 +449,20 @@ abstract class FriendAbstract
     /**
      * Set transport
      *
-     * @param string $transport
+     * @param string $transport | null
      *
-     * @return self
+     * @return static
      */
-    public function setTransport($transport)
+    protected function setTransport($transport = null)
     {
-        Assertion::notNull($transport, 'transport value "%s" is null, but non null value was expected.');
-        Assertion::maxLength($transport, 25, 'transport value "%s" is too long, it should have no more than %d characters, but has %d characters.');
-        Assertion::choice($transport, array (
-          0 => 'udp',
-          1 => 'tcp',
-          2 => 'tls',
-        ), 'transportvalue "%s" is not an element of the valid values: %s');
+        if (!is_null($transport)) {
+            Assertion::maxLength($transport, 25, 'transport value "%s" is too long, it should have no more than %d characters, but has %d characters.');
+            Assertion::choice($transport, [
+                FriendInterface::TRANSPORT_UDP,
+                FriendInterface::TRANSPORT_TCP,
+                FriendInterface::TRANSPORT_TLS
+            ], 'transportvalue "%s" is not an element of the valid values: %s');
+        }
 
         $this->transport = $transport;
 
@@ -437,7 +472,7 @@ abstract class FriendAbstract
     /**
      * Get transport
      *
-     * @return string
+     * @return string | null
      */
     public function getTransport()
     {
@@ -447,11 +482,11 @@ abstract class FriendAbstract
     /**
      * Set ip
      *
-     * @param string $ip
+     * @param string $ip | null
      *
-     * @return self
+     * @return static
      */
-    public function setIp($ip = null)
+    protected function setIp($ip = null)
     {
         if (!is_null($ip)) {
             Assertion::maxLength($ip, 50, 'ip value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -465,7 +500,7 @@ abstract class FriendAbstract
     /**
      * Get ip
      *
-     * @return string
+     * @return string | null
      */
     public function getIp()
     {
@@ -475,17 +510,16 @@ abstract class FriendAbstract
     /**
      * Set port
      *
-     * @param integer $port
+     * @param integer $port | null
      *
-     * @return self
+     * @return static
      */
-    public function setPort($port = null)
+    protected function setPort($port = null)
     {
         if (!is_null($port)) {
-            if (!is_null($port)) {
-                Assertion::integerish($port, 'port value "%s" is not an integer or a number castable to integer.');
-                Assertion::greaterOrEqualThan($port, 0, 'port provided "%s" is not greater or equal than "%s".');
-            }
+            Assertion::integerish($port, 'port value "%s" is not an integer or a number castable to integer.');
+            Assertion::greaterOrEqualThan($port, 0, 'port provided "%s" is not greater or equal than "%s".');
+            $port = (int) $port;
         }
 
         $this->port = $port;
@@ -496,7 +530,7 @@ abstract class FriendAbstract
     /**
      * Get port
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPort()
     {
@@ -508,9 +542,9 @@ abstract class FriendAbstract
      *
      * @param string $authNeeded
      *
-     * @return self
+     * @return static
      */
-    public function setAuthNeeded($authNeeded)
+    protected function setAuthNeeded($authNeeded)
     {
         Assertion::notNull($authNeeded, 'authNeeded value "%s" is null, but non null value was expected.');
 
@@ -532,11 +566,11 @@ abstract class FriendAbstract
     /**
      * Set password
      *
-     * @param string $password
+     * @param string $password | null
      *
-     * @return self
+     * @return static
      */
-    public function setPassword($password = null)
+    protected function setPassword($password = null)
     {
         if (!is_null($password)) {
             Assertion::maxLength($password, 64, 'password value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -550,7 +584,7 @@ abstract class FriendAbstract
     /**
      * Get password
      *
-     * @return string
+     * @return string | null
      */
     public function getPassword()
     {
@@ -562,14 +596,14 @@ abstract class FriendAbstract
      *
      * @param integer $priority
      *
-     * @return self
+     * @return static
      */
-    public function setPriority($priority)
+    protected function setPriority($priority)
     {
         Assertion::notNull($priority, 'priority value "%s" is null, but non null value was expected.');
         Assertion::integerish($priority, 'priority value "%s" is not an integer or a number castable to integer.');
 
-        $this->priority = $priority;
+        $this->priority = (int) $priority;
 
         return $this;
     }
@@ -589,9 +623,9 @@ abstract class FriendAbstract
      *
      * @param string $disallow
      *
-     * @return self
+     * @return static
      */
-    public function setDisallow($disallow)
+    protected function setDisallow($disallow)
     {
         Assertion::notNull($disallow, 'disallow value "%s" is null, but non null value was expected.');
         Assertion::maxLength($disallow, 200, 'disallow value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -616,9 +650,9 @@ abstract class FriendAbstract
      *
      * @param string $allow
      *
-     * @return self
+     * @return static
      */
-    public function setAllow($allow)
+    protected function setAllow($allow)
     {
         Assertion::notNull($allow, 'allow value "%s" is null, but non null value was expected.');
         Assertion::maxLength($allow, 200, 'allow value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -643,15 +677,15 @@ abstract class FriendAbstract
      *
      * @param string $directMediaMethod
      *
-     * @return self
+     * @return static
      */
-    public function setDirectMediaMethod($directMediaMethod)
+    protected function setDirectMediaMethod($directMediaMethod)
     {
         Assertion::notNull($directMediaMethod, 'directMediaMethod value "%s" is null, but non null value was expected.');
-        Assertion::choice($directMediaMethod, array (
-          0 => 'invite',
-          1 => 'update',
-        ), 'directMediaMethodvalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($directMediaMethod, [
+            FriendInterface::DIRECTMEDIAMETHOD_INVITE,
+            FriendInterface::DIRECTMEDIAMETHOD_UPDATE
+        ], 'directMediaMethodvalue "%s" is not an element of the valid values: %s');
 
         $this->directMediaMethod = $directMediaMethod;
 
@@ -673,15 +707,15 @@ abstract class FriendAbstract
      *
      * @param string $calleridUpdateHeader
      *
-     * @return self
+     * @return static
      */
-    public function setCalleridUpdateHeader($calleridUpdateHeader)
+    protected function setCalleridUpdateHeader($calleridUpdateHeader)
     {
         Assertion::notNull($calleridUpdateHeader, 'calleridUpdateHeader value "%s" is null, but non null value was expected.');
-        Assertion::choice($calleridUpdateHeader, array (
-          0 => 'pai',
-          1 => 'rpid',
-        ), 'calleridUpdateHeadervalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($calleridUpdateHeader, [
+            FriendInterface::CALLERIDUPDATEHEADER_PAI,
+            FriendInterface::CALLERIDUPDATEHEADER_RPID
+        ], 'calleridUpdateHeadervalue "%s" is not an element of the valid values: %s');
 
         $this->calleridUpdateHeader = $calleridUpdateHeader;
 
@@ -703,15 +737,15 @@ abstract class FriendAbstract
      *
      * @param string $updateCallerid
      *
-     * @return self
+     * @return static
      */
-    public function setUpdateCallerid($updateCallerid)
+    protected function setUpdateCallerid($updateCallerid)
     {
         Assertion::notNull($updateCallerid, 'updateCallerid value "%s" is null, but non null value was expected.');
-        Assertion::choice($updateCallerid, array (
-          0 => 'yes',
-          1 => 'no',
-        ), 'updateCalleridvalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($updateCallerid, [
+            FriendInterface::UPDATECALLERID_YES,
+            FriendInterface::UPDATECALLERID_NO
+        ], 'updateCalleridvalue "%s" is not an element of the valid values: %s');
 
         $this->updateCallerid = $updateCallerid;
 
@@ -731,11 +765,11 @@ abstract class FriendAbstract
     /**
      * Set fromDomain
      *
-     * @param string $fromDomain
+     * @param string $fromDomain | null
      *
-     * @return self
+     * @return static
      */
-    public function setFromDomain($fromDomain = null)
+    protected function setFromDomain($fromDomain = null)
     {
         if (!is_null($fromDomain)) {
             Assertion::maxLength($fromDomain, 190, 'fromDomain value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -749,7 +783,7 @@ abstract class FriendAbstract
     /**
      * Get fromDomain
      *
-     * @return string
+     * @return string | null
      */
     public function getFromDomain()
     {
@@ -761,15 +795,17 @@ abstract class FriendAbstract
      *
      * @param string $directConnectivity
      *
-     * @return self
+     * @return static
      */
-    public function setDirectConnectivity($directConnectivity)
+    protected function setDirectConnectivity($directConnectivity)
     {
         Assertion::notNull($directConnectivity, 'directConnectivity value "%s" is null, but non null value was expected.');
-        Assertion::choice($directConnectivity, array (
-          0 => 'yes',
-          1 => 'no',
-        ), 'directConnectivityvalue "%s" is not an element of the valid values: %s');
+        Assertion::maxLength($directConnectivity, 20, 'directConnectivity value "%s" is too long, it should have no more than %d characters, but has %d characters.');
+        Assertion::choice($directConnectivity, [
+            FriendInterface::DIRECTCONNECTIVITY_YES,
+            FriendInterface::DIRECTCONNECTIVITY_NO,
+            FriendInterface::DIRECTCONNECTIVITY_INTERVPBX
+        ], 'directConnectivityvalue "%s" is not an element of the valid values: %s');
 
         $this->directConnectivity = $directConnectivity;
 
@@ -787,13 +823,73 @@ abstract class FriendAbstract
     }
 
     /**
+     * Set ddiIn
+     *
+     * @param string $ddiIn
+     *
+     * @return static
+     */
+    protected function setDdiIn($ddiIn)
+    {
+        Assertion::notNull($ddiIn, 'ddiIn value "%s" is null, but non null value was expected.');
+        Assertion::choice($ddiIn, [
+            FriendInterface::DDIIN_YES,
+            FriendInterface::DDIIN_NO
+        ], 'ddiInvalue "%s" is not an element of the valid values: %s');
+
+        $this->ddiIn = $ddiIn;
+
+        return $this;
+    }
+
+    /**
+     * Get ddiIn
+     *
+     * @return string
+     */
+    public function getDdiIn()
+    {
+        return $this->ddiIn;
+    }
+
+    /**
+     * Set t38Passthrough
+     *
+     * @param string $t38Passthrough
+     *
+     * @return static
+     */
+    protected function setT38Passthrough($t38Passthrough)
+    {
+        Assertion::notNull($t38Passthrough, 't38Passthrough value "%s" is null, but non null value was expected.');
+        Assertion::choice($t38Passthrough, [
+            FriendInterface::T38PASSTHROUGH_YES,
+            FriendInterface::T38PASSTHROUGH_NO
+        ], 't38Passthroughvalue "%s" is not an element of the valid values: %s');
+
+        $this->t38Passthrough = $t38Passthrough;
+
+        return $this;
+    }
+
+    /**
+     * Get t38Passthrough
+     *
+     * @return string
+     */
+    public function getT38Passthrough()
+    {
+        return $this->t38Passthrough;
+    }
+
+    /**
      * Set company
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
+    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -813,9 +909,9 @@ abstract class FriendAbstract
     /**
      * Set domain
      *
-     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain
+     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain | null
      *
-     * @return self
+     * @return static
      */
     public function setDomain(\Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain = null)
     {
@@ -827,7 +923,7 @@ abstract class FriendAbstract
     /**
      * Get domain
      *
-     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     public function getDomain()
     {
@@ -837,11 +933,11 @@ abstract class FriendAbstract
     /**
      * Set transformationRuleSet
      *
-     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet
+     * @param \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet | null
      *
-     * @return self
+     * @return static
      */
-    public function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null)
+    protected function setTransformationRuleSet(\Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface $transformationRuleSet = null)
     {
         $this->transformationRuleSet = $transformationRuleSet;
 
@@ -851,7 +947,7 @@ abstract class FriendAbstract
     /**
      * Get transformationRuleSet
      *
-     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface
+     * @return \Ivoz\Provider\Domain\Model\TransformationRuleSet\TransformationRuleSetInterface | null
      */
     public function getTransformationRuleSet()
     {
@@ -861,11 +957,11 @@ abstract class FriendAbstract
     /**
      * Set callAcl
      *
-     * @param \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl
+     * @param \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallAcl(\Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl = null)
+    protected function setCallAcl(\Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface $callAcl = null)
     {
         $this->callAcl = $callAcl;
 
@@ -875,7 +971,7 @@ abstract class FriendAbstract
     /**
      * Get callAcl
      *
-     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface
+     * @return \Ivoz\Provider\Domain\Model\CallAcl\CallAclInterface | null
      */
     public function getCallAcl()
     {
@@ -885,11 +981,11 @@ abstract class FriendAbstract
     /**
      * Set outgoingDdi
      *
-     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi
+     * @param \Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi | null
      *
-     * @return self
+     * @return static
      */
-    public function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null)
+    protected function setOutgoingDdi(\Ivoz\Provider\Domain\Model\Ddi\DdiInterface $outgoingDdi = null)
     {
         $this->outgoingDdi = $outgoingDdi;
 
@@ -899,7 +995,7 @@ abstract class FriendAbstract
     /**
      * Get outgoingDdi
      *
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     public function getOutgoingDdi()
     {
@@ -909,11 +1005,11 @@ abstract class FriendAbstract
     /**
      * Set language
      *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
+     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language | null
      *
-     * @return self
+     * @return static
      */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
+    protected function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null)
     {
         $this->language = $language;
 
@@ -923,15 +1019,36 @@ abstract class FriendAbstract
     /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage()
     {
         return $this->language;
     }
 
+    /**
+     * Set interCompany
+     *
+     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $interCompany | null
+     *
+     * @return static
+     */
+    protected function setInterCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $interCompany = null)
+    {
+        $this->interCompany = $interCompany;
 
+        return $this;
+    }
+
+    /**
+     * Get interCompany
+     *
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
+     */
+    public function getInterCompany()
+    {
+        return $this->interCompany;
+    }
 
     // @codeCoverageIgnoreEnd
 }
-

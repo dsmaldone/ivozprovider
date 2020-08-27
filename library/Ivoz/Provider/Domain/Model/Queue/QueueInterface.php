@@ -6,6 +6,16 @@ use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
 interface QueueInterface extends LoggableEntityInterface
 {
+    const TIMEOUTTARGETTYPE_NUMBER = 'number';
+    const TIMEOUTTARGETTYPE_EXTENSION = 'extension';
+    const TIMEOUTTARGETTYPE_VOICEMAIL = 'voicemail';
+
+
+    const FULLTARGETTYPE_NUMBER = 'number';
+    const FULLTARGETTYPE_EXTENSION = 'extension';
+    const FULLTARGETTYPE_VOICEMAIL = 'voicemail';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -50,176 +60,93 @@ interface QueueInterface extends LoggableEntityInterface
     /**
      * Get name
      *
-     * @return string
+     * @return string | null
      */
     public function getName();
 
     /**
      * Get maxWaitTime
      *
-     * @return integer
+     * @return integer | null
      */
     public function getMaxWaitTime();
 
     /**
-     * Set timeoutTargetType
-     *
-     * @param string $timeoutTargetType
-     *
-     * @return self
-     */
-    public function setTimeoutTargetType($timeoutTargetType = null);
-
-    /**
      * Get timeoutTargetType
      *
-     * @return string
+     * @return string | null
      */
     public function getTimeoutTargetType();
 
     /**
-     * Set timeoutNumberValue
-     *
-     * @param string $timeoutNumberValue
-     *
-     * @return self
-     */
-    public function setTimeoutNumberValue($timeoutNumberValue = null);
-
-    /**
      * Get timeoutNumberValue
      *
-     * @return string
+     * @return string | null
      */
     public function getTimeoutNumberValue();
 
     /**
      * Get maxlen
      *
-     * @return integer
+     * @return integer | null
      */
     public function getMaxlen();
 
     /**
-     * Set fullTargetType
-     *
-     * @param string $fullTargetType
-     *
-     * @return self
-     */
-    public function setFullTargetType($fullTargetType = null);
-
-    /**
      * Get fullTargetType
      *
-     * @return string
+     * @return string | null
      */
     public function getFullTargetType();
 
     /**
-     * Set fullNumberValue
-     *
-     * @param string $fullNumberValue
-     *
-     * @return self
-     */
-    public function setFullNumberValue($fullNumberValue = null);
-
-    /**
      * Get fullNumberValue
      *
-     * @return string
+     * @return string | null
      */
     public function getFullNumberValue();
 
     /**
-     * Set periodicAnnounceFrequency
-     *
-     * @param integer $periodicAnnounceFrequency
-     *
-     * @return self
-     */
-    public function setPeriodicAnnounceFrequency($periodicAnnounceFrequency = null);
-
-    /**
      * Get periodicAnnounceFrequency
      *
-     * @return integer
+     * @return integer | null
      */
     public function getPeriodicAnnounceFrequency();
 
     /**
-     * Set memberCallRest
-     *
-     * @param integer $memberCallRest
-     *
-     * @return self
-     */
-    public function setMemberCallRest($memberCallRest = null);
-
-    /**
      * Get memberCallRest
      *
-     * @return integer
+     * @return integer | null
      */
     public function getMemberCallRest();
 
     /**
-     * Set memberCallTimeout
-     *
-     * @param integer $memberCallTimeout
-     *
-     * @return self
-     */
-    public function setMemberCallTimeout($memberCallTimeout = null);
-
-    /**
      * Get memberCallTimeout
      *
-     * @return integer
+     * @return integer | null
      */
     public function getMemberCallTimeout();
 
     /**
-     * Set strategy
-     *
-     * @param string $strategy
-     *
-     * @return self
-     */
-    public function setStrategy($strategy = null);
-
-    /**
      * Get strategy
      *
-     * @return string
+     * @return string | null
      */
     public function getStrategy();
 
     /**
-     * Set weight
-     *
-     * @param integer $weight
-     *
-     * @return self
-     */
-    public function setWeight($weight = null);
-
-    /**
      * Get weight
      *
-     * @return integer
+     * @return integer | null
      */
     public function getWeight();
 
     /**
-     * Set company
+     * Get preventMissedCalls
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
+     * @return integer
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
+    public function getPreventMissedCalls();
 
     /**
      * Get company
@@ -229,146 +156,65 @@ interface QueueInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set periodicAnnounceLocution
-     *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $periodicAnnounceLocution
-     *
-     * @return self
-     */
-    public function setPeriodicAnnounceLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $periodicAnnounceLocution = null);
-
-    /**
      * Get periodicAnnounceLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getPeriodicAnnounceLocution();
 
     /**
-     * Set timeoutLocution
-     *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $timeoutLocution
-     *
-     * @return self
-     */
-    public function setTimeoutLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $timeoutLocution = null);
-
-    /**
      * Get timeoutLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getTimeoutLocution();
 
     /**
-     * Set timeoutExtension
-     *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $timeoutExtension
-     *
-     * @return self
-     */
-    public function setTimeoutExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $timeoutExtension = null);
-
-    /**
      * Get timeoutExtension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getTimeoutExtension();
 
     /**
-     * Set timeoutVoiceMailUser
-     *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $timeoutVoiceMailUser
-     *
-     * @return self
-     */
-    public function setTimeoutVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $timeoutVoiceMailUser = null);
-
-    /**
      * Get timeoutVoiceMailUser
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getTimeoutVoiceMailUser();
 
     /**
-     * Set fullLocution
-     *
-     * @param \Ivoz\Provider\Domain\Model\Locution\LocutionInterface $fullLocution
-     *
-     * @return self
-     */
-    public function setFullLocution(\Ivoz\Provider\Domain\Model\Locution\LocutionInterface $fullLocution = null);
-
-    /**
      * Get fullLocution
      *
-     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface
+     * @return \Ivoz\Provider\Domain\Model\Locution\LocutionInterface | null
      */
     public function getFullLocution();
 
     /**
-     * Set fullExtension
-     *
-     * @param \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $fullExtension
-     *
-     * @return self
-     */
-    public function setFullExtension(\Ivoz\Provider\Domain\Model\Extension\ExtensionInterface $fullExtension = null);
-
-    /**
      * Get fullExtension
      *
-     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface
+     * @return \Ivoz\Provider\Domain\Model\Extension\ExtensionInterface | null
      */
     public function getFullExtension();
 
     /**
-     * Set fullVoiceMailUser
-     *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $fullVoiceMailUser
-     *
-     * @return self
-     */
-    public function setFullVoiceMailUser(\Ivoz\Provider\Domain\Model\User\UserInterface $fullVoiceMailUser = null);
-
-    /**
      * Get fullVoiceMailUser
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getFullVoiceMailUser();
 
     /**
-     * Set timeoutNumberCountry
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $timeoutNumberCountry
-     *
-     * @return self
-     */
-    public function setTimeoutNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $timeoutNumberCountry = null);
-
-    /**
      * Get timeoutNumberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getTimeoutNumberCountry();
 
     /**
-     * Set fullNumberCountry
-     *
-     * @param \Ivoz\Provider\Domain\Model\Country\CountryInterface $fullNumberCountry
-     *
-     * @return self
-     */
-    public function setFullNumberCountry(\Ivoz\Provider\Domain\Model\Country\CountryInterface $fullNumberCountry = null);
-
-    /**
      * Get fullNumberCountry
      *
-     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface
+     * @return \Ivoz\Provider\Domain\Model\Country\CountryInterface | null
      */
     public function getFullNumberCountry();
 
@@ -377,6 +223,4 @@ interface QueueInterface extends LoggableEntityInterface
      * @return null|string
      */
     public function getTarget(string $prefix = '');
-
 }
-

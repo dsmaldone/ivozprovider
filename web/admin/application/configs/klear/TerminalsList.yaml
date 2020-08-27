@@ -11,6 +11,10 @@ production:
   screens: &terminals_screensLink
     terminalsList_screen: &terminalsList_screenLink
       controller: list
+      order:
+        field:
+        - Terminal.name
+        type: asc
       pagination:
         items: 25
       <<: *Terminals
@@ -18,7 +22,7 @@ production:
       title: _("List of %s %2s", ngettext('Terminal', 'Terminals', 0), "[format| (%parent%)]")
       info:
         <<: *documentationLink
-        href: "/doc/${lang}/company/terminals.html"
+        href: "/doc/en/administration_portal/client/vpbx/terminals.html"
       forcedValues:
         <<: *forcedCompany
       fields:
@@ -28,12 +32,15 @@ production:
           lastProvisionDate: true
           disallow: true
           status: true
+          t38Passthrough: true
+          allowAudio: true
+          allowVideo: true
         options:
           title: _("Options")
           screens:
-            terminalsEdit_screen: true
+            terminalsEdit_screen: ${auth.acls.Terminals.update}
           dialogs:
-            terminalsDel_dialog: true
+            terminalsDel_dialog: ${auth.acls.Terminals.delete}
           default: terminalsEdit_screen
         order:
           name: true
@@ -46,9 +53,9 @@ production:
       options:
         title: _("Options")
         screens:
-          terminalsNew_screen: true
+          terminalsNew_screen: ${auth.acls.Terminals.create}
         dialogs:
-          terminalsDel_dialog: true
+          terminalsDel_dialog: ${auth.acls.Terminals.delete}
           importTerminals_dialog: false
     terminalsNew_screen: &terminalsNew_screenLink
       <<: *Terminals
@@ -71,6 +78,7 @@ production:
           allowAudio: true
           allowVideo: true
           directMediaMethod: true
+          t38Passthrough: true
           terminalModel: true
           mac: true
           lastProvisionDate: true
@@ -78,8 +86,12 @@ production:
           disallow: true
           lastProvisionDate: true
           domain: true
+          t38Passthrough: true
           statusIcon: true
           status: true
+          allowAudio: true
+          allowVideo: true
+          directMediaMethod: true
       fixedPositions: &TerminalsFixedPositions_link
         group0:
           label: _("Login Info")
@@ -90,11 +102,12 @@ production:
             password: 5
         group1:
           label: _("Connection Info")
-          colsPerRow: 12
+          colsPerRow: 8
           fields:
             allowAudio: 4
             allowVideo: 4
             directMediaMethod: 4
+            t38Passthrough: 4
         group2:
           label: _("Provisioning Info")
           colsPerRow: 12
@@ -130,6 +143,7 @@ production:
           terminalModel: true
           mac: true
           lastProvisionDate: true
+          t38Passthrough: true
       fixedPositions:
         <<: *TerminalsFixedPositions_link
   dialogs: &terminals_dialogsLink

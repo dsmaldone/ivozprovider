@@ -7,6 +7,7 @@ use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Ivoz\Provider\Domain\Model\Ddi\Ddi;
+use Ivoz\Provider\Domain\Model\Ddi\DdiInterface;
 
 class ProviderDdi extends Fixture implements DependentFixtureInterface
 {
@@ -17,24 +18,64 @@ class ProviderDdi extends Fixture implements DependentFixtureInterface
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(Ddi::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
-    
-        $item1 = $this->createEntityInstanceWithPublicMethods(Ddi::class);
-        $item1->setDdi("123");
-        $item1->setDdie164("+34123");
-        $item1->setDisplayName("");
-        $item1->setBillInboundCalls(false);
-        $item1->setFriendValue("");
-        $item1->setCompany($this->getReference('_reference_ProviderCompany1'));
-        $item1->setBrand($this->getReference('_reference_ProviderBrand1'));
-        $item1->setPeeringContract($this->getReference('_reference_ProviderPeeringContract1'));
-        $item1->setCountry($this->getReference('_reference_ProviderCountry70'));
+
+        /** @var DdiInterface $item1 */
+        $item1 = $this->createEntityInstance(Ddi::class);
+        (function () use ($fixture) {
+            $this->setDdi("123");
+            $this->setDdie164("+34123");
+            $this->setDisplayName("");
+            $this->setBillInboundCalls(false);
+            $this->setFriendValue("");
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany1'));
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setDdiProvider($fixture->getReference('_reference_ProviderDdiProvider1'));
+            $this->setCountry($fixture->getReference('_reference_ProviderCountry70'));
+        })->call($item1);
+
         $this->addReference('_reference_ProviderDdi1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);
 
-    
+        /** @var DdiInterface $item2 */
+        $item2 = $this->createEntityInstance(Ddi::class);
+        (function () use ($fixture) {
+            $this->setDdi("124");
+            $this->setDdie164("+34124");
+            $this->setDisplayName("");
+            $this->setBillInboundCalls(false);
+            $this->setFriendValue("");
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany4'));
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setDdiProvider($fixture->getReference('_reference_ProviderDdiProvider1'));
+            $this->setCountry($fixture->getReference('_reference_ProviderCountry70'));
+        })->call($item2);
+
+        $this->addReference('_reference_ProviderDdi2', $item2);
+        $this->sanitizeEntityValues($item2);
+        $manager->persist($item2);
+
+        /** @var DdiInterface $item3 */
+        $item3 = $this->createEntityInstance(Ddi::class);
+        (function () use ($fixture) {
+            $this->setDdi("121");
+            $this->setDdie164("+34121");
+            $this->setDisplayName("");
+            $this->setBillInboundCalls(false);
+            $this->setFriendValue("");
+            $this->setCompany($fixture->getReference('_reference_ProviderCompany3'));
+            $this->setBrand($fixture->getReference('_reference_ProviderBrand1'));
+            $this->setDdiProvider($fixture->getReference('_reference_ProviderDdiProvider1'));
+            $this->setCountry($fixture->getReference('_reference_ProviderCountry70'));
+        })->call($item3);
+
+        $this->addReference('_reference_ProviderDdi3', $item3);
+        $this->sanitizeEntityValues($item3);
+        $manager->persist($item3);
+
         $manager->flush();
     }
 
@@ -43,7 +84,7 @@ class ProviderDdi extends Fixture implements DependentFixtureInterface
         return array(
             ProviderCompany::class,
             ProviderBrand::class,
-            ProviderPeeringContract::class,
+            ProviderDdiProvider::class,
             ProviderCountry::class
         );
     }

@@ -12,8 +12,8 @@ class KlearCustomRunCodeController extends Zend_Controller_Action
 
     public function init()
     {
-        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter)) ) {
-            throw New Zend_Exception('',Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
+        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter))) {
+            throw new Zend_Exception('', Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
         }
 
         $this->_helper->ContextSwitch()
@@ -38,22 +38,32 @@ class KlearCustomRunCodeController extends Zend_Controller_Action
         $error = "";
         $inputMac = '<br/> Mac:<input type="text" name="mac" />';
         if ($this->getParam("exec")) {
-            if($this->getParam("mac")){
+            if ($this->getParam("mac")) {
+                try {
+                    $terminalModel = $this->dataGateway->findOneBy(
+                        \Ivoz\Provider\Domain\Model\Terminal\Terminal::class,
+                        [
+                            'Terminal.mac = :mac',
+                            ['mac' => $this->getParam("mac")]
+                        ]
+                    );
 
-                $terminalModel = $this->dataGateway->findOneBy(
-                    \Ivoz\Provider\Domain\Model\Terminal\Terminal::class,
-                    [
-                        'Terminal.mac = :mac',
-                        ['mac' => $this->getParam("mac")]
-                    ]
-                );
-                if($terminalModel){
+                    if (!$terminalModel) {
+                        throw new \DomainException('Mac does not exist');
+                    }
+
                     $this->view->terminal = $terminalModel;
 
                     $userModel = $this->dataGateway->findOneBy(
                         \Ivoz\Provider\Domain\Model\User\User::class,
                         ["User.terminal = '" . $terminalModel->getId() . "'"]
                     );
+
+                    if (!$userModel) {
+                        throw new \DomainException('User was not found');
+                    }
+
+                    /** @var \Ivoz\Provider\Domain\Model\User\UserDto user */
                     $this->view->user = $userModel;
 
                     /** @var \Ivoz\Provider\Domain\Model\Language\LanguageDto $language */
@@ -65,11 +75,22 @@ class KlearCustomRunCodeController extends Zend_Controller_Action
                     );
                     $this->view->language = $language->toDto();
 
+                    /** @var \Ivoz\Provider\Domain\Model\Extension\Extension $extension */
+                    $extension = $this->dataGateway->remoteProcedureCall(
+                        \Ivoz\Provider\Domain\Model\User\User::class,
+                        $userModel->getId(),
+                        'getExtension',
+                        []
+                    );
+
                     /**
                      * For backward compatibility reasons
                      * @deprecated this will be remove in ivozprovider 3.0
                      */
-                    $this->view->user->setLanguage($this->view->language);
+                    if (!$extension) {
+                        throw new \DomainException('Extension was not found');
+                    }
+                    $this->view->user->setExtension($extension->toDto());
 
                     $companyModel = $this->dataGateway->findOneBy(
                         \Ivoz\Provider\Domain\Model\Company\Company::class,
@@ -82,12 +103,12 @@ class KlearCustomRunCodeController extends Zend_Controller_Action
                         ["Brand.id = '" . $companyModel->getBrandId() . "'"]
                     );
                     $this->view->brand = $brandModel;
-
-                } else {
-                    $error = "Mac does not exist";
+                } catch (\Exception $exception) {
+                    $error = $exception->getMessage();
                 }
-                $this->_runCode('specific', $inputMac, $error );
-            } else{
+
+                $this->_runCode('specific', $inputMac, $error);
+            } else {
                 $this->_runCode('specific', $inputMac, "*required");
             }
         } else {
@@ -125,11 +146,16 @@ class KlearCustomRunCodeController extends Zend_Controller_Action
                 });
 
                 $message = implode("<br>", $output);
-            }
-            else{
-                $message = _('This template is going to be tested<br /><textarea name="currentCode" rows="8" cols="80" readonly></textarea>' . $inputMac . $error);
+            } else {
+                $message = $this->_helper->translate('This template is going to be tested')
+                            . '<br /><textarea name="currentCode" rows="8" cols="80" readonly></textarea>'
+                            . $inputMac
+                            . '<span style="color:red;padding-left:10px;">'
+                            . $error
+                            . '</span>';
+
                 $buttons = array(
-                        _('Exec') => array(
+                        $this->_helper->translate('Exec') => array(
                                 'reloadParent' => false,
                                 'recall' => true,
                                 'params' => array('exec'=>true)
@@ -137,20 +163,22 @@ class KlearCustomRunCodeController extends Zend_Controller_Action
                 );
             }
         } else {
-            $message = _('The terminal model must be saved before you can test the code');
+            $message = $this->_helper->translate('The terminal model must be saved before you can test the code');
         }
 
-        $this->_dispatch( $message, $buttons);
+        $this->_dispatch($message, $buttons);
     }
 
-    protected function _getFilePath(){
+    protected function _getFilePath()
+    {
         $bootstrap = \Zend_Controller_Front::getInstance()->getParam('bootstrap');
         $conf = (Object) $bootstrap->getOptions();
         $path = $conf->Iron['fso']['localStoragePath'];
         return $path;
     }
 
-    protected function _createFile($route, $file){
+    protected function _createFile($route, $file)
+    {
         $filename = $route . DIRECTORY_SEPARATOR .$file;
 
         if (!file_exists($route)) {
@@ -165,24 +193,25 @@ class KlearCustomRunCodeController extends Zend_Controller_Action
 
         $currentCodePost = " <?php  } }";
         try {
-            if ( copy($this->_template, $filename)) {
+            if (copy($this->_template, $filename)) {
                 file_put_contents($filename, $currentCode . $currentCodePost, FILE_APPEND);
-            } else{
-                $this->_helper->log( "RunCode- error copy(" . $this->_template . ", " . $filename . ")", Zend_Log::ERR);
+            } else {
+                $this->_helper->log("RunCode- error copy(" . $this->_template . ", " . $filename . ")", Zend_Log::ERR);
                 file_put_contents($filename, "Internal error processing the code. Try it again later and if the problem persists, contact an administrator.");
             }
         } catch (Exception $e) {
-            $this->_helper->log( "RunCode- " . $e->getMessage(), Zend_Log::WARN);
+            $this->_helper->log("RunCode- " . $e->getMessage(), Zend_Log::WARN);
         }
     }
 
-    protected function _dispatch( $message, $buttons = array()){
-        $buttons[_('Close')] = array(
+    protected function _dispatch($message, $buttons = array())
+    {
+        $buttons[$this->_helper->translate('Close')] = array(
             'reloadParent' => false,
             'recall' => false,
         );
         $data = array(
-            'title' => _("Test the code"),
+            'title' => $this->_helper->translate("Test the code"),
             'message' => $message,
             'buttons'=>$buttons
         );

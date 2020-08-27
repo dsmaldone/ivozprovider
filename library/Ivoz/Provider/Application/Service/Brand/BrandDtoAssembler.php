@@ -2,18 +2,17 @@
 
 namespace Ivoz\Provider\Application\Service\Brand;
 
+use Assert\Assertion;
+use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Application\Service\Assembler\CustomDtoAssemblerInterface;
 use Ivoz\Core\Application\Service\StoragePathResolverCollection;
 use Ivoz\Core\Domain\Model\EntityInterface;
-use Ivoz\Core\Application\Service\Assembler\CustomDtoAssemblerInterface;
 use Ivoz\Provider\Domain\Model\Brand\BrandDto;
 use Ivoz\Provider\Domain\Model\Brand\BrandInterface;
-use Assert\Assertion;
+use Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrand;
 
 class BrandDtoAssembler implements CustomDtoAssemblerInterface
 {
-    /**
-     * @var StoragePathResolverCollection
-     */
     protected $storagePathResolver;
 
     public function __construct(
@@ -24,14 +23,13 @@ class BrandDtoAssembler implements CustomDtoAssemblerInterface
 
     /**
      * @param BrandInterface $entity
-     * @param integer $depth
-     * @return BrandDTO
+     * @throws \Exception
      */
-    public function toDto(EntityInterface $entity, $depth = 0)
+    public function toDto(EntityInterface $entity, int $depth = 0, string $context = null): DataTransferObjectInterface
     {
         Assertion::isInstanceOf($entity, BrandInterface::class);
 
-        /** @var BrandDTO $dto */
+        /** @var BrandDto $dto */
         $dto = $entity->toDto($depth);
         $id = $entity->getId();
 
@@ -40,13 +38,27 @@ class BrandDtoAssembler implements CustomDtoAssemblerInterface
         }
 
         if ($entity->getLogo()->getFileSize()) {
-
             $pathResolver = $this
                 ->storagePathResolver
                 ->getPathResolver('Logo');
 
             $dto->setLogoPath(
                 $pathResolver->getFilePath($entity)
+            );
+        }
+
+        if (in_array($context, BrandDto::CONTEXTS_WITH_FEATURES, true)) {
+            $featureIds = array_map(
+                function (FeaturesRelBrand $relFeature) {
+                    return $relFeature
+                        ->getFeature()
+                        ->getId();
+                },
+                $entity->getRelFeatures()
+            );
+
+            $dto->setFeatures(
+                $featureIds
             );
         }
 

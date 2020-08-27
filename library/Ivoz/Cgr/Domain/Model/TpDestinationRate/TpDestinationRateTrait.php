@@ -15,16 +15,6 @@ trait TpDestinationRateTrait
      */
     protected $id;
 
-    /**
-     * @var \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface
-     */
-    protected $tpDestination;
-
-    /**
-     * @var \Ivoz\Cgr\Domain\Model\TpRate\TpRateInterface
-     */
-    protected $tpRate;
-
 
     /**
      * Constructor
@@ -32,21 +22,25 @@ trait TpDestinationRateTrait
     protected function __construct()
     {
         parent::__construct(...func_get_args());
-
     }
+
+    abstract protected function sanitizeValues();
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param TpDestinationRateDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpDestinationRateDto
-         */
-        $self = parent::fromDto($dto);
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        /** @var static $self */
+        $self = parent::fromDto($dto, $fkTransformer);
 
+        $self->sanitizeValues();
         if ($dto->getId()) {
             $self->id = $dto->getId();
             $self->initChangelog();
@@ -56,20 +50,24 @@ trait TpDestinationRateTrait
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
-     * @return self
+     * @internal use EntityTools instead
+     * @param TpDestinationRateDto $dto
+     * @param \Ivoz\Core\Application\ForeignKeyTransformerInterface  $fkTransformer
+     * @return static
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpDestinationRateDto
-         */
-        parent::updateFromDto($dto);
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        parent::updateFromDto($dto, $fkTransformer);
+
+        $this->sanitizeValues();
 
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TpDestinationRateDto
      */
@@ -89,56 +87,4 @@ trait TpDestinationRateTrait
             'id' => self::getId()
         ];
     }
-
-
-    /**
-     * Set tpDestination
-     *
-     * @param \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface $tpDestination
-     *
-     * @return self
-     */
-    public function setTpDestination(\Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface $tpDestination = null)
-    {
-        $this->tpDestination = $tpDestination;
-
-        return $this;
-    }
-
-    /**
-     * Get tpDestination
-     *
-     * @return \Ivoz\Cgr\Domain\Model\TpDestination\TpDestinationInterface
-     */
-    public function getTpDestination()
-    {
-        return $this->tpDestination;
-    }
-
-    /**
-     * Set tpRate
-     *
-     * @param \Ivoz\Cgr\Domain\Model\TpRate\TpRateInterface $tpRate
-     *
-     * @return self
-     */
-    public function setTpRate(\Ivoz\Cgr\Domain\Model\TpRate\TpRateInterface $tpRate = null)
-    {
-        $this->tpRate = $tpRate;
-
-        return $this;
-    }
-
-    /**
-     * Get tpRate
-     *
-     * @return \Ivoz\Cgr\Domain\Model\TpRate\TpRateInterface
-     */
-    public function getTpRate()
-    {
-        return $this->tpRate;
-    }
-
-
 }
-

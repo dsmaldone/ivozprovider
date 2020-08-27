@@ -3,8 +3,9 @@
 namespace Ivoz\Ast\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Ast\Domain\Model\Queue\QueueRepository;
 use Ivoz\Ast\Domain\Model\Queue\Queue;
+use Ivoz\Ast\Domain\Model\Queue\QueueInterface;
+use Ivoz\Ast\Domain\Model\Queue\QueueRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -18,5 +19,19 @@ class QueueDoctrineRepository extends ServiceEntityRepository implements QueueRe
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Queue::class);
+    }
+
+    /**
+     * @param int $id
+     * @return QueueInterface
+     */
+    public function findOneByProviderQueueId($id)
+    {
+        /** @var QueueInterface $response */
+        $response = $this->findOneBy([
+            'queue' => $id
+        ]);
+
+        return $response;
     }
 }

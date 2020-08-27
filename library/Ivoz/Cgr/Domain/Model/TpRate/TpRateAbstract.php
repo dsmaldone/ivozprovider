@@ -19,19 +19,19 @@ abstract class TpRateAbstract
     protected $tpid = 'ivozprovider';
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $tag;
 
     /**
      * column: connect_fee
-     * @var string
+     * @var float
      */
     protected $connectFee;
 
     /**
      * column: rate
-     * @var string
+     * @var float
      */
     protected $rateCost;
 
@@ -60,9 +60,9 @@ abstract class TpRateAbstract
     protected $createdAt;
 
     /**
-     * @var \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface
+     * @var \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateInterface
      */
-    protected $tpDestinationRate;
+    protected $destinationRate;
 
 
     use ChangelogTrait;
@@ -92,7 +92,8 @@ abstract class TpRateAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "TpRate",
             $this->getId()
         );
@@ -116,7 +117,8 @@ abstract class TpRateAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param TpRateInterface|null $entity
      * @param int $depth
      * @return TpRateDto|null
      */
@@ -136,19 +138,22 @@ abstract class TpRateAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var TpRateDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpRateDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpRateDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpRateDto::class);
 
         $self = new static(
@@ -158,28 +163,28 @@ abstract class TpRateAbstract
             $dto->getRateUnit(),
             $dto->getRateIncrement(),
             $dto->getGroupIntervalStart(),
-            $dto->getCreatedAt());
+            $dto->getCreatedAt()
+        );
 
         $self
             ->setTag($dto->getTag())
-            ->setTpDestinationRate($dto->getTpDestinationRate())
+            ->setDestinationRate($fkTransformer->transform($dto->getDestinationRate()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param TpRateDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto TpRateDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, TpRateDto::class);
 
         $this
@@ -191,15 +196,15 @@ abstract class TpRateAbstract
             ->setRateIncrement($dto->getRateIncrement())
             ->setGroupIntervalStart($dto->getGroupIntervalStart())
             ->setCreatedAt($dto->getCreatedAt())
-            ->setTpDestinationRate($dto->getTpDestinationRate());
+            ->setDestinationRate($fkTransformer->transform($dto->getDestinationRate()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return TpRateDto
      */
@@ -214,7 +219,7 @@ abstract class TpRateAbstract
             ->setRateIncrement(self::getRateIncrement())
             ->setGroupIntervalStart(self::getGroupIntervalStart())
             ->setCreatedAt(self::getCreatedAt())
-            ->setTpDestinationRate(\Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRate::entityToDto(self::getTpDestinationRate(), $depth));
+            ->setDestinationRate(\Ivoz\Provider\Domain\Model\DestinationRate\DestinationRate::entityToDto(self::getDestinationRate(), $depth));
     }
 
     /**
@@ -231,11 +236,9 @@ abstract class TpRateAbstract
             'rate_increment' => self::getRateIncrement(),
             'group_interval_start' => self::getGroupIntervalStart(),
             'created_at' => self::getCreatedAt(),
-            'tpDestinationRateId' => self::getTpDestinationRate() ? self::getTpDestinationRate()->getId() : null
+            'destinationRateId' => self::getDestinationRate()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -243,9 +246,9 @@ abstract class TpRateAbstract
      *
      * @param string $tpid
      *
-     * @return self
+     * @return static
      */
-    public function setTpid($tpid)
+    protected function setTpid($tpid)
     {
         Assertion::notNull($tpid, 'tpid value "%s" is null, but non null value was expected.');
         Assertion::maxLength($tpid, 64, 'tpid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -268,11 +271,11 @@ abstract class TpRateAbstract
     /**
      * Set tag
      *
-     * @param string $tag
+     * @param string $tag | null
      *
-     * @return self
+     * @return static
      */
-    public function setTag($tag = null)
+    protected function setTag($tag = null)
     {
         if (!is_null($tag)) {
             Assertion::maxLength($tag, 64, 'tag value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -286,7 +289,7 @@ abstract class TpRateAbstract
     /**
      * Get tag
      *
-     * @return string
+     * @return string | null
      */
     public function getTag()
     {
@@ -296,16 +299,16 @@ abstract class TpRateAbstract
     /**
      * Set connectFee
      *
-     * @param string $connectFee
+     * @param float $connectFee
      *
-     * @return self
+     * @return static
      */
-    public function setConnectFee($connectFee)
+    protected function setConnectFee($connectFee)
     {
         Assertion::notNull($connectFee, 'connectFee value "%s" is null, but non null value was expected.');
         Assertion::numeric($connectFee);
 
-        $this->connectFee = $connectFee;
+        $this->connectFee = (float) $connectFee;
 
         return $this;
     }
@@ -313,7 +316,7 @@ abstract class TpRateAbstract
     /**
      * Get connectFee
      *
-     * @return string
+     * @return float
      */
     public function getConnectFee()
     {
@@ -323,16 +326,16 @@ abstract class TpRateAbstract
     /**
      * Set rateCost
      *
-     * @param string $rateCost
+     * @param float $rateCost
      *
-     * @return self
+     * @return static
      */
-    public function setRateCost($rateCost)
+    protected function setRateCost($rateCost)
     {
         Assertion::notNull($rateCost, 'rateCost value "%s" is null, but non null value was expected.');
         Assertion::numeric($rateCost);
 
-        $this->rateCost = $rateCost;
+        $this->rateCost = (float) $rateCost;
 
         return $this;
     }
@@ -340,7 +343,7 @@ abstract class TpRateAbstract
     /**
      * Get rateCost
      *
-     * @return string
+     * @return float
      */
     public function getRateCost()
     {
@@ -352,9 +355,9 @@ abstract class TpRateAbstract
      *
      * @param string $rateUnit
      *
-     * @return self
+     * @return static
      */
-    public function setRateUnit($rateUnit)
+    protected function setRateUnit($rateUnit)
     {
         Assertion::notNull($rateUnit, 'rateUnit value "%s" is null, but non null value was expected.');
         Assertion::maxLength($rateUnit, 16, 'rateUnit value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -379,9 +382,9 @@ abstract class TpRateAbstract
      *
      * @param string $rateIncrement
      *
-     * @return self
+     * @return static
      */
-    public function setRateIncrement($rateIncrement)
+    protected function setRateIncrement($rateIncrement)
     {
         Assertion::notNull($rateIncrement, 'rateIncrement value "%s" is null, but non null value was expected.');
         Assertion::maxLength($rateIncrement, 16, 'rateIncrement value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -406,9 +409,9 @@ abstract class TpRateAbstract
      *
      * @param string $groupIntervalStart
      *
-     * @return self
+     * @return static
      */
-    public function setGroupIntervalStart($groupIntervalStart)
+    protected function setGroupIntervalStart($groupIntervalStart)
     {
         Assertion::notNull($groupIntervalStart, 'groupIntervalStart value "%s" is null, but non null value was expected.');
         Assertion::maxLength($groupIntervalStart, 16, 'groupIntervalStart value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -433,15 +436,19 @@ abstract class TpRateAbstract
      *
      * @param \DateTime $createdAt
      *
-     * @return self
+     * @return static
      */
-    public function setCreatedAt($createdAt)
+    protected function setCreatedAt($createdAt)
     {
         Assertion::notNull($createdAt, 'createdAt value "%s" is null, but non null value was expected.');
         $createdAt = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $createdAt,
             'CURRENT_TIMESTAMP'
         );
+
+        if ($this->createdAt == $createdAt) {
+            return $this;
+        }
 
         $this->createdAt = $createdAt;
 
@@ -455,35 +462,32 @@ abstract class TpRateAbstract
      */
     public function getCreatedAt()
     {
-        return $this->createdAt;
+        return clone $this->createdAt;
     }
 
     /**
-     * Set tpDestinationRate
+     * Set destinationRate
      *
-     * @param \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface $tpDestinationRate
+     * @param \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateInterface $destinationRate
      *
-     * @return self
+     * @return static
      */
-    public function setTpDestinationRate(\Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface $tpDestinationRate)
+    public function setDestinationRate(\Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateInterface $destinationRate)
     {
-        $this->tpDestinationRate = $tpDestinationRate;
+        $this->destinationRate = $destinationRate;
 
         return $this;
     }
 
     /**
-     * Get tpDestinationRate
+     * Get destinationRate
      *
-     * @return \Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateInterface
+     * @return \Ivoz\Provider\Domain\Model\DestinationRate\DestinationRateInterface
      */
-    public function getTpDestinationRate()
+    public function getDestinationRate()
     {
-        return $this->tpDestinationRate;
+        return $this->destinationRate;
     }
-
-
 
     // @codeCoverageIgnoreEnd
 }
-

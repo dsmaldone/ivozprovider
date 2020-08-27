@@ -1,5 +1,6 @@
 #include conf.d/mapperList.yaml
 #include conf.d/actions.yaml
+#include conf.d/documentationLink.yaml
 
 production:
   main:
@@ -11,9 +12,12 @@ production:
       controller: list
       pagination:
         items: 25
-      <<: *DDIs
+      <<: *Ddis
       title: _("List of %s %2s", ngettext('DDI', 'DDIs', 0), "[format| (%parent%)]")
       class: ui-silk-lightning-go
+      info:
+        <<: *documentationLink
+        href: "/doc/en/administration_portal/brand/views/ddis.html"
       forcedValues:
         <<: *forcedBrand
       order:
@@ -23,9 +27,9 @@ production:
       fields:
         order: &dDIsFieldsOder_Link
           country: true
-          DDI: true
+          ddi: true
           company: true
-          peeringContract: true
+          carrier: true
         blacklist:
           externalCallFilter: true
           routeType: true
@@ -39,12 +43,12 @@ production:
           brand: true
           conferenceRoom: true
           recordCalls: true
-          billInboundCalls: true
           friendValue: true
           queue: true
-          retailAccount: true
+          residentialDevice: true
           language: true
           conditionalRoute: true
+          retailAccount: true
 staging: 
   _extends: production
 testing:

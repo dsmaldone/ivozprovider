@@ -3,8 +3,10 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\Ivr\IvrRepository;
+use Ivoz\Provider\Domain\Model\Extension\ExtensionInterface;
 use Ivoz\Provider\Domain\Model\Ivr\Ivr;
+use Ivoz\Provider\Domain\Model\Ivr\IvrRepository;
+use Ivoz\Provider\Domain\Model\User\UserInterface;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -18,5 +20,45 @@ class IvrDoctrineRepository extends ServiceEntityRepository implements IvrReposi
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Ivr::class);
+    }
+
+    /**
+     * @return array
+     */
+    public function findByExtension(ExtensionInterface $extension)
+    {
+        $qb = $this->createQueryBuilder('self');
+
+        $qb
+            ->select('i')
+            ->from(Ivr::class, 'i')
+            ->where(
+                "i.noInputRouteType = 'extension' and i.noInputExtension = " . $extension->getId()
+            )
+            ->orWhere(
+                "i.errorRouteType = 'extension' and i.errorExtension = " . $extension->getId()
+            );
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return array
+     */
+    public function findByUser(UserInterface $user)
+    {
+        $qb = $this->createQueryBuilder('self');
+
+        $qb
+            ->select('i')
+            ->from(Ivr::class, 'i')
+            ->where(
+                "i.noInputRouteType = 'voicemail' and i.noInputVoiceMailUser = " . $user->getId()
+            )
+            ->orWhere(
+                "i.errorRouteType = 'voicemail' and i.errorVoiceMailUser = " . $user->getId()
+            );
+
+        return $qb->getQuery()->getResult();
     }
 }

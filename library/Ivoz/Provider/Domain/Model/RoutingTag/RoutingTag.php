@@ -2,6 +2,8 @@
 
 namespace Ivoz\Provider\Domain\Model\RoutingTag;
 
+use Ivoz\Core\Domain\Assert\Assertion;
+
 /**
  * RoutingTag
  */
@@ -10,7 +12,7 @@ class RoutingTag extends RoutingTagAbstract implements RoutingTagInterface
     use RoutingTagTrait;
 
     /**
-     * @RoutingTagoverageIgnore
+     * @codeCoverageIgnore
      * @return array
      */
     public function getChangeSet()
@@ -18,9 +20,18 @@ class RoutingTag extends RoutingTagAbstract implements RoutingTagInterface
         return parent::getChangeSet();
     }
 
+    protected function setTag($tag)
+    {
+        Assertion::regex(
+            $tag,
+            '/^[0-9]{1,3}#$/'
+        );
+
+        return parent::setTag($tag);
+    }
+
     /**
-     * Get id
-     * @RoutingTagoverageIgnore
+     * @codeCoverageIgnore
      * @return integer
      */
     public function getId()
@@ -28,5 +39,11 @@ class RoutingTag extends RoutingTagAbstract implements RoutingTagInterface
         return $this->id;
     }
 
+    /**
+     * @return string
+     */
+    public function getCgrSubject()
+    {
+        return sprintf("rt%d", $this->getId());
+    }
 }
-

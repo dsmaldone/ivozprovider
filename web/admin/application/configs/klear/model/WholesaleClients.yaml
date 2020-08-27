@@ -43,8 +43,23 @@ production:
             fields:
               - tz
             template: '%tz%'
+          extraDataAttributes:
+            country: countryId
           order:
             Timezone.tz: asc
+    currency:
+      title: ngettext('Currency', 'Currencies', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\Currency\Currency
+          fieldName:
+            fields:
+              - name${lang}
+              - symbol
+            template: '%name${lang}% (%symbol%)'
+        'null': _("Default currency")
     maxCalls:
       title: _('Max calls')
       type: number
@@ -56,7 +71,20 @@ production:
         type: box
         position: left
         icon: help
-        text: _("Limits both user generated and external received calls to this value (0 for unlimited).")
+        text: _("Limits external incoming and outgoing calls to this value (0 for unlimited).")
+        label: _("Need help?")
+    maxDailyUsage:
+      title: _('Max daily usage')
+      type: number
+      defaultValue: 1000000
+      source:
+        control: Spinner
+        min: 1
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("Limit max daily usage.")
         label: _("Need help?")
     postalAddress:
       title: _('Postal address')
@@ -88,6 +116,24 @@ production:
       trim: both
       required: true
       maxLength: 255
+    country:
+      title: _('Country code')
+      type: select
+      defaultValue: 70
+      required: true
+      attributes:
+        data-autofilter-select-by-data: "defaultTimezone:country"
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\Country\Country
+          fieldName:
+            fields:
+            - name${lang}
+            - countryCode
+            template: '%name${lang}% (%countryCode%)'
+          order:
+            Country.name.${lang}: asc
     language:
       title: _('Language')
       type: select
@@ -110,7 +156,6 @@ production:
         data: mapper
         config:
           entity: \Ivoz\Provider\Domain\Model\MediaRelaySet\MediaRelaySet
-          filterClass: IvozProvider_Klear_Filter_WholesaleMediaRelaySets
           fieldName:
             fields:
               - name
@@ -176,6 +221,52 @@ production:
               - name
               - tag
             template: '%name% (%tag%)'
+    showInvoices:
+      title: _('Display Client Invoices section')
+      type: select
+      defaultValue: 0
+      source:
+        data: inline
+        values:
+          '0':
+            title: _("No")
+          '1':
+            title: _("Yes")
+      info:
+        type: box
+        position: left
+        icon: help
+        text: _("Enable this option to display a section in Client's portal to download generated invoices.")
+        label: _("Need help?")
+    invoiceNotificationTemplate:
+      title: ngettext('Invoice Notification', 'Invoice Notifications', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate
+          filterClass: IvozProvider_Klear_Filter_NotificationTemplateInvoice
+          fieldName:
+            fields:
+              - name
+            template: '%name%'
+        'null': _("Use generic template")
+    callCsvNotificationTemplate:
+      title: ngettext('Call CSV Notification', 'Call CSV Notifications', 1)
+      type: select
+      source:
+        data: mapper
+        config:
+          entity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplate
+          filterClass: IvozProvider_Klear_Filter_NotificationTemplateCallCsv
+          fieldName:
+            fields:
+            - name
+            template: '%name%'
+        'null': _("Use generic template")
+    externallyExtraOpts:
+      title: _('Externally rater custom options')
+      type: textarea
 staging:
   _extends: production
 testing:

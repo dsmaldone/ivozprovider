@@ -30,8 +30,7 @@ class FaxSend extends RouteHandlerAbstract
     public function __construct(
         Wrapper $agi,
         EntityManagerInterface $em
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->em = $em;
     }
@@ -44,7 +43,7 @@ class FaxSend extends RouteHandlerAbstract
         /** @var FaxesInOutRepository $faxInOutRepository */
         $faxInOutRepository = $this->em->getRepository(FaxesInOut::class);
 
-        /** @var FaxesInOutInterface $faxOut */
+        /** @var FaxesInOutInterface|null $faxOut */
         $faxOut = $faxInOutRepository->find($faxId);
         if (is_null($faxOut)) {
             $this->agi->error("Faxfile %d not found in database", $faxId);

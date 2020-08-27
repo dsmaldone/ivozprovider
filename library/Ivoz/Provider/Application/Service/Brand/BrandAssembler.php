@@ -2,13 +2,14 @@
 
 namespace Ivoz\Provider\Application\Service\Brand;
 
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\Service\StoragePathResolverCollection;
-use Ivoz\Core\Domain\Model\EntityInterface;
-use Ivoz\Core\Application\Service\Assembler\CustomEntityAssemblerInterface;
-use Ivoz\Provider\Domain\Model\Brand\BrandInterface;
 use Assert\Assertion;
+use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Application\ForeignKeyTransformerInterface;
+use Ivoz\Core\Application\Service\Assembler\CustomEntityAssemblerInterface;
+use Ivoz\Core\Application\Service\StoragePathResolverCollection;
 use Ivoz\Core\Application\Service\Traits\FileContainerEntityAssemblerTrait;
+use Ivoz\Core\Domain\Model\EntityInterface;
+use Ivoz\Provider\Domain\Model\Brand\BrandInterface;
 
 class BrandAssembler implements CustomEntityAssemblerInterface
 {
@@ -20,14 +21,13 @@ class BrandAssembler implements CustomEntityAssemblerInterface
         $this->storagePathResolver = $storagePathResolver;
     }
 
-    /**
-     * @param DataTransferObjectInterface $dto
-     * @param EntityInterface $entity
-     */
-    public function fromDto(DataTransferObjectInterface $dto, EntityInterface $entity)
-    {
-        Assertion::isInstanceOf($entity, BrandInterface::class);
-        $entity->updateFromDto($dto);
-        $this->handleEntityFiles($entity, $dto);
+    public function fromDto(
+        DataTransferObjectInterface $brandDto,
+        EntityInterface $brand,
+        ForeignKeyTransformerInterface $fkTransformer
+    ) {
+        Assertion::isInstanceOf($brand, BrandInterface::class);
+        $brand->updateFromDto($brandDto, $fkTransformer);
+        $this->handleEntityFiles($brand, $brandDto, $fkTransformer);
     }
 }

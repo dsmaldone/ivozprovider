@@ -3,8 +3,8 @@
 namespace Ivoz\Provider\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Provider\Domain\Model\Brand\BrandRepository;
 use Ivoz\Provider\Domain\Model\Brand\Brand;
+use Ivoz\Provider\Domain\Model\Brand\BrandRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -18,5 +18,25 @@ class BrandDoctrineRepository extends ServiceEntityRepository implements BrandRe
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Brand::class);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getNames()
+    {
+        $qb = $this->createQueryBuilder('self');
+
+        $result = $qb
+            ->select('self.id, self.name')
+            ->getQuery()
+            ->getScalarResult();
+
+        $response = [];
+        foreach ($result as $row) {
+            $response[$row['id']] = $row['name'];
+        }
+
+        return $response;
     }
 }

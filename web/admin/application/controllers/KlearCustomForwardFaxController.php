@@ -1,46 +1,59 @@
 <?php
+
+use Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOut;
+
 class KlearCustomForwardFaxController extends Zend_Controller_Action
 {
     protected $_mainRouter;
     
     public function init()
     {
-        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter)) ) {
-            throw New Zend_Exception('',Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
+        if ((!$this->_mainRouter = $this->getRequest()->getUserParam("mainRouter")) || (!is_object($this->_mainRouter))) {
+            throw new Zend_Exception('', Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ACTION);
         }
     
         $this->_helper->ContextSwitch()
              ->addActionContext('forward-fax', 'json')
              ->initContext('json');
   
-      $this->_helper->layout->disableLayout();
+        $this->_helper->layout->disableLayout();
     }
     
     public function forwardFaxAction()
     {
         $pk = $this->getRequest()->getParam("pk");
 
-        $mapperFax = new IvozProvider\Mapper\Sql\FaxesInOut();
-        $modelFax = $mapperFax->find($pk);
+        /** @var DataGateway $dataGateway */
+        $dataGateway = \Zend_Registry::get('data_gateway');
+
+        /** @var \Ivoz\Provider\Domain\Model\FaxesInOut\FaxesInOutDto $modelFax */
+        $modelFax = $dataGateway->find(
+            FaxesInOut::class,
+            $pk
+        );
 
         if (!$modelFax) {
-            $modelFax = new IvozProvider\Model\FaxesInOut();
+            $modelFax = FaxesInOut::createDto();
         }
 
         $bodyMsg = '
-                <p><strong>'._("Resend to").':</strong> '.$modelFax->getDst().'</p>
-                <p><strong>'._("File").':</strong> '.$modelFax->getFileBaseName().'</p>
+                <p><strong>'.$this->_helper->translate("Resend to").':</strong> '.$modelFax->getDst().'</p>
+                <p><strong>'.$this->_helper->translate("File").':</strong> '.$modelFax->getFileBaseName().'</p>
         ';
 
         if ($this->getRequest()->getParam("forward")) {
             $modelFax->setStatus('pending');
-            $modelFax->save();
+
+            $dataGateway->update(
+                FaxesInOut::class,
+                $modelFax
+            );
 
             $data = array(
-                'title' => _("Fax resent"),
+                'title' => $this->_helper->translate("Fax resent"),
                 'message'=> $bodyMsg,
                 'buttons'=>array(
-                    _('Accept') => array(
+                    $this->_helper->translate('Accept') => array(
                         'reloadParent' => true,
                         'recall' => false,
                     )
@@ -48,14 +61,14 @@ class KlearCustomForwardFaxController extends Zend_Controller_Action
             );
         } else {
             $data = array(
-                'title' => _("Resend fax"),
+                'title' => $this->_helper->translate("Resend fax"),
                 'message'=> $bodyMsg,
                 'buttons'=>array(
-                    _('Cancel') => array(
+                    $this->_helper->translate('Cancel') => array(
                         'reloadParent' => false,
                         'recall' => false,
                     ),
-                    _('Resend') => array(
+                    $this->_helper->translate('Resend') => array(
                         "recall" => true,
                         "reloadParent" => false,
                         "params" => array(

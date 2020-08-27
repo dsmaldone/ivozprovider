@@ -2,55 +2,58 @@
 
 namespace Ivoz\Ast\Domain\Service\PsEndpoint;
 
-use Ivoz\Core\Domain\Service\EntityPersisterInterface;
+use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointDto;
+use Ivoz\Core\Application\Service\EntityTools;
 use Ivoz\Provider\Domain\Model\User\UserInterface;
 use Ivoz\Provider\Domain\Service\User\UserLifecycleEventHandlerInterface;
 
-/**
- * Class UpdateByUser
- * @package Ivoz\Ast\Domain\Service\PsEndpoint
- * @lifecycle pre_persist
- */
 class UpdateByUser implements UserLifecycleEventHandlerInterface
 {
     /**
-     * @var EntityPersisterInterface
+     * @var EntityTools
      */
-    protected $entityPersister;
+    protected $entityTools;
 
     public function __construct(
-        EntityPersisterInterface $entityPersister
+        EntityTools $entityTools
     ) {
-        $this->entityPersister = $entityPersister;
+        $this->entityTools = $entityTools;
     }
 
     public static function getSubscribedEvents()
     {
         return [
-            self::EVENT_POST_PERSIST => 40,
-            self::EVENT_PRE_REMOVE => 10
+            self::EVENT_POST_PERSIST => 40
         ];
     }
 
-    public function execute(UserInterface $entity, $isNew)
+    /**
+     * @return void
+     */
+    public function execute(UserInterface $user)
     {
-        $endpoint = $entity->getEndpoint();
+        $endpoint = $user->getEndpoint();
         if (!$endpoint) {
             return;
         }
+        /** @var PsEndpointDto $endpointDto */
+        $endpointDto = $this
+            ->entityTools
+            ->entityToDto($endpoint);
 
         $callerId = sprintf(
             '%s <%s>',
-            $entity->getFullName(),
-            $entity->getExtensionNumber()
+            $user->getFullName(),
+            $user->getExtensionNumber()
         );
 
-        $endpoint
+        $endpointDto
             ->setCallerid($callerId)
-            ->setMailboxes($entity->getVoiceMail());
+            ->setMailboxes($user->getVoiceMail())
+            ->setNamedPickupGroup($user->getPickUpGroupsIds());
 
         $this
-            ->entityPersister
-            ->persist($endpoint);
+            ->entityTools
+            ->persistDto($endpointDto, $endpoint, false);
     }
 }

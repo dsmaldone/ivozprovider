@@ -2,7 +2,7 @@
 
 namespace Ivoz\Provider\Domain\Model\Calendar;
 
-use Doctrine\Common\Collections\Criteria;
+use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 
 /**
  * Calendar
@@ -33,22 +33,37 @@ class Calendar extends CalendarAbstract implements CalendarInterface
     /**
      * Check if the given day is registered as Holiday
      *
-     * @param \DateTime $date
+     * @param \DateTime $datetime
      * @return bool
      */
-    public function isHolidayDate($date)
+    public function isHolidayDate(\DateTime $datetime)
     {
-        $criteria = new Criteria();
-        $criteria->where(
-            Criteria::expr()->eq(
-                'eventDate',
-                $date
-            )
-        );
+        return $this->getHolidayDate($datetime) !== null;
+    }
+
+    /**
+     * Return the first HolidayDate matching the given date
+     *
+     * @param \DateTime $dateTime
+     * @return \Ivoz\Provider\Domain\Model\HolidayDate\HolidayDateInterface|null
+     */
+    public function getHolidayDate(\DateTime $dateTime)
+    {
+        // Find HolidayDates for the given date that apply the whole day
+        // or time is between the range of the event
+        $criteria = CriteriaHelper::fromArray([
+            ['eventDate', 'eq', $dateTime],
+            'or' => [
+                ['wholeDayEvent', 'eq', '1'],
+                'and' => [
+                    ['timeIn', 'lte', $dateTime],
+                    ['timeOut', 'gte', $dateTime]
+                ]
+            ]
+        ]);
 
         $holidayDates = $this->getHolidayDates($criteria);
 
-        return !empty($holidayDates);
+        return array_shift($holidayDates);
     }
 }
-

@@ -3,8 +3,6 @@
 namespace Ivoz\Kam\Domain\Model\TrunksHtable;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -20,12 +18,12 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $keyType = '0';
+    private $keyType = 0;
 
     /**
      * @var integer
      */
-    private $valueType = '0';
+    private $valueType = 0;
 
     /**
      * @var string
@@ -35,7 +33,7 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     /**
      * @var integer
      */
-    private $expires = '0';
+    private $expires = 0;
 
     /**
      * @var integer
@@ -53,7 +51,7 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -74,7 +72,7 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'keyName' => $this->getKeyName(),
             'keyType' => $this->getKeyType(),
             'valueType' => $this->getValueType(),
@@ -82,22 +80,19 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
             'expires' => $this->getExpires(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -113,7 +108,7 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getKeyName()
     {
@@ -133,7 +128,7 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getKeyType()
     {
@@ -153,7 +148,7 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getValueType()
     {
@@ -173,7 +168,7 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getKeyValue()
     {
@@ -193,7 +188,7 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getExpires()
     {
@@ -213,12 +208,10 @@ abstract class TrunksHtableDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

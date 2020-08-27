@@ -2,10 +2,12 @@
 
 namespace Ivoz\Provider\Domain\Model\Brand;
 
+use Ivoz\Core\Domain\Service\FileContainerInterface;
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 
-interface BrandInterface extends LoggableEntityInterface
+interface BrandInterface extends FileContainerInterface, LoggableEntityInterface
 {
     /**
      * @codeCoverageIgnore
@@ -16,16 +18,28 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * @return array
      */
-    public function getFileObjects();
+    public function getFileObjects(int $filter = null);
 
     /**
      * @inheritdoc
+     * @see BrandAbstract::setDomainUsers
      */
     public function setDomainUsers($domainUsers = null);
 
+    /**
+     * @return string
+     */
     public function getLanguageCode();
 
-    public function willUseExternallyRating(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company, $destination = null);
+    /**
+     * @return string
+     */
+    public function getCurrencySymbol();
+
+    /**
+     * @return string
+     */
+    public function getCurrencyIden();
 
     /**
      * Get the size in bytes used by the recordings on this brand
@@ -39,24 +53,30 @@ interface BrandInterface extends LoggableEntityInterface
     public function getRecordingsLimit();
 
     /**
-     * @return FeatureInterface[]
+     * @return \Ivoz\Provider\Domain\Model\Feature\FeatureInterface[]
      */
     public function getFeatures();
 
     /**
-     * @param $featureId
+     * @param int $featureId
      * @return bool
      */
     public function hasFeature($featureId);
 
+    public function hasFeatureByIden(string $iden);
+
     /**
-     * Set name
+     * Return Brand Cgrates tenant code
      *
-     * @param string $name
-     *
-     * @return self
+     * @return string
      */
-    public function setName($name);
+    public function getCgrTenant();
+
+    /**
+     * @param string $exten
+     * @return \Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface|null
+     */
+    public function getService($exten);
 
     /**
      * Get name
@@ -68,50 +88,23 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * Get domainUsers
      *
-     * @return string
+     * @return string | null
      */
     public function getDomainUsers();
 
     /**
-     * Set recordingsLimitMB
-     *
-     * @param integer $recordingsLimitMB
-     *
-     * @return self
-     */
-    public function setRecordingsLimitMB($recordingsLimitMB = null);
-
-    /**
      * Get recordingsLimitMB
      *
-     * @return integer
+     * @return integer | null
      */
     public function getRecordingsLimitMB();
 
     /**
-     * Set recordingsLimitEmail
-     *
-     * @param string $recordingsLimitEmail
-     *
-     * @return self
-     */
-    public function setRecordingsLimitEmail($recordingsLimitEmail = null);
-
-    /**
      * Get recordingsLimitEmail
      *
-     * @return string
+     * @return string | null
      */
     public function getRecordingsLimitEmail();
-
-    /**
-     * Set maxCalls
-     *
-     * @param integer $maxCalls
-     *
-     * @return self
-     */
-    public function setMaxCalls($maxCalls);
 
     /**
      * Get maxCalls
@@ -121,45 +114,18 @@ interface BrandInterface extends LoggableEntityInterface
     public function getMaxCalls();
 
     /**
-     * Set domain
-     *
-     * @param \Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain
-     *
-     * @return self
-     */
-    public function setDomain(\Ivoz\Provider\Domain\Model\Domain\DomainInterface $domain = null);
-
-    /**
      * Get domain
      *
-     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface
+     * @return \Ivoz\Provider\Domain\Model\Domain\DomainInterface | null
      */
     public function getDomain();
 
     /**
-     * Set language
-     *
-     * @param \Ivoz\Provider\Domain\Model\Language\LanguageInterface $language
-     *
-     * @return self
-     */
-    public function setLanguage(\Ivoz\Provider\Domain\Model\Language\LanguageInterface $language = null);
-
-    /**
      * Get language
      *
-     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface
+     * @return \Ivoz\Provider\Domain\Model\Language\LanguageInterface | null
      */
     public function getLanguage();
-
-    /**
-     * Set defaultTimezone
-     *
-     * @param \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone
-     *
-     * @return self
-     */
-    public function setDefaultTimezone(\Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface $defaultTimezone);
 
     /**
      * Get defaultTimezone
@@ -169,13 +135,39 @@ interface BrandInterface extends LoggableEntityInterface
     public function getDefaultTimezone();
 
     /**
-     * Set logo
+     * Get currency
      *
-     * @param \Ivoz\Provider\Domain\Model\Brand\Logo $logo
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface | null
      */
-    public function setLogo(\Ivoz\Provider\Domain\Model\Brand\Logo $logo);
+    public function getCurrency();
+
+    /**
+     * Get voicemailNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getVoicemailNotificationTemplate();
+
+    /**
+     * Get faxNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getFaxNotificationTemplate();
+
+    /**
+     * Get invoiceNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getInvoiceNotificationTemplate();
+
+    /**
+     * Get callCsvNotificationTemplate
+     *
+     * @return \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface | null
+     */
+    public function getCallCsvNotificationTemplate();
 
     /**
      * Get logo
@@ -183,15 +175,6 @@ interface BrandInterface extends LoggableEntityInterface
      * @return \Ivoz\Provider\Domain\Model\Brand\Logo
      */
     public function getLogo();
-
-    /**
-     * Set invoice
-     *
-     * @param \Ivoz\Provider\Domain\Model\Brand\Invoice $invoice
-     *
-     * @return self
-     */
-    public function setInvoice(\Ivoz\Provider\Domain\Model\Brand\Invoice $invoice);
 
     /**
      * Get invoice
@@ -205,7 +188,7 @@ interface BrandInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
@@ -219,14 +202,14 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * Replace companies
      *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface[] $companies
-     * @return self
+     * @param ArrayCollection $companies of Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return static
      */
-    public function replaceCompanies(Collection $companies);
+    public function replaceCompanies(ArrayCollection $companies);
 
     /**
      * Get companies
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface[]
      */
     public function getCompanies(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -236,7 +219,7 @@ interface BrandInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface $service
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addService(\Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface $service);
 
@@ -250,14 +233,14 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * Replace services
      *
-     * @param \Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface[] $services
-     * @return self
+     * @param ArrayCollection $services of Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface
+     * @return static
      */
-    public function replaceServices(Collection $services);
+    public function replaceServices(ArrayCollection $services);
 
     /**
      * Get services
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\BrandService\BrandServiceInterface[]
      */
     public function getServices(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -265,31 +248,31 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * Add url
      *
-     * @param \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface $url
+     * @param \Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface $url
      *
-     * @return BrandTrait
+     * @return static
      */
-    public function addUrl(\Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface $url);
+    public function addUrl(\Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface $url);
 
     /**
      * Remove url
      *
-     * @param \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface $url
+     * @param \Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface $url
      */
-    public function removeUrl(\Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface $url);
+    public function removeUrl(\Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface $url);
 
     /**
      * Replace urls
      *
-     * @param \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface[] $urls
-     * @return self
+     * @param ArrayCollection $urls of Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface
+     * @return static
      */
-    public function replaceUrls(Collection $urls);
+    public function replaceUrls(ArrayCollection $urls);
 
     /**
      * Get urls
-     *
-     * @return \Ivoz\Provider\Domain\Model\BrandUrl\BrandUrlInterface[]
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\WebPortal\WebPortalInterface[]
      */
     public function getUrls(\Doctrine\Common\Collections\Criteria $criteria = null);
 
@@ -298,7 +281,7 @@ interface BrandInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface $relFeature
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addRelFeature(\Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface $relFeature);
 
@@ -312,55 +295,86 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * Replace relFeatures
      *
-     * @param \Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface[] $relFeatures
-     * @return self
+     * @param ArrayCollection $relFeatures of Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface
+     * @return static
      */
-    public function replaceRelFeatures(Collection $relFeatures);
+    public function replaceRelFeatures(ArrayCollection $relFeatures);
 
     /**
      * Get relFeatures
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\FeaturesRelBrand\FeaturesRelBrandInterface[]
      */
     public function getRelFeatures(\Doctrine\Common\Collections\Criteria $criteria = null);
 
     /**
-     * Add retailAccount
+     * Add relProxyTrunk
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface $relProxyTrunk
      *
-     * @return BrandTrait
+     * @return static
      */
-    public function addRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount);
+    public function addRelProxyTrunk(\Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface $relProxyTrunk);
 
     /**
-     * Remove retailAccount
+     * Remove relProxyTrunk
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
+     * @param \Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface $relProxyTrunk
      */
-    public function removeRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount);
+    public function removeRelProxyTrunk(\Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface $relProxyTrunk);
 
     /**
-     * Replace retailAccounts
+     * Replace relProxyTrunks
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface[] $retailAccounts
-     * @return self
+     * @param ArrayCollection $relProxyTrunks of Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface
+     * @return static
      */
-    public function replaceRetailAccounts(Collection $retailAccounts);
+    public function replaceRelProxyTrunks(ArrayCollection $relProxyTrunks);
 
     /**
-     * Get retailAccounts
-     *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface[]
+     * Get relProxyTrunks
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\ProxyTrunksRelBrand\ProxyTrunksRelBrandInterface[]
      */
-    public function getRetailAccounts(\Doctrine\Common\Collections\Criteria $criteria = null);
+    public function getRelProxyTrunks(\Doctrine\Common\Collections\Criteria $criteria = null);
+
+    /**
+     * Add residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice
+     *
+     * @return static
+     */
+    public function addResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice);
+
+    /**
+     * Remove residentialDevice
+     *
+     * @param \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice
+     */
+    public function removeResidentialDevice(\Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface $residentialDevice);
+
+    /**
+     * Replace residentialDevices
+     *
+     * @param ArrayCollection $residentialDevices of Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface
+     * @return static
+     */
+    public function replaceResidentialDevices(ArrayCollection $residentialDevices);
+
+    /**
+     * Get residentialDevices
+     * @param Criteria | null $criteria
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface[]
+     */
+    public function getResidentialDevices(\Doctrine\Common\Collections\Criteria $criteria = null);
 
     /**
      * Add musicsOnHold
      *
      * @param \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface $musicsOnHold
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addMusicsOnHold(\Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface $musicsOnHold);
 
@@ -374,14 +388,14 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * Replace musicsOnHold
      *
-     * @param \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface[] $musicsOnHold
-     * @return self
+     * @param ArrayCollection $musicsOnHold of Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface
+     * @return static
      */
-    public function replaceMusicsOnHold(Collection $musicsOnHold);
+    public function replaceMusicsOnHold(ArrayCollection $musicsOnHold);
 
     /**
      * Get musicsOnHold
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\MusicOnHold\MusicOnHoldInterface[]
      */
     public function getMusicsOnHold(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -391,7 +405,7 @@ interface BrandInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addMatchList(\Ivoz\Provider\Domain\Model\MatchList\MatchListInterface $matchList);
 
@@ -405,14 +419,14 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * Replace matchLists
      *
-     * @param \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface[] $matchLists
-     * @return self
+     * @param ArrayCollection $matchLists of Ivoz\Provider\Domain\Model\MatchList\MatchListInterface
+     * @return static
      */
-    public function replaceMatchLists(Collection $matchLists);
+    public function replaceMatchLists(ArrayCollection $matchLists);
 
     /**
      * Get matchLists
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\MatchList\MatchListInterface[]
      */
     public function getMatchLists(\Doctrine\Common\Collections\Criteria $criteria = null);
@@ -422,7 +436,7 @@ interface BrandInterface extends LoggableEntityInterface
      *
      * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting
      *
-     * @return BrandTrait
+     * @return static
      */
     public function addOutgoingRouting(\Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface $outgoingRouting);
 
@@ -436,30 +450,43 @@ interface BrandInterface extends LoggableEntityInterface
     /**
      * Replace outgoingRoutings
      *
-     * @param \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[] $outgoingRoutings
-     * @return self
+     * @param ArrayCollection $outgoingRoutings of Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface
+     * @return static
      */
-    public function replaceOutgoingRoutings(Collection $outgoingRoutings);
+    public function replaceOutgoingRoutings(ArrayCollection $outgoingRoutings);
 
     /**
      * Get outgoingRoutings
-     *
+     * @param Criteria | null $criteria
      * @return \Ivoz\Provider\Domain\Model\OutgoingRouting\OutgoingRoutingInterface[]
      */
     public function getOutgoingRoutings(\Doctrine\Common\Collections\Criteria $criteria = null);
 
+    /**
+     * @param string $fldName
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @return void
+     */
     public function addTmpFile($fldName, \Ivoz\Core\Domain\Service\TempFile $file);
 
     /**
-     * @return TempFile[]
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function removeTmpFile(\Ivoz\Core\Domain\Service\TempFile $file);
+
+    /**
+     * @return \Ivoz\Core\Domain\Service\TempFile[]
      */
     public function getTempFiles();
 
     /**
      * @var string $fldName
-     * @return null | TempFile
+     * @return null | \Ivoz\Core\Domain\Service\TempFile
      */
     public function getTempFileByFieldName($fldName);
-
 }
-

@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\MediaRelaySet;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -23,11 +21,6 @@ abstract class MediaRelaySetDtoAbstract implements DataTransferObjectInterface
     private $description;
 
     /**
-     * @var string
-     */
-    private $type = 'rtpproxy';
-
-    /**
      * @var integer
      */
     private $id;
@@ -43,7 +36,7 @@ abstract class MediaRelaySetDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -52,7 +45,6 @@ abstract class MediaRelaySetDtoAbstract implements DataTransferObjectInterface
         return [
             'name' => 'name',
             'description' => 'description',
-            'type' => 'type',
             'id' => 'id'
         ];
     }
@@ -62,28 +54,24 @@ abstract class MediaRelaySetDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'name' => $this->getName(),
             'description' => $this->getDescription(),
-            'type' => $this->getType(),
             'id' => $this->getId()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    }
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-
+        return $response;
     }
 
     /**
@@ -99,7 +87,7 @@ abstract class MediaRelaySetDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -119,31 +107,11 @@ abstract class MediaRelaySetDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
         return $this->description;
-    }
-
-    /**
-     * @param string $type
-     *
-     * @return static
-     */
-    public function setType($type = null)
-    {
-        $this->type = $type;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getType()
-    {
-        return $this->type;
     }
 
     /**
@@ -159,12 +127,10 @@ abstract class MediaRelaySetDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
         return $this->id;
     }
 }
-
-

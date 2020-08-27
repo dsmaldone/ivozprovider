@@ -20,10 +20,26 @@ pushd /opt/irontec/ivozprovider/microservices/balances
     composer require $*
 popd
 
-pushd /opt/irontec/ivozprovider/scheme
+pushd /opt/irontec/ivozprovider/microservices/scheduler
     composer require $*
 popd
 
-pushd /opt/irontec/ivozprovider/web/rest
+pushd /opt/irontec/ivozprovider/microservices/realtime
+    composer require $*
+popd
+
+pushd /opt/irontec/ivozprovider/schema
+    composer require $*
+popd
+
+pushd /opt/irontec/ivozprovider/web/rest/platform
+    composer require $*
+popd
+
+pushd /opt/irontec/ivozprovider/web/rest/brand
+    composer require $*
+popd
+
+pushd /opt/irontec/ivozprovider/web/rest/client
     composer require $*
 popd

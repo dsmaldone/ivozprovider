@@ -14,7 +14,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 abstract class RecordingAbstract
 {
     /**
-     * @var string
+     * @var string | null
      */
     protected $callid;
 
@@ -32,25 +32,25 @@ abstract class RecordingAbstract
     /**
      * @var float
      */
-    protected $duration = '0.000';
+    protected $duration = 0.0;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $caller;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $callee;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $recorder;
 
     /**
-     * @var RecordedFile
+     * @var RecordedFile | null
      */
     protected $recordedFile;
 
@@ -81,7 +81,8 @@ abstract class RecordingAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "Recording",
             $this->getId()
         );
@@ -105,7 +106,8 @@ abstract class RecordingAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param RecordingInterface|null $entity
      * @param int $depth
      * @return RecordingDto|null
      */
@@ -125,19 +127,22 @@ abstract class RecordingAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var RecordingDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param RecordingDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto RecordingDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, RecordingDto::class);
 
         $recordedFile = new RecordedFile(
@@ -158,24 +163,23 @@ abstract class RecordingAbstract
             ->setCaller($dto->getCaller())
             ->setCallee($dto->getCallee())
             ->setRecorder($dto->getRecorder())
-            ->setCompany($dto->getCompany())
+            ->setCompany($fkTransformer->transform($dto->getCompany()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param RecordingDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto RecordingDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, RecordingDto::class);
 
         $recordedFile = new RecordedFile(
@@ -193,15 +197,15 @@ abstract class RecordingAbstract
             ->setCallee($dto->getCallee())
             ->setRecorder($dto->getRecorder())
             ->setRecordedFile($recordedFile)
-            ->setCompany($dto->getCompany());
+            ->setCompany($fkTransformer->transform($dto->getCompany()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return RecordingDto
      */
@@ -237,21 +241,19 @@ abstract class RecordingAbstract
             'recordedFileFileSize' => self::getRecordedFile()->getFileSize(),
             'recordedFileMimeType' => self::getRecordedFile()->getMimeType(),
             'recordedFileBaseName' => self::getRecordedFile()->getBaseName(),
-            'companyId' => self::getCompany() ? self::getCompany()->getId() : null
+            'companyId' => self::getCompany()->getId()
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
      * Set callid
      *
-     * @param string $callid
+     * @param string $callid | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallid($callid = null)
+    protected function setCallid($callid = null)
     {
         if (!is_null($callid)) {
             Assertion::maxLength($callid, 255, 'callid value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -265,7 +267,7 @@ abstract class RecordingAbstract
     /**
      * Get callid
      *
-     * @return string
+     * @return string | null
      */
     public function getCallid()
     {
@@ -277,15 +279,19 @@ abstract class RecordingAbstract
      *
      * @param \DateTime $calldate
      *
-     * @return self
+     * @return static
      */
-    public function setCalldate($calldate)
+    protected function setCalldate($calldate)
     {
         Assertion::notNull($calldate, 'calldate value "%s" is null, but non null value was expected.');
         $calldate = \Ivoz\Core\Domain\Model\Helper\DateTimeHelper::createOrFix(
             $calldate,
             'CURRENT_TIMESTAMP'
         );
+
+        if ($this->calldate == $calldate) {
+            return $this;
+        }
 
         $this->calldate = $calldate;
 
@@ -299,7 +305,7 @@ abstract class RecordingAbstract
      */
     public function getCalldate()
     {
-        return $this->calldate;
+        return clone $this->calldate;
     }
 
     /**
@@ -307,15 +313,15 @@ abstract class RecordingAbstract
      *
      * @param string $type
      *
-     * @return self
+     * @return static
      */
-    public function setType($type)
+    protected function setType($type)
     {
         Assertion::notNull($type, 'type value "%s" is null, but non null value was expected.');
-        Assertion::choice($type, array (
-          0 => 'ondemand',
-          1 => 'ddi',
-        ), 'typevalue "%s" is not an element of the valid values: %s');
+        Assertion::choice($type, [
+            RecordingInterface::TYPE_ONDEMAND,
+            RecordingInterface::TYPE_DDI
+        ], 'typevalue "%s" is not an element of the valid values: %s');
 
         $this->type = $type;
 
@@ -337,14 +343,14 @@ abstract class RecordingAbstract
      *
      * @param float $duration
      *
-     * @return self
+     * @return static
      */
-    public function setDuration($duration)
+    protected function setDuration($duration)
     {
         Assertion::notNull($duration, 'duration value "%s" is null, but non null value was expected.');
         Assertion::numeric($duration);
 
-        $this->duration = $duration;
+        $this->duration = (float) $duration;
 
         return $this;
     }
@@ -362,11 +368,11 @@ abstract class RecordingAbstract
     /**
      * Set caller
      *
-     * @param string $caller
+     * @param string $caller | null
      *
-     * @return self
+     * @return static
      */
-    public function setCaller($caller = null)
+    protected function setCaller($caller = null)
     {
         if (!is_null($caller)) {
             Assertion::maxLength($caller, 128, 'caller value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -380,7 +386,7 @@ abstract class RecordingAbstract
     /**
      * Get caller
      *
-     * @return string
+     * @return string | null
      */
     public function getCaller()
     {
@@ -390,11 +396,11 @@ abstract class RecordingAbstract
     /**
      * Set callee
      *
-     * @param string $callee
+     * @param string $callee | null
      *
-     * @return self
+     * @return static
      */
-    public function setCallee($callee = null)
+    protected function setCallee($callee = null)
     {
         if (!is_null($callee)) {
             Assertion::maxLength($callee, 128, 'callee value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -408,7 +414,7 @@ abstract class RecordingAbstract
     /**
      * Get callee
      *
-     * @return string
+     * @return string | null
      */
     public function getCallee()
     {
@@ -418,11 +424,11 @@ abstract class RecordingAbstract
     /**
      * Set recorder
      *
-     * @param string $recorder
+     * @param string $recorder | null
      *
-     * @return self
+     * @return static
      */
-    public function setRecorder($recorder = null)
+    protected function setRecorder($recorder = null)
     {
         if (!is_null($recorder)) {
             Assertion::maxLength($recorder, 128, 'recorder value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -436,7 +442,7 @@ abstract class RecordingAbstract
     /**
      * Get recorder
      *
-     * @return string
+     * @return string | null
      */
     public function getRecorder()
     {
@@ -448,9 +454,9 @@ abstract class RecordingAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
      *
-     * @return self
+     * @return static
      */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null)
+    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company)
     {
         $this->company = $company;
 
@@ -472,12 +478,16 @@ abstract class RecordingAbstract
      *
      * @param \Ivoz\Provider\Domain\Model\Recording\RecordedFile $recordedFile
      *
-     * @return self
+     * @return static
      */
-    public function setRecordedFile(RecordedFile $recordedFile)
+    protected function setRecordedFile(RecordedFile $recordedFile)
     {
-        $this->recordedFile = $recordedFile;
+        $isEqual = $this->recordedFile && $this->recordedFile->equals($recordedFile);
+        if ($isEqual) {
+            return $this;
+        }
 
+        $this->recordedFile = $recordedFile;
         return $this;
     }
 
@@ -490,7 +500,5 @@ abstract class RecordingAbstract
     {
         return $this->recordedFile;
     }
-
     // @codeCoverageIgnoreEnd
 }
-

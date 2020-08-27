@@ -3,8 +3,10 @@
 namespace Ivoz\Cgr\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateRepository;
+use Doctrine\ORM\NativeQuery;
 use Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRate;
+use Ivoz\Cgr\Domain\Model\TpDestinationRate\TpDestinationRateRepository;
+use Ivoz\Core\Infrastructure\Domain\Service\DoctrineQueryRunner;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -15,8 +17,39 @@ use Symfony\Bridge\Doctrine\RegistryInterface;
  */
 class TpDestinationRateDoctrineRepository extends ServiceEntityRepository implements TpDestinationRateRepository
 {
-    public function __construct(RegistryInterface $registry)
-    {
+    protected $queryRunner;
+
+    public function __construct(
+        RegistryInterface $registry,
+        DoctrineQueryRunner $queryRunner
+    ) {
         parent::__construct($registry, TpDestinationRate::class);
+        $this->queryRunner = $queryRunner;
+    }
+
+    /**
+     * @param int $destinationRateGroupId
+     * @param string $roundingMethod
+     * @return int affected rows
+     * @throws \Doctrine\DBAL\ConnectionException
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function syncWithBussines($destinationRateGroupId, $roundingMethod)
+    {
+        $tpDestinationRatesInsert =
+            "INSERT IGNORE tp_destination_rates (tpid, tag, destinations_tag, rates_tag, destinationRateId, rounding_method)
+            SELECT CONCAT('b', DRG.brandId), CONCAT('b', DRG.brandId, 'dr', DRG.id), CONCAT('b', DRG.brandId, 'dst', DR.destinationId),
+             CONCAT('b', DRG.brandId, 'rt', DR.id), DR.id, '$roundingMethod'
+              FROM DestinationRates DR
+              INNER JOIN DestinationRateGroups DRG ON DRG.id = DR.destinationRateGroupId
+              WHERE DRG.id = $destinationRateGroupId";
+
+        $nativeQuery = new NativeQuery($this->_em);
+        $nativeQuery->setSQL($tpDestinationRatesInsert);
+
+        return $this->queryRunner->execute(
+            TpDestinationRate::class,
+            $nativeQuery
+        );
     }
 }

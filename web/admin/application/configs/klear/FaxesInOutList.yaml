@@ -13,6 +13,9 @@ production:
       autoRefresh: 15
       pagination:
         items: 25
+      order:
+        field:
+        - FaxesInOut.calldate desc
       <<: *FaxesInOut
       class: ui-silk-text-list-bullets
       title: _("List of %s %2s", ngettext('Faxfile', 'Faxfiles', 0), "[format| (%parent%)]")
@@ -20,16 +23,16 @@ production:
         options:
           title: _("Options")
           screens:
-            faxesInOutEdit_screen: true
+            faxesInOutEdit_screen: ${auth.acls.FaxesInOut.update}
           dialogs:
-            faxesInOutDel_dialog: true
+            faxesInOutDel_dialog: ${auth.acls.FaxesInOut.delete}
           default: faxesInOutEdit_screen
       options:
         title: _("Options")
         screens:
-          faxesInOutNew_screen: true
+          faxesInOutNew_screen: ${auth.acls.FaxesInOut.create}
         dialogs:
-          faxesInOutDel_dialog: true
+          faxesInOutDel_dialog: ${auth.acls.FaxesInOut.delete}
 
     faxesInOutNew_screen: &faxesInOutNew_screenLink
       <<: *FaxesInOut

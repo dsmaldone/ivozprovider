@@ -7,7 +7,6 @@ use Doctrine\Common\Collections\Criteria;
 use Ivoz\Provider\Domain\Model\ConditionalRoute\ConditionalRouteInterface;
 use Ivoz\Provider\Domain\Model\ConditionalRoutesCondition\ConditionalRoutesConditionInterface;
 
-
 class ConditionalRouteAction
 {
     /**
@@ -21,7 +20,7 @@ class ConditionalRouteAction
     protected $routerAction;
 
     /**
-     * @var ConditionalRouteInterface
+     * @var ConditionalRouteInterface|null
      */
     protected $conditionalRoute;
 
@@ -34,8 +33,7 @@ class ConditionalRouteAction
     public function __construct(
         Wrapper $agi,
         RouterAction $routerAction
-    )
-    {
+    ) {
         $this->agi = $agi;
         $this->routerAction = $routerAction;
     }
@@ -72,7 +70,7 @@ class ConditionalRouteAction
             ->setRouteUser($route->getUser())
             ->setRouteIvr($route->getIvr())
             ->setRouteHuntGroup($route->getHuntGroup())
-            ->setRouteVoicemail($route->getVoiceMailUser())
+            ->setRouteVoicemailUser($route->getVoiceMailUser())
             ->setRouteExternal($route->getNumberValueE164())
             ->setRouteFriendDestination($route->getFriendValue())
             ->setRouteQueue($route->getQueue())
@@ -86,7 +84,6 @@ class ConditionalRouteAction
         /** @var ConditionalRoutesConditionInterface[] $conditions */
         $conditions = $route->getConditions($criteria);
         foreach ($conditions as $condition) {
-
             // Check origin matches route condition
             if (!$condition->matchesOrigin($this->agi->getCallerIdNum())) {
                 continue;
@@ -119,7 +116,7 @@ class ConditionalRouteAction
                 ->setRouteUser($condition->getUser())
                 ->setRouteIvr($condition->getIvr())
                 ->setRouteHuntGroup($condition->getHuntGroup())
-                ->setRouteVoicemail($condition->getVoiceMailUser())
+                ->setRouteVoicemailUser($condition->getVoiceMailUser())
                 ->setRouteExternal($condition->getNumberValueE164())
                 ->setRouteFriendDestination($condition->getFriendValue())
                 ->setRouteQueue($condition->getQueue())
@@ -130,10 +127,9 @@ class ConditionalRouteAction
         }
 
         // Play locution if requested
-        $this->agi->playback($locution);
+        $this->agi->playbackLocution($locution);
 
         // Route this!
         $this->routerAction->route();
     }
-
 }

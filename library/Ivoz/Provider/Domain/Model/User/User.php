@@ -18,12 +18,7 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
      */
     public function getChangeSet()
     {
-        $changeSet = parent::getChangeSet();
-        if (isset($changeSet['pass'])) {
-            $changeSet['pass'] = '****';
-        }
-
-        return $changeSet;
+        return parent::getChangeSet();
     }
 
     /**
@@ -42,7 +37,8 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
      */
     public function __toString()
     {
-        return sprintf("%s %s [%s]",
+        return sprintf(
+            "%s %s [%s]",
             $this->getName(),
             $this->getLastname(),
             parent::__toString()
@@ -58,6 +54,7 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
             $this->active
         ));
     }
+
     public function unserialize($serialized)
     {
         list (
@@ -75,11 +72,17 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
             $this->sanitizeNew();
         }
 
+        if (!$this->getTimezone()) {
+            $this->setTimezone(
+                $this->getCompanyTimezone()
+            );
+        }
+
         $canAccessUserweb = ($this->getActive() && $this->getEmail());
         if ($canAccessUserweb) {
             // Avoid username/pass/active incoherences
             if (!$this->getPass()) {
-                $this->setPass("1234");
+                throw new \DomainException('Active users must have a password');
             }
         } else {
             $this->setActive(0);
@@ -94,31 +97,12 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
 
     protected function sanitizeNew()
     {
-        // Sane defaults for hidden fields
-        if (!$this->getTimezone()) {
-            /**
-             * @todo create a shortcut
-             */
-            $brandDefaultTimezone = $this
-                ->getCompany()
-                ->getBrand()
-                ->getDefaultTimezone();
-
-            $this->setTimezone(
-                $brandDefaultTimezone
-            );
-        }
-
-        if (is_null($this->getVoicemailSendMail()) && $this->getEmail()) {
+        if ($this->getEmail()) {
             $this->setVoicemailSendMail(1);
         }
 
         if ($this->getEmail()) {
             $this->setActive(1);
-            /**
-             * @todo should we move this to the frontend?
-             */
-            $this->setPass("1234");
         }
     }
 
@@ -131,9 +115,11 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
             return $this;
         }
 
-        $newToken = md5(md5($pass));
-        $this->setTokenKey($newToken);
-        $salt = substr(md5(mt_rand(), false), 0, 22);
+        if (empty($pass)) {
+            return parent::setPass(null);
+        }
+
+        $salt = substr(md5(random_int(0, mt_getrandmax()), false), 0, 22);
         $cryptPass = crypt(
             $pass,
             '$2a$08$' . $salt . '$' . $salt . '$'
@@ -145,7 +131,7 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     /**
      * return associated endpoint with the user
      *
-     * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface
+     * @return \Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface | null
      */
     public function getEndpoint()
     {
@@ -159,7 +145,7 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     }
 
     /**
-     * @return string or null
+     * @return string | null
      */
     public function getUserTerminalInterface()
     {
@@ -198,13 +184,12 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getOutgoingDdiNumber()
     {
         $ddi = $this->getOutgoingDdi();
         if ($ddi) {
-
             return $ddi->getDdiE164();
         }
 
@@ -215,13 +200,12 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     /**
      * Get User outgoingDdi
      * If no Ddi is assigned, retrieve company's default Ddi
-     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface
+     * @return \Ivoz\Provider\Domain\Model\Ddi\DdiInterface | null
      */
     public function getOutgoingDdi()
     {
         $ddi = parent::getOutgoingDdi();
         if ($ddi) {
-
             return $ddi;
         }
 
@@ -233,13 +217,12 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     /**
      * Get User outgoingDdiRule
      * If no OutgoingDdiRule is assigned, retrieve company's default OutgoingDdiRule
-     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface or null
+     * @return \Ivoz\Provider\Domain\Model\OutgoingDdiRule\OutgoingDdiRuleInterface|null
      */
     public function getOutgoingDdiRule()
     {
         $outgoingDdiRule = parent::getOutgoingDdiRule();
         if ($outgoingDdiRule) {
-
             return $outgoingDdiRule;
         }
 
@@ -256,7 +239,6 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     {
         $extension = $this->getExtension();
         if ($extension) {
-
             return $extension
                 ->getNumber();
         }
@@ -272,7 +254,6 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     {
         $callAcl = $this->getCallAcl();
         if (empty($callAcl)) {
-
             return true;
         }
 
@@ -292,9 +273,7 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
          */
         $pickUpRelUsers = $this->getPickUpRelUsers();
         if (!empty($pickUpRelUsers)) {
-
             foreach ($pickUpRelUsers as $key => $pickUpRelUser) {
-
                 $pickUpGroups[$key] = $pickUpRelUser->getPickUpGroup();
             }
         }
@@ -315,6 +294,10 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
         $pickUpRelUsers = $this->getPickUpRelUsers();
         if (!empty($pickUpRelUsers)) {
             foreach ($pickUpRelUsers as $pickUpRel) {
+                if ($pickUpRel->hasBeenDeleted()) {
+                    continue;
+                }
+
                 array_push($pickUpGroupIds, $pickUpRel->getPickUpGroup()->getId());
             }
         }
@@ -358,14 +341,9 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
         if (empty($this->getTerminal())) {
             return false;
         }
-
         // Check if user has extension configured
-        if (empty($this->getExtension())) {
-            return false;
-        }
-
         // Looks like a complete user
-        return true;
+        return !empty($this->getExtension());
     }
 
     /**
@@ -377,7 +355,6 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     {
         $language = parent::getLanguage();
         if ($language) {
-
             return $language;
         }
 
@@ -409,15 +386,23 @@ class User extends UserAbstract implements UserInterface, AdvancedUserInterface,
     /**
      * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneInterface
      */
-    public function getTimezone()
+    private function getCompanyTimezone()
     {
-        $timeZone = parent::getTimezone();
-        if (!empty($timeZone)) {
+        return $this
+            ->getCompany()
+            ->getDefaultTimezone();
+    }
 
-            return $timeZone;
-        }
-
-        return $this->getCompany()->getDefaultTimezone();
+    /**
+     * @return string
+     */
+    public function getFullNameExtension()
+    {
+        return sprintf(
+            "%s %s (%s)",
+            $this->getName(),
+            $this->getLastname(),
+            $this->getExtensionNumber()
+        );
     }
 }
-

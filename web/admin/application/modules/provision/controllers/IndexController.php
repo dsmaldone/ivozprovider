@@ -1,5 +1,9 @@
 <?php
 
+use Ivoz\Provider\Domain\Model\Language\LanguageDto;
+use Ivoz\Provider\Domain\Model\User\UserDto;
+use Ivoz\Provider\Domain\Model\Extension\ExtensionDto;
+
 class Provision_IndexController extends Zend_Controller_Action
 {
     /**
@@ -64,6 +68,10 @@ class Provision_IndexController extends Zend_Controller_Action
             ['User.terminal = ' . $terminal->getId()]
         );
 
+        if (!$this->view->user) {
+            return $this->_error(404, 'User not found');
+        }
+
         /** @var \Ivoz\Provider\Domain\Model\Language\LanguageDto $language */
         $language = $this->dataGateway->remoteProcedureCall(
             \Ivoz\Provider\Domain\Model\User\User::class,
@@ -71,7 +79,28 @@ class Provision_IndexController extends Zend_Controller_Action
             'getLanguage',
             []
         );
+
+        if (!$language) {
+            return $this->_error(404, 'Language not found');
+        }
+
         $this->view->language = $language->toDto();
+
+        /** @var \Ivoz\Provider\Domain\Model\Extension\Extension $extension */
+        $extension = $this->dataGateway->remoteProcedureCall(
+            \Ivoz\Provider\Domain\Model\User\User::class,
+            $this->view->user->getId(),
+            'getExtension',
+            []
+        );
+
+        if (!$extension) {
+            return $this->_error(404, 'Extension not found');
+        }
+
+        $this->view->user->setExtension(
+            $extension->toDto()
+        );
 
         /**
          * For backward compatibility reasons
@@ -150,7 +179,7 @@ class Provision_IndexController extends Zend_Controller_Action
             $criteria
         );
 
-        if ( $terminalModel == null ) {
+        if ($terminalModel == null) {
             $criteria = [ sprintf($criteriaTemplate, "$terminalUrl") ];
             $terminalModel = $this->dataGateway->findOneBy(
                 \Ivoz\Provider\Domain\Model\TerminalModel\TerminalModel::class,
@@ -158,7 +187,7 @@ class Provision_IndexController extends Zend_Controller_Action
             );
         }
 
-        if ( $terminalModel == null ) {
+        if ($terminalModel == null) {
             $criteria = [ sprintf($criteriaTemplate, preg_replace("/^\//", "", $terminalUrl)) ];
             $terminalModel = $this->dataGateway->findOneBy(
                 \Ivoz\Provider\Domain\Model\TerminalModel\TerminalModel::class,
@@ -207,7 +236,6 @@ class Provision_IndexController extends Zend_Controller_Action
         );
 
         foreach ($terminals as $candidate) {
-
             $terminalModelId = $candidate->getTerminalModelId();
             if (!$terminalModelId) {
                 continue;
@@ -235,7 +263,6 @@ class Provision_IndexController extends Zend_Controller_Action
 
             $fixedFileName = $fileName;
             if (count($fixedUrlSegments) > 1) {
-
                 $start = strlen($fixedUrlSegments[0]);
                 $end = strlen($fixedUrlSegments[1]) * -1;
 
@@ -270,7 +297,8 @@ class Provision_IndexController extends Zend_Controller_Action
         return pathinfo($route, PATHINFO_EXTENSION);
     }
 
-    protected function _getFilePath(){
+    protected function _getFilePath()
+    {
         $bootstrap = \Zend_Controller_Front::getInstance()->getParam('bootstrap');
         $conf = (Object) $bootstrap->getOptions();
         $path = $conf->Iron['fso']['localStoragePath'];

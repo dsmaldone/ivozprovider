@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\RoutingPattern;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -35,12 +33,32 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     /**
      * @var string
      */
+    private $nameCa;
+
+    /**
+     * @var string
+     */
+    private $nameIt;
+
+    /**
+     * @var string
+     */
     private $descriptionEn;
 
     /**
      * @var string
      */
     private $descriptionEs;
+
+    /**
+     * @var string
+     */
+    private $descriptionCa;
+
+    /**
+     * @var string
+     */
+    private $descriptionIt;
 
     /**
      * @var \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
@@ -73,7 +91,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -82,8 +100,8 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
         return [
             'prefix' => 'prefix',
             'id' => 'id',
-            'name' => ['en','es'],
-            'description' => ['en','es'],
+            'name' => ['en','es','ca','it'],
+            'description' => ['en','es','ca','it'],
             'brandId' => 'brand'
         ];
     }
@@ -93,82 +111,39 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'prefix' => $this->getPrefix(),
             'id' => $this->getId(),
             'name' => [
                 'en' => $this->getNameEn(),
-                'es' => $this->getNameEs()
+                'es' => $this->getNameEs(),
+                'ca' => $this->getNameCa(),
+                'it' => $this->getNameIt()
             ],
             'description' => [
                 'en' => $this->getDescriptionEn(),
-                'es' => $this->getDescriptionEs()
+                'es' => $this->getDescriptionEs(),
+                'ca' => $this->getDescriptionCa(),
+                'it' => $this->getDescriptionIt()
             ],
             'brand' => $this->getBrand(),
             'outgoingRoutings' => $this->getOutgoingRoutings(),
             'relPatternGroups' => $this->getRelPatternGroups(),
             'lcrRules' => $this->getLcrRules()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        if (!is_null($this->outgoingRoutings)) {
-            $items = $this->getOutgoingRoutings();
-            $this->outgoingRoutings = [];
-            foreach ($items as $item) {
-                $this->outgoingRoutings[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\OutgoingRouting\\OutgoingRouting',
-                    $item->getId() ?? $item
-                );
-            }
+        if (!$hideSensitiveData) {
+            return $response;
         }
 
-        if (!is_null($this->relPatternGroups)) {
-            $items = $this->getRelPatternGroups();
-            $this->relPatternGroups = [];
-            foreach ($items as $item) {
-                $this->relPatternGroups[] = $transformer->transform(
-                    'Ivoz\\Provider\\Domain\\Model\\RoutingPatternGroupsRelPattern\\RoutingPatternGroupsRelPattern',
-                    $item->getId() ?? $item
-                );
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
             }
+            $response[$sensitiveField] = '*****';
         }
 
-        if (!is_null($this->lcrRules)) {
-            $items = $this->getLcrRules();
-            $this->lcrRules = [];
-            foreach ($items as $item) {
-                $this->lcrRules[] = $transformer->transform(
-                    'Ivoz\\Kam\\Domain\\Model\\TrunksLcrRule\\TrunksLcrRule',
-                    $item->getId() ?? $item
-                );
-            }
-        }
-
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
-        $this->outgoingRoutings = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\OutgoingRouting\\OutgoingRouting',
-            $this->outgoingRoutings
-        );
-        $this->relPatternGroups = $transformer->transform(
-            'Ivoz\\Provider\\Domain\\Model\\RoutingPatternGroupsRelPattern\\RoutingPatternGroupsRelPattern',
-            $this->relPatternGroups
-        );
-        $this->lcrRules = $transformer->transform(
-            'Ivoz\\Kam\\Domain\\Model\\TrunksLcrRule\\TrunksLcrRule',
-            $this->lcrRules
-        );
+        return $response;
     }
 
     /**
@@ -184,7 +159,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPrefix()
     {
@@ -204,7 +179,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -224,7 +199,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNameEn()
     {
@@ -244,11 +219,51 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getNameEs()
     {
         return $this->nameEs;
+    }
+
+    /**
+     * @param string $nameCa
+     *
+     * @return static
+     */
+    public function setNameCa($nameCa = null)
+    {
+        $this->nameCa = $nameCa;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNameCa()
+    {
+        return $this->nameCa;
+    }
+
+    /**
+     * @param string $nameIt
+     *
+     * @return static
+     */
+    public function setNameIt($nameIt = null)
+    {
+        $this->nameIt = $nameIt;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getNameIt()
+    {
+        return $this->nameIt;
     }
 
     /**
@@ -264,7 +279,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescriptionEn()
     {
@@ -284,11 +299,51 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getDescriptionEs()
     {
         return $this->descriptionEs;
+    }
+
+    /**
+     * @param string $descriptionCa
+     *
+     * @return static
+     */
+    public function setDescriptionCa($descriptionCa = null)
+    {
+        $this->descriptionCa = $descriptionCa;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getDescriptionCa()
+    {
+        return $this->descriptionCa;
+    }
+
+    /**
+     * @param string $descriptionIt
+     *
+     * @return static
+     */
+    public function setDescriptionIt($descriptionIt = null)
+    {
+        $this->descriptionIt = $descriptionIt;
+
+        return $this;
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getDescriptionIt()
+    {
+        return $this->descriptionIt;
     }
 
     /**
@@ -304,7 +359,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -312,7 +367,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -326,7 +381,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -350,7 +405,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getOutgoingRoutings()
     {
@@ -370,7 +425,7 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getRelPatternGroups()
     {
@@ -390,12 +445,10 @@ abstract class RoutingPatternDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return array
+     * @return array | null
      */
     public function getLcrRules()
     {
         return $this->lcrRules;
     }
 }
-
-

@@ -20,8 +20,10 @@ class Feature extends FeatureAbstract implements FeatureInterface
     const BILLING           = 6;
     const INVOICES          = 7;
     const PROGRESS          = 8;
-    const RETAIL            = 9;
+    const RESIDENTIAL       = 9;
     const WHOLESALE         = 10;
+    const RETAIL            = 11;
+    const VPBX              = 12;
 
     /**
      * @codeCoverageIgnore
@@ -42,4 +44,3 @@ class Feature extends FeatureAbstract implements FeatureInterface
         return $this->id;
     }
 }
-

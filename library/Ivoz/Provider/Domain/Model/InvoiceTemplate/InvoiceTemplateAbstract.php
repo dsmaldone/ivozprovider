@@ -19,7 +19,7 @@ abstract class InvoiceTemplateAbstract
     protected $name;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $description;
 
@@ -29,17 +29,17 @@ abstract class InvoiceTemplateAbstract
     protected $template;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $templateHeader;
 
     /**
-     * @var string
+     * @var string | null
      */
     protected $templateFooter;
 
     /**
-     * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @var \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     protected $brand;
 
@@ -59,7 +59,8 @@ abstract class InvoiceTemplateAbstract
 
     public function __toString()
     {
-        return sprintf("%s#%s",
+        return sprintf(
+            "%s#%s",
             "InvoiceTemplate",
             $this->getId()
         );
@@ -83,7 +84,8 @@ abstract class InvoiceTemplateAbstract
     }
 
     /**
-     * @param EntityInterface|null $entity
+     * @internal use EntityTools instead
+     * @param InvoiceTemplateInterface|null $entity
      * @param int $depth
      * @return InvoiceTemplateDto|null
      */
@@ -103,47 +105,50 @@ abstract class InvoiceTemplateAbstract
             return static::createDto($entity->getId());
         }
 
-        return $entity->toDto($depth-1);
+        /** @var InvoiceTemplateDto $dto */
+        $dto = $entity->toDto($depth-1);
+
+        return $dto;
     }
 
     /**
      * Factory method
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param InvoiceTemplateDto $dto
      * @return self
      */
-    public static function fromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto InvoiceTemplateDto
-         */
+    public static function fromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, InvoiceTemplateDto::class);
 
         $self = new static(
             $dto->getName(),
-            $dto->getTemplate());
+            $dto->getTemplate()
+        );
 
         $self
             ->setDescription($dto->getDescription())
             ->setTemplateHeader($dto->getTemplateHeader())
             ->setTemplateFooter($dto->getTemplateFooter())
-            ->setBrand($dto->getBrand())
+            ->setBrand($fkTransformer->transform($dto->getBrand()))
         ;
 
-        $self->sanitizeValues();
         $self->initChangelog();
 
         return $self;
     }
 
     /**
-     * @param DataTransferObjectInterface $dto
+     * @internal use EntityTools instead
+     * @param InvoiceTemplateDto $dto
      * @return self
      */
-    public function updateFromDto(DataTransferObjectInterface $dto)
-    {
-        /**
-         * @var $dto InvoiceTemplateDto
-         */
+    public function updateFromDto(
+        DataTransferObjectInterface $dto,
+        \Ivoz\Core\Application\ForeignKeyTransformerInterface $fkTransformer
+    ) {
         Assertion::isInstanceOf($dto, InvoiceTemplateDto::class);
 
         $this
@@ -152,15 +157,15 @@ abstract class InvoiceTemplateAbstract
             ->setTemplate($dto->getTemplate())
             ->setTemplateHeader($dto->getTemplateHeader())
             ->setTemplateFooter($dto->getTemplateFooter())
-            ->setBrand($dto->getBrand());
+            ->setBrand($fkTransformer->transform($dto->getBrand()));
 
 
 
-        $this->sanitizeValues();
         return $this;
     }
 
     /**
+     * @internal use EntityTools instead
      * @param int $depth
      * @return InvoiceTemplateDto
      */
@@ -189,8 +194,6 @@ abstract class InvoiceTemplateAbstract
             'brandId' => self::getBrand() ? self::getBrand()->getId() : null
         ];
     }
-
-
     // @codeCoverageIgnoreStart
 
     /**
@@ -198,9 +201,9 @@ abstract class InvoiceTemplateAbstract
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setName($name)
+    protected function setName($name)
     {
         Assertion::notNull($name, 'name value "%s" is null, but non null value was expected.');
         Assertion::maxLength($name, 55, 'name value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -223,11 +226,11 @@ abstract class InvoiceTemplateAbstract
     /**
      * Set description
      *
-     * @param string $description
+     * @param string $description | null
      *
-     * @return self
+     * @return static
      */
-    public function setDescription($description = null)
+    protected function setDescription($description = null)
     {
         if (!is_null($description)) {
             Assertion::maxLength($description, 300, 'description value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -241,7 +244,7 @@ abstract class InvoiceTemplateAbstract
     /**
      * Get description
      *
-     * @return string
+     * @return string | null
      */
     public function getDescription()
     {
@@ -253,9 +256,9 @@ abstract class InvoiceTemplateAbstract
      *
      * @param string $template
      *
-     * @return self
+     * @return static
      */
-    public function setTemplate($template)
+    protected function setTemplate($template)
     {
         Assertion::notNull($template, 'template value "%s" is null, but non null value was expected.');
         Assertion::maxLength($template, 65535, 'template value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -278,11 +281,11 @@ abstract class InvoiceTemplateAbstract
     /**
      * Set templateHeader
      *
-     * @param string $templateHeader
+     * @param string $templateHeader | null
      *
-     * @return self
+     * @return static
      */
-    public function setTemplateHeader($templateHeader = null)
+    protected function setTemplateHeader($templateHeader = null)
     {
         if (!is_null($templateHeader)) {
             Assertion::maxLength($templateHeader, 65535, 'templateHeader value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -296,7 +299,7 @@ abstract class InvoiceTemplateAbstract
     /**
      * Get templateHeader
      *
-     * @return string
+     * @return string | null
      */
     public function getTemplateHeader()
     {
@@ -306,11 +309,11 @@ abstract class InvoiceTemplateAbstract
     /**
      * Set templateFooter
      *
-     * @param string $templateFooter
+     * @param string $templateFooter | null
      *
-     * @return self
+     * @return static
      */
-    public function setTemplateFooter($templateFooter = null)
+    protected function setTemplateFooter($templateFooter = null)
     {
         if (!is_null($templateFooter)) {
             Assertion::maxLength($templateFooter, 65535, 'templateFooter value "%s" is too long, it should have no more than %d characters, but has %d characters.');
@@ -324,7 +327,7 @@ abstract class InvoiceTemplateAbstract
     /**
      * Get templateFooter
      *
-     * @return string
+     * @return string | null
      */
     public function getTemplateFooter()
     {
@@ -334,11 +337,11 @@ abstract class InvoiceTemplateAbstract
     /**
      * Set brand
      *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
+     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand | null
      *
-     * @return self
+     * @return static
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand)
+    protected function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null)
     {
         $this->brand = $brand;
 
@@ -348,15 +351,12 @@ abstract class InvoiceTemplateAbstract
     /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand()
     {
         return $this->brand;
     }
 
-
-
     // @codeCoverageIgnoreEnd
 }
-

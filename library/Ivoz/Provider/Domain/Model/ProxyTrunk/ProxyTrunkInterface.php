@@ -13,29 +13,11 @@ interface ProxyTrunkInterface extends LoggableEntityInterface
     public function getChangeSet();
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name = null);
-
-    /**
      * Get name
      *
-     * @return string
+     * @return string | null
      */
     public function getName();
-
-    /**
-     * Set ip
-     *
-     * @param string $ip
-     *
-     * @return self
-     */
-    public function setIp($ip);
 
     /**
      * Get ip
@@ -43,6 +25,4 @@ interface ProxyTrunkInterface extends LoggableEntityInterface
      * @return string
      */
     public function getIp();
-
 }
-

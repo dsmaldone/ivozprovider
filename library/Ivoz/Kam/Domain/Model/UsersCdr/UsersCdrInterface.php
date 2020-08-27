@@ -7,13 +7,14 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 interface UsersCdrInterface extends EntityInterface
 {
     /**
-     * Set startTime
-     *
-     * @param \DateTime $startTime
-     *
-     * @return self
+     * @return string
      */
-    public function setStartTime($startTime);
+    public function getOwner();
+
+    /**
+     * @return string
+     */
+    public function getParty();
 
     /**
      * Get startTime
@@ -23,29 +24,11 @@ interface UsersCdrInterface extends EntityInterface
     public function getStartTime();
 
     /**
-     * Set endTime
-     *
-     * @param \DateTime $endTime
-     *
-     * @return self
-     */
-    public function setEndTime($endTime);
-
-    /**
      * Get endTime
      *
      * @return \DateTime
      */
     public function getEndTime();
-
-    /**
-     * Set duration
-     *
-     * @param float $duration
-     *
-     * @return self
-     */
-    public function setDuration($duration);
 
     /**
      * Get duration
@@ -55,228 +38,114 @@ interface UsersCdrInterface extends EntityInterface
     public function getDuration();
 
     /**
-     * Set direction
-     *
-     * @param string $direction
-     *
-     * @return self
-     */
-    public function setDirection($direction = null);
-
-    /**
      * Get direction
      *
-     * @return string
+     * @return string | null
      */
     public function getDirection();
 
     /**
-     * Set caller
-     *
-     * @param string $caller
-     *
-     * @return self
-     */
-    public function setCaller($caller = null);
-
-    /**
      * Get caller
      *
-     * @return string
+     * @return string | null
      */
     public function getCaller();
 
     /**
-     * Set callee
-     *
-     * @param string $callee
-     *
-     * @return self
-     */
-    public function setCallee($callee = null);
-
-    /**
      * Get callee
      *
-     * @return string
+     * @return string | null
      */
     public function getCallee();
 
     /**
-     * Set diversion
-     *
-     * @param string $diversion
-     *
-     * @return self
-     */
-    public function setDiversion($diversion = null);
-
-    /**
      * Get diversion
      *
-     * @return string
+     * @return string | null
      */
     public function getDiversion();
 
     /**
-     * Set referee
-     *
-     * @param string $referee
-     *
-     * @return self
-     */
-    public function setReferee($referee = null);
-
-    /**
      * Get referee
      *
-     * @return string
+     * @return string | null
      */
     public function getReferee();
 
     /**
-     * Set referrer
-     *
-     * @param string $referrer
-     *
-     * @return self
-     */
-    public function setReferrer($referrer = null);
-
-    /**
      * Get referrer
      *
-     * @return string
+     * @return string | null
      */
     public function getReferrer();
 
     /**
-     * Set callid
-     *
-     * @param string $callid
-     *
-     * @return self
-     */
-    public function setCallid($callid = null);
-
-    /**
      * Get callid
      *
-     * @return string
+     * @return string | null
      */
     public function getCallid();
 
     /**
-     * Set callidHash
-     *
-     * @param string $callidHash
-     *
-     * @return self
-     */
-    public function setCallidHash($callidHash = null);
-
-    /**
      * Get callidHash
      *
-     * @return string
+     * @return string | null
      */
     public function getCallidHash();
 
     /**
-     * Set xcallid
-     *
-     * @param string $xcallid
-     *
-     * @return self
-     */
-    public function setXcallid($xcallid = null);
-
-    /**
      * Get xcallid
      *
-     * @return string
+     * @return string | null
      */
     public function getXcallid();
 
     /**
-     * Set brand
+     * Get hidden
      *
-     * @param \Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand
-     *
-     * @return self
+     * @return boolean
      */
-    public function setBrand(\Ivoz\Provider\Domain\Model\Brand\BrandInterface $brand = null);
+    public function getHidden();
 
     /**
      * Get brand
      *
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandInterface | null
      */
     public function getBrand();
 
     /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company = null);
-
-    /**
      * Get company
      *
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyInterface | null
      */
     public function getCompany();
 
     /**
-     * Set user
-     *
-     * @param \Ivoz\Provider\Domain\Model\User\UserInterface $user
-     *
-     * @return self
-     */
-    public function setUser(\Ivoz\Provider\Domain\Model\User\UserInterface $user = null);
-
-    /**
      * Get user
      *
-     * @return \Ivoz\Provider\Domain\Model\User\UserInterface
+     * @return \Ivoz\Provider\Domain\Model\User\UserInterface | null
      */
     public function getUser();
 
     /**
-     * Set friend
-     *
-     * @param \Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend
-     *
-     * @return self
-     */
-    public function setFriend(\Ivoz\Provider\Domain\Model\Friend\FriendInterface $friend = null);
-
-    /**
      * Get friend
      *
-     * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface
+     * @return \Ivoz\Provider\Domain\Model\Friend\FriendInterface | null
      */
     public function getFriend();
 
     /**
-     * Set retailAccount
+     * Get residentialDevice
      *
-     * @param \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount
-     *
-     * @return self
+     * @return \Ivoz\Provider\Domain\Model\ResidentialDevice\ResidentialDeviceInterface | null
      */
-    public function setRetailAccount(\Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface $retailAccount = null);
+    public function getResidentialDevice();
 
     /**
      * Get retailAccount
      *
-     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface
+     * @return \Ivoz\Provider\Domain\Model\RetailAccount\RetailAccountInterface | null
      */
     public function getRetailAccount();
-
 }
-

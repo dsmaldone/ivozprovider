@@ -2,8 +2,10 @@
 
 namespace Ivoz\Kam\Domain\Model\UsersLocationAttr;
 
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\Common\Persistence\ObjectRepository;
 
-interface UsersLocationAttrRepository extends ObjectRepository, Selectable {}
+interface UsersLocationAttrRepository extends ObjectRepository, Selectable
+{
 
+}

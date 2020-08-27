@@ -15,6 +15,14 @@ mappers:
         modelFile: BalanceNotifications,
         entity: 'Ivoz\\Provider\\Domain\\Model\\BalanceNotification\\BalanceNotification'
     }
+  - &BannedAddresses {
+    modelFile: BannedAddresses,
+    entity: 'Ivoz\\Provider\\Domain\\Model\\BannedAddress\\BannedAddress'
+  }
+  - &BillableCalls {
+        modelFile: BillableCalls,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\BillableCall\\BillableCall'
+    }
   - &BrandServices {
         modelFile: BrandServices,
         entity: 'Ivoz\\Provider\\Domain\\Model\\BrandService\\BrandService'
@@ -23,13 +31,17 @@ mappers:
         modelFile: Brands,
         entity: 'Ivoz\\Provider\\Domain\\Model\\Brand\\Brand'
     }
-  - &BrandURLs {
-        modelFile: BrandUrls,
-        entity: 'Ivoz\\Provider\\Domain\\Model\\BrandUrl\\BrandUrl'
+  - &WebPortals {
+        modelFile: WebPortals,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\WebPortal\\WebPortal'
     }
   - &Calendars {
         modelFile: Calendars,
         entity: 'Ivoz\\Provider\\Domain\\Model\\Calendar\\Calendar'
+    }
+  - &CalendarPeriods {
+        modelFile: CalendarPeriods,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\CalendarPeriods\\CalendarPeriods'
     }
   - &CallACL {
         modelFile: CallAcl,
@@ -39,9 +51,25 @@ mappers:
         modelFile: CallAclRelMatchLists,
         entity: 'Ivoz\\Provider\\Domain\\Model\\CallAclRelMatchLists\\CallAclRelMatchLists'
     }
+  - &CallCsvReports {
+      modelFile: CallCsvReports,
+      entity: 'Ivoz\\Provider\\Domain\\Model\\CallCsvReport\\CallCsvReport'
+  }
+  - &CallCsvSchedulers {
+      modelFile: CallCsvSchedulers,
+      entity: 'Ivoz\\Provider\\Domain\\Model\\CallCsvScheduler\\CallCsvScheduler'
+  }
   - &CallForwardSettings {
         modelFile: CallForwardSettings,
         entity: 'Ivoz\\Provider\\Domain\\Model\\CallForwardSetting\\CallForwardSetting'
+    }
+  - &Carriers {
+        modelFile: Carriers,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\Carrier\\Carrier'
+    }
+  - &CarrierServers {
+        modelFile: CarrierServers,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\CarrierServer\\CarrierServer'
     }
   - &Companies {
         modelFile: Companies,
@@ -51,9 +79,9 @@ mappers:
         modelFile: CompanyServices,
         entity: 'Ivoz\\Provider\\Domain\\Model\\CompanyService\\CompanyService'
     }
-  - &CompanyURLs {
-        modelFile: CompanyUrls,
-        entity: 'Ivoz\\Provider\\Domain\\Model\\BrandUrl\\BrandUrl'
+  - &CompanyPortals {
+        modelFile: CompanyPortals,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\WebPortal\\WebPortal'
     }
   - &ConditionalRoutesConditions {
         modelFile: ConditionalRoutesConditions,
@@ -71,13 +99,41 @@ mappers:
         modelFile: ConferenceRooms,
         entity: 'Ivoz\\Provider\\Domain\\Model\\ConferenceRoom\\ConferenceRoom'
     }
-  - &DDIs {
+  - &Countries {
+        modelFile: Countries,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\Country\\Country'
+    }
+  - &Currencies {
+        modelFile: Currencies,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\Currency\\Currency'
+    }
+  - &Ddis {
         modelFile: Ddis,
         entity: 'Ivoz\\Provider\\Domain\\Model\\Ddi\\Ddi'
     }
+  - &DdiProviders {
+        modelFile: DdiProviders,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\DdiProvider\\DdiProvider'
+    }
+  - &DdiProviderAddresses {
+        modelFile: DdiProviderAddresses,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\DdiProviderAddress\\DdiProviderAddress'
+    }
+  - &DdiProviderRegistrations {
+        modelFile: DdiProviderRegistrations,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\DdiProviderRegistration\\DdiProviderRegistration'
+    }
+  - &Destinations {
+        modelFile: Destinations,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\Destination\\Destination'
+    }
   - &DestinationRates {
         modelFile: DestinationRates,
-        entity: 'Ivoz\\Cgr\\Domain\\Model\\DestinationRate\\DestinationRate'
+        entity: 'Ivoz\\Provider\\Domain\\Model\\DestinationRate\\DestinationRate'
+    }
+  - &DestinationRateGroups {
+        modelFile: DestinationRateGroups,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\DestinationRateGroup\\DestinationRateGroup'
     }
   - &Domains {
         modelFile: Domains,
@@ -91,8 +147,8 @@ mappers:
         modelFile: ExternalCallFilters,
         entity: 'Ivoz\\Provider\\Domain\\Model\\ExternalCallFilter\\ExternalCallFilter'
     }
-  - &ExternalCallFiltersRetail {
-        modelFile: ExternalCallFiltersRetail,
+  - &ExternalCallFiltersResidential {
+        modelFile: ExternalCallFiltersResidential,
         entity: 'Ivoz\\Provider\\Domain\\Model\\ExternalCallFilter\\ExternalCallFilter'
     }
   - &FaxesInOut {
@@ -110,6 +166,10 @@ mappers:
   - &FixedCostsRelInvoices {
         modelFile: FixedCostsRelInvoices,
         entity: 'Ivoz\\Provider\\Domain\\Model\\FixedCostsRelInvoice\\FixedCostsRelInvoice'
+    }
+  - &FixedCostsRelInvoiceSchedulers {
+        modelFile: FixedCostsRelInvoiceSchedulers,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\FixedCostsRelInvoiceScheduler\\FixedCostsRelInvoiceScheduler'
     }
   - &Friends {
         modelFile: Friends,
@@ -139,6 +199,14 @@ mappers:
         modelFile: InvoiceTemplates,
         entity: 'Ivoz\\Provider\\Domain\\Model\\InvoiceTemplate\\InvoiceTemplate'
     }
+  - &InvoiceNumberSequences {
+        modelFile: InvoiceNumberSequences,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\InvoiceNumberSequence\\InvoiceNumberSequence'
+    }
+  - &InvoiceSchedulers {
+        modelFile: InvoiceSchedulers,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\InvoiceScheduler\\InvoiceScheduler'
+  }
   - &IvrEntries {
         modelFile: IvrEntries,
         entity: 'Ivoz\\Provider\\Domain\\Model\\IvrEntry\\IvrEntry'
@@ -187,13 +255,9 @@ mappers:
         modelFile: OutgoingRouting,
         entity: 'Ivoz\\Provider\\Domain\\Model\\OutgoingRouting\\OutgoingRouting'
     }
-  - &PeeringContracts {
-        modelFile: PeeringContracts,
-        entity: 'Ivoz\\Provider\\Domain\\Model\\PeeringContract\\PeeringContract'
-    }
-  - &PeerServers {
-        modelFile: PeerServers,
-        entity: 'Ivoz\\Provider\\Domain\\Model\\PeerServer\\PeerServer'
+  - &AdministratorRelPublicEntities {
+      modelFile: AdministratorRelPublicEntities,
+      entity: 'Ivoz\\Provider\\Domain\\Model\\AdministratorRelPublicEntity\\AdministratorRelPublicEntity'
     }
   - &PickUpGroups {
         modelFile: PickUpGroups,
@@ -221,11 +285,27 @@ mappers:
     }
   - &RatingPlans {
         modelFile: RatingPlans,
-        entity: 'Ivoz\\Cgr\\Domain\\Model\\RatingPlan\\RatingPlan'
+        entity: 'Ivoz\\Provider\\Domain\\Model\\RatingPlan\\RatingPlan'
+    }
+  - &RatingPlanGroups {
+        modelFile: RatingPlanGroups,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\RatingPlanGroup\\RatingPlanGroup'
+    }
+  - &RatingProfiles {
+        modelFile: RatingProfiles,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\RatingProfile\\RatingProfile'
     }
   - &Recordings {
         modelFile: Recordings,
         entity: 'Ivoz\\Provider\\Domain\\Model\\Recording\\Recording'
+    }
+  - &ResidentialDevices {
+        modelFile: ResidentialDevices,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\ResidentialDevice\\ResidentialDevice'
+    }
+  - &ResidentialClients {
+        modelFile: ResidentialClients,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\Company\\Company'
     }
   - &RetailAccounts {
         modelFile: RetailAccounts,
@@ -234,7 +314,7 @@ mappers:
   - &RetailClients {
         modelFile: RetailClients,
         entity: 'Ivoz\\Provider\\Domain\\Model\\Company\\Company'
-  }
+    }
   - &RoutingPatternGroups {
         modelFile: RoutingPatternGroups,
         entity: 'Ivoz\\Provider\\Domain\\Model\\RoutingPatternGroup\\RoutingPatternGroup'
@@ -263,6 +343,10 @@ mappers:
         modelFile: Services,
         entity: 'Ivoz\\Provider\\Domain\\Model\\Service\\Service'
     }
+  - &SpecialNumbers {
+        modelFile: SpecialNumbers,
+        entity: 'Ivoz\\Provider\\Domain\\Model\\SpecialNumber\\SpecialNumber'
+    }
   - &TerminalManufacturers {
         modelFile: TerminalManufacturers,
         entity: 'Ivoz\\Provider\\Domain\\Model\\TerminalManufacturer\\TerminalManufacturer'
@@ -279,26 +363,6 @@ mappers:
         modelFile: TransformationRuleSets,
         entity: 'Ivoz\\Provider\\Domain\\Model\\TransformationRuleSet\\TransformationRuleSet'
     }
-  - &TpDestinationRates {
-        modelFile: TpDestinationRates,
-        entity: 'Ivoz\\Cgr\\Domain\\Model\\TpDestinationRate\\TpDestinationRate'
-    }
-  - &TpDestinations {
-        modelFile: TpDestinations,
-        entity: 'Ivoz\\Cgr\\Domain\\Model\\TpDestination\\TpDestination'
-    }
-  - &TpRates {
-        modelFile: TpRates,
-        entity: 'Ivoz\\Cgr\\Domain\\Model\\TpRate\\TpRate'
-    }
-  - &TpRatingPlans {
-        modelFile: TpRatingPlans,
-        entity: 'Ivoz\\Cgr\\Domain\\Model\\TpRatingPlan\\TpRatingPlan'
-    }
-  - &TpRatingProfiles {
-        modelFile: TpRatingProfiles,
-        entity: 'Ivoz\\Cgr\\Domain\\Model\\TpRatingProfile\\TpRatingProfile'
-    }
   - &TransformationRules {
         modelFile: TransformationRules,
         entity: 'Ivoz\\Provider\\Domain\\Model\\TransformationRule\\TransformationRule'
@@ -311,17 +375,9 @@ mappers:
         modelFile: WholesaleClients,
         entity: 'Ivoz\\Provider\\Domain\\Model\\Company\\Company'
     }
-  - &KamTrunksCdrs {
-        modelFile: KamTrunksCdrs,
-        entity: 'Ivoz\\Kam\\Domain\\Model\\TrunksCdr\\TrunksCdr'
-    }
   - &Trusted {
         modelFile: KamTrusted,
         entity: 'Kam\\Model\\Trusted\\Trusted'
-    }
-  - &Rtpproxy {
-        modelFile: KamRtpproxy,
-        entity: 'Kam\\Model\\Rtpproxy\\Rtpproxy'
     }
   - &Rtpengine {
         modelFile: KamRtpengine,
@@ -330,14 +386,6 @@ mappers:
   - &KamTrunksAcc {
         modelFile: KamTrunksAcc,
         entity: 'Kam\\Model\\TrunksAcc\\TrunksAcc'
-    }
-  - &KamTrunksUacreg {
-        modelFile: KamTrunksUacreg,
-        entity: 'Ivoz\\Kam\\Domain\\Model\\TrunksUacreg\\TrunksUacreg'
-    }
-  - &UsersAcc {
-        modelFile: UsersAcc,
-        entity: 'Ivoz\\Provider\\Domain\\Model\\UsersAcc\\UsersAcc'
     }
   - &KamUsersAddress {
         modelFile: KamUsersAddress,

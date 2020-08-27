@@ -4,6 +4,7 @@ namespace Ivoz\Ast\Domain\Service\PsEndpoint;
 
 use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpoint;
 use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointDto;
+use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointInterface;
 use Ivoz\Ast\Domain\Model\PsEndpoint\PsEndpointRepository;
 use Ivoz\Core\Domain\Service\EntityPersisterInterface;
 use Ivoz\Provider\Domain\Model\Friend\Friend;
@@ -38,17 +39,14 @@ class UpdateByFriend implements FriendLifecycleEventHandlerInterface
     }
 
     /**
-     * @param Friend $entity
+     * @return void
      */
-    public function execute(FriendInterface $entity, $isNew)
+    public function execute(FriendInterface $entity)
     {
         // Replicate Terminal into ast_ps_endpoint
-        /**
-         * @var PsEndpoint $endpoint
-         */
-        $endpoint = $this->psEndpointRepository->findOneBy([
-            "friend" => $entity->getId()
-        ]);
+        $endpoint = $this->psEndpointRepository->findOneByFriendId(
+            $entity->getId()
+        );
 
         if (is_null($endpoint)) {
             $endPointDto = new PsEndpointDto();
@@ -57,16 +55,21 @@ class UpdateByFriend implements FriendLifecycleEventHandlerInterface
                 ->setSendDiversion("yes")
                 ->setSendPai("yes");
         } else {
+            /** @var PsEndpointDto $endPointDto */
             $endPointDto = $endpoint->toDto();
         }
 
-        // Use company domain if retail from-domain not set
+        // Use company domain if friend from-domain not set
         $fromDomain = $entity->getFromDomain()
             ? $entity->getFromDomain()
             : $entity->getDomain()->getDomain();
 
+        // Disable directMedia for intervpbx friends
+        if ($entity->isInterPbxConnectivity()) {
+            $endPointDto->setDirectMedia('no');
+        }
+
         // Update/Insert endpoint data
-        $domainUsers = $entity->getCompany()->getDomainUsers();
         $endPointDto
             ->setFriendId($entity->getId())
             ->setSorceryId($entity->getSorcery())
@@ -74,10 +77,11 @@ class UpdateByFriend implements FriendLifecycleEventHandlerInterface
             ->setAors($entity->getSorcery())
             ->setDisallow($entity->getDisallow())
             ->setAllow($entity->getAllow())
-            ->setDirectmediaMethod($entity->getDirectmediaMethod())
             ->setTrustIdInbound('yes')
             ->setOutboundProxy('sip:users.ivozprovider.local^3Blr')
-            ->setDirectMediaMethod('invite');
+            ->setT38Udptl($entity->getT38Passthrough())
+            ->setDirectMedia('no')
+            ->setDirectMediaMethod(PsEndpointInterface::DIRECTMEDIAMETHOD_INVITE);
 
         $this->entityPersister->persistDto($endPointDto, $endpoint, true);
     }

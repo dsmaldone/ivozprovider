@@ -3,8 +3,6 @@
 namespace Ivoz\Provider\Domain\Model\Administrator;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\ForeignKeyTransformerInterface;
-use Ivoz\Core\Application\CollectionTransformerInterface;
 use Ivoz\Core\Application\Model\DtoNormalizer;
 
 /**
@@ -30,7 +28,12 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     /**
      * @var boolean
      */
-    private $active = '1';
+    private $active = true;
+
+    /**
+     * @var boolean
+     */
+    private $restricted = false;
 
     /**
      * @var string
@@ -62,6 +65,11 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
      */
     private $timezone;
 
+    /**
+     * @var \Ivoz\Provider\Domain\Model\AdministratorRelPublicEntity\AdministratorRelPublicEntityDto[] | null
+     */
+    private $relPublicEntities = null;
+
 
     use DtoNormalizer;
 
@@ -73,7 +81,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     /**
      * @inheritdoc
      */
-    public static function getPropertyMap(string $context = '')
+    public static function getPropertyMap(string $context = '', string $role = null)
     {
         if ($context === self::CONTEXT_COLLECTION) {
             return ['id' => 'id'];
@@ -84,6 +92,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
             'pass' => 'pass',
             'email' => 'email',
             'active' => 'active',
+            'restricted' => 'restricted',
             'name' => 'name',
             'lastname' => 'lastname',
             'id' => 'id',
@@ -98,36 +107,33 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
      */
     public function toArray($hideSensitiveData = false)
     {
-        return [
+        $response = [
             'username' => $this->getUsername(),
             'pass' => $this->getPass(),
             'email' => $this->getEmail(),
             'active' => $this->getActive(),
+            'restricted' => $this->getRestricted(),
             'name' => $this->getName(),
             'lastname' => $this->getLastname(),
             'id' => $this->getId(),
             'brand' => $this->getBrand(),
             'company' => $this->getCompany(),
-            'timezone' => $this->getTimezone()
+            'timezone' => $this->getTimezone(),
+            'relPublicEntities' => $this->getRelPublicEntities()
         ];
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformForeignKeys(ForeignKeyTransformerInterface $transformer)
-    {
-        $this->brand = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Brand\\Brand', $this->getBrandId());
-        $this->company = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Company\\Company', $this->getCompanyId());
-        $this->timezone = $transformer->transform('Ivoz\\Provider\\Domain\\Model\\Timezone\\Timezone', $this->getTimezoneId());
-    }
+        if (!$hideSensitiveData) {
+            return $response;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function transformCollections(CollectionTransformerInterface $transformer)
-    {
+        foreach ($this->sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $response)) {
+                throw new \Exception($sensitiveField . ' field was not found');
+            }
+            $response[$sensitiveField] = '*****';
+        }
 
+        return $response;
     }
 
     /**
@@ -143,7 +149,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getUsername()
     {
@@ -163,7 +169,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getPass()
     {
@@ -183,7 +189,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getEmail()
     {
@@ -203,11 +209,31 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return boolean
+     * @return boolean | null
      */
     public function getActive()
     {
         return $this->active;
+    }
+
+    /**
+     * @param boolean $restricted
+     *
+     * @return static
+     */
+    public function setRestricted($restricted = null)
+    {
+        $this->restricted = $restricted;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean | null
+     */
+    public function getRestricted()
+    {
+        return $this->restricted;
     }
 
     /**
@@ -223,7 +249,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getName()
     {
@@ -243,7 +269,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return string
+     * @return string | null
      */
     public function getLastname()
     {
@@ -263,7 +289,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer
+     * @return integer | null
      */
     public function getId()
     {
@@ -283,7 +309,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto
+     * @return \Ivoz\Provider\Domain\Model\Brand\BrandDto | null
      */
     public function getBrand()
     {
@@ -291,7 +317,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -305,7 +331,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getBrandId()
     {
@@ -329,7 +355,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto
+     * @return \Ivoz\Provider\Domain\Model\Company\CompanyDto | null
      */
     public function getCompany()
     {
@@ -337,7 +363,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -351,7 +377,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getCompanyId()
     {
@@ -375,7 +401,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneDto
+     * @return \Ivoz\Provider\Domain\Model\Timezone\TimezoneDto | null
      */
     public function getTimezone()
     {
@@ -383,7 +409,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @param integer $id | null
+     * @param mixed | null $id
      *
      * @return static
      */
@@ -397,7 +423,7 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
     }
 
     /**
-     * @return integer | null
+     * @return mixed | null
      */
     public function getTimezoneId()
     {
@@ -407,6 +433,24 @@ abstract class AdministratorDtoAbstract implements DataTransferObjectInterface
 
         return null;
     }
+
+    /**
+     * @param array $relPublicEntities
+     *
+     * @return static
+     */
+    public function setRelPublicEntities($relPublicEntities = null)
+    {
+        $this->relPublicEntities = $relPublicEntities;
+
+        return $this;
+    }
+
+    /**
+     * @return array | null
+     */
+    public function getRelPublicEntities()
+    {
+        return $this->relPublicEntities;
+    }
 }
-
-

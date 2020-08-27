@@ -15,7 +15,7 @@ Ivoz\Provider\Domain\Model\Company\CompanyAbstract:
       length: 25
       options:
         fixed: false
-        comment: '[enum:vpbx|retail|wholesale]'
+        comment: '[enum:vpbx|retail|wholesale|residential]'
         default: vpbx
     name:
       type: string
@@ -50,8 +50,15 @@ Ivoz\Provider\Domain\Model\Company\CompanyAbstract:
       nullable: false
       options:
         unsigned: true
-        default: '0'
+        default: 0
       column: maxCalls
+    maxDailyUsage:
+      type: integer
+      nullable: false
+      options:
+        unsigned: true
+        default: 1000000
+      column: maxDailyUsage
     postalAddress:
       type: string
       nullable: false
@@ -95,8 +102,14 @@ Ivoz\Provider\Domain\Model\Company\CompanyAbstract:
       type: smallint
       nullable: true
       options:
-        default: '0'
+        default: 0
       column: onDemandRecord
+    allowRecordingRemoval:
+      type: boolean
+      nullable: false
+      options:
+        default: 1
+      column: allowRecordingRemoval
     onDemandRecordCode:
       type: string
       nullable: true
@@ -140,6 +153,12 @@ Ivoz\Provider\Domain\Model\Company\CompanyAbstract:
       scale: 4
       options:
         default: 0
+    showInvoices:
+      type: boolean
+      nullable: true
+      options:
+        default: '0'
+      column: showInvoices
   manyToOne:
     language:
       targetEntity: \Ivoz\Provider\Domain\Model\Language\LanguageInterface
@@ -219,6 +238,18 @@ Ivoz\Provider\Domain\Model\Company\CompanyAbstract:
       joinColumns:
         countryId:
           referencedColumnName: id
+          onDelete: cascade
+          nullable: true
+      orphanRemoval: false
+    currency:
+      targetEntity: \Ivoz\Provider\Domain\Model\Currency\CurrencyInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        currencyId:
+          referencedColumnName: id
           onDelete: set null
       orphanRemoval: false
     transformationRuleSet:
@@ -275,6 +306,30 @@ Ivoz\Provider\Domain\Model\Company\CompanyAbstract:
       inversedBy: null
       joinColumns:
         faxNotificationTemplateId:
+          referencedColumnName: id
+          nullable: true
+          onDelete: set null
+      orphanRemoval: false
+    invoiceNotificationTemplate:
+      targetEntity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        invoiceNotificationTemplateId:
+          referencedColumnName: id
+          nullable: true
+          onDelete: set null
+      orphanRemoval: false
+    callCsvNotificationTemplate:
+      targetEntity: \Ivoz\Provider\Domain\Model\NotificationTemplate\NotificationTemplateInterface
+      cascade: {  }
+      fetch: LAZY
+      mappedBy: null
+      inversedBy: null
+      joinColumns:
+        callCsvNotificationTemplateId:
           referencedColumnName: id
           nullable: true
           onDelete: set null

@@ -2,10 +2,17 @@
 
 namespace Ivoz\Provider\Domain\Model\Locution;
 
+use Ivoz\Core\Domain\Service\FileContainerInterface;
 use Ivoz\Core\Domain\Model\LoggableEntityInterface;
 
-interface LocutionInterface extends LoggableEntityInterface
+interface LocutionInterface extends FileContainerInterface, LoggableEntityInterface
 {
+    const STATUS_PENDING = 'pending';
+    const STATUS_ENCODING = 'encoding';
+    const STATUS_READY = 'ready';
+    const STATUS_ERROR = 'error';
+
+
     /**
      * @codeCoverageIgnore
      * @return array
@@ -15,24 +22,15 @@ interface LocutionInterface extends LoggableEntityInterface
     /**
      * @return array
      */
-    public function getFileObjects();
+    public function getFileObjects(int $filter = null);
 
     /**
      * Add TempFile and set status to pending
      *
-     * @param $fldName
-     * @param TempFile $file
+     * @param string $fldName
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
      */
     public function addTmpFile($fldName, \Ivoz\Core\Domain\Service\TempFile $file);
-
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName($name);
 
     /**
      * Get name
@@ -42,29 +40,11 @@ interface LocutionInterface extends LoggableEntityInterface
     public function getName();
 
     /**
-     * Set status
-     *
-     * @param string $status
-     *
-     * @return self
-     */
-    public function setStatus($status = null);
-
-    /**
      * Get status
      *
-     * @return string
+     * @return string | null
      */
     public function getStatus();
-
-    /**
-     * Set company
-     *
-     * @param \Ivoz\Provider\Domain\Model\Company\CompanyInterface $company
-     *
-     * @return self
-     */
-    public function setCompany(\Ivoz\Provider\Domain\Model\Company\CompanyInterface $company);
 
     /**
      * Get company
@@ -74,29 +54,11 @@ interface LocutionInterface extends LoggableEntityInterface
     public function getCompany();
 
     /**
-     * Set encodedFile
-     *
-     * @param \Ivoz\Provider\Domain\Model\Locution\EncodedFile $encodedFile
-     *
-     * @return self
-     */
-    public function setEncodedFile(\Ivoz\Provider\Domain\Model\Locution\EncodedFile $encodedFile);
-
-    /**
      * Get encodedFile
      *
      * @return \Ivoz\Provider\Domain\Model\Locution\EncodedFile
      */
     public function getEncodedFile();
-
-    /**
-     * Set originalFile
-     *
-     * @param \Ivoz\Provider\Domain\Model\Locution\OriginalFile $originalFile
-     *
-     * @return self
-     */
-    public function setOriginalFile(\Ivoz\Provider\Domain\Model\Locution\OriginalFile $originalFile);
 
     /**
      * Get originalFile
@@ -106,15 +68,22 @@ interface LocutionInterface extends LoggableEntityInterface
     public function getOriginalFile();
 
     /**
-     * @return TempFile[]
+     * @param \Ivoz\Core\Domain\Service\TempFile $file
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function removeTmpFile(\Ivoz\Core\Domain\Service\TempFile $file);
+
+    /**
+     * @return \Ivoz\Core\Domain\Service\TempFile[]
      */
     public function getTempFiles();
 
     /**
      * @var string $fldName
-     * @return null | TempFile
+     * @return null | \Ivoz\Core\Domain\Service\TempFile
      */
     public function getTempFileByFieldName($fldName);
-
 }
-

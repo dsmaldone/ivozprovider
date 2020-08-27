@@ -12,6 +12,57 @@ class IvozProvider_Klear_Filter_OutgoingDDI implements KlearMatrix_Model_Field_S
 
     public function setRouteDispatcher(KlearMatrix_Model_RouteDispatcher $routeDispatcher)
     {
+        $file = $routeDispatcher->getParam('file');
+        $useDynamicFilter = in_array(
+            $file,
+            [
+                'CallCsvSchedulersList',
+                'CallCsvSchedulersBrandList'
+            ],
+            true
+        );
+
+        if ($useDynamicFilter) {
+            $auth = Zend_Auth::getInstance();
+            if (!$auth->hasIdentity()) {
+                throw new Klear_Exception_Default("No company/brand emulated");
+            }
+            $identity = $auth->getIdentity();
+
+            switch ($file) {
+                case 'CallCsvSchedulersList':
+                    $currentCompanyId = $identity->companyId;
+                    $this->_condition = [
+                        'self::company = ' . $currentCompanyId
+                    ];
+
+                    return;
+
+                case 'CallCsvSchedulersBrandList':
+                    $currentBrandId = $identity->brandId;
+                    $this->_condition = [
+                        'self::brand = ' . $currentBrandId,
+                    ];
+
+                    return;
+            }
+        }
+
+        // Do not apply company based filtering in list view
+        if ($routeDispatcher->getControllerName() == "list") {
+            $auth = Zend_Auth::getInstance();
+            if (!$auth->hasIdentity()) {
+                throw new Klear_Exception_Default("No company/brand emulated");
+            }
+            $currentBrandId = $auth->getIdentity()->brandId;
+            $this->_condition = [
+                'self::brand = :pk',
+                ['pk' => $currentBrandId]
+            ];
+
+            return;
+        }
+
         // Get current object id
         $pk = $routeDispatcher->getParam("pk", false);
 
@@ -32,6 +83,10 @@ class IvozProvider_Klear_Filter_OutgoingDDI implements KlearMatrix_Model_Field_S
 
     public function getCondition()
     {
-        return $this->_condition;
+        if (count($this->_condition) > 0) {
+            return $this->_condition;
+        }
+
+        return null;
     }
 }

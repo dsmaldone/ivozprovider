@@ -17,14 +17,18 @@ class KamTrusted extends Fixture
      */
     public function load(ObjectManager $manager)
     {
+        $fixture = $this;
         $this->disableLifecycleEvents($manager);
         $manager->getClassMetadata(Trusted::class)->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
     
-        $item1 = $this->createEntityInstanceWithPublicMethods(Trusted::class);
-        $item1->setSrcIp("194.30.6.32");
-        $item1->setProto("any");
-        $item1->setTag("Sarenet");
-        $item1->setPriority(0);
+        $item1 = $this->createEntityInstance(Trusted::class);
+        (function () use ($fixture) {
+            $this->setSrcIp("194.30.6.32");
+            $this->setProto("any");
+            $this->setTag("Sarenet");
+            $this->setPriority(0);
+        })->call($item1);
+
         $this->addReference('_reference_KamTrusted1', $item1);
         $this->sanitizeEntityValues($item1);
         $manager->persist($item1);
@@ -32,5 +36,4 @@ class KamTrusted extends Fixture
     
         $manager->flush();
     }
-
 }
